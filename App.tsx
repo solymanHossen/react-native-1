@@ -6,23 +6,25 @@
  */
 
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
-import { Camera, Home, Pill } from 'lucide-react-native';
+import { Camera, Home, Pill, Waves } from 'lucide-react-native';
 import { useState, type ComponentType } from 'react';
 import { Pressable, StatusBar, Text, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import CircadianDashboardScreen from './src/screens/CircadianDashboardScreen';
 import DrugLabScreen from './src/screens/DrugLabScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import PrescriptionScanScreen from './src/screens/PrescriptionScanScreen';
 import { useThemeMode } from './src/theme/useTheme';
 import './global.css';
 
-type Tab = 'home' | 'drugLab' | 'scanRx';
+type Tab = 'home' | 'drugLab' | 'scanRx' | 'rhythm';
 
 const TAB_CONFIG: Record<Tab, { label: string; Icon: ComponentType<{ size?: number; color?: string; strokeWidth?: number }> }> = {
   home: { label: 'Home', Icon: Home },
   drugLab: { label: 'Medications', Icon: Pill },
   scanRx: { label: 'Scan Rx', Icon: Camera },
+  rhythm: { label: 'Rhythm', Icon: Waves },
 };
 
 const BAR_BACKGROUND = '#0B0E14';
@@ -51,7 +53,7 @@ function DevTabBar({ tab, onChange }: { tab: Tab; onChange: (tab: Tab) => void }
           everywhere else in this app (buttons, status pills, search field)
           instead of introducing a different, flatter nav idiom. */}
       <View style={{ flexDirection: 'row', gap: 6, padding: 6 }}>
-        {(['home', 'drugLab', 'scanRx'] as const).map((value) => {
+        {(['home', 'drugLab', 'scanRx', 'rhythm'] as const).map((value) => {
           const isActive = tab === value;
           const { label, Icon } = TAB_CONFIG[value];
           return (
@@ -91,6 +93,8 @@ function ActiveScreen({ tab }: { tab: Tab }) {
       return <DrugLabScreen />;
     case 'scanRx':
       return <PrescriptionScanScreen />;
+    case 'rhythm':
+      return <CircadianDashboardScreen />;
   }
 }
 

@@ -15,3 +15,20 @@ export type HapticType = keyof typeof HapticFeedbackTypes;
 export function triggerHaptic(type: HapticType = 'impactMedium'): void {
   trigger(type, options);
 }
+
+const CASCADE_STEPS: Array<{ type: HapticType; delay: number }> = [
+  { type: 'impactLight', delay: 0 },
+  { type: 'impactMedium', delay: 90 },
+  { type: 'notificationSuccess', delay: 190 },
+];
+
+/**
+ * A short escalating burst rather than a single pulse — reserved for
+ * milestone moments (e.g. 100% daily adherence) where a single haptic reads
+ * as just another button tap rather than something worth celebrating.
+ */
+export function triggerHapticCascade(): void {
+  for (const step of CASCADE_STEPS) {
+    setTimeout(() => trigger(step.type, options), step.delay);
+  }
+}
