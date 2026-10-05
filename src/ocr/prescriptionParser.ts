@@ -33,10 +33,10 @@ const DROP_RE = /(\d+(?:\.\d+)?)\s*(?:ফোঁটা|drops?)/i;
 const STRENGTH_RE = /\d+(?:\.\d+)?\s*(?:mg|mcg|g|%)\b|\d+(?:\.\d+)?\s*(?:মিগ্রা|মিলিগ্রাম|গ্রাম)/gi;
 
 const EMPTY_STOMACH_RE = /খালি\s*পেটে|empty\s*stomach/i;
-const AFTER_MEAL_WITH_OFFSET_RE = /খাওয়ার\s*(\d+)\s*মিনিট\s*পর|(\d+)\s*min(?:ute)?s?\s*after\s*(?:meal|food)/i;
-const BEFORE_MEAL_RE = /খাবার(?:ের)?\s*আগে|before\s*(?:meal|food)/i;
-const AFTER_MEAL_RE = /খাবার(?:ের)?\s*পরে?|খাওয়ার\s*পর|after\s*(?:meal|food)/i;
-const WITH_MEAL_RE = /খাবারের\s*সাথে|with\s*(?:meal|food)/i;
+const AFTER_MEAL_WITH_OFFSET_RE = /(?:খাওয়া|খাওয়া|খাবার|খাওয়ার|খাওয়ার)\s*(?:ের)?\s*(\d+)\s*মিনিট\s*(?:পর|পরে)|(\d+)\s*min(?:ute)?s?\s*after\s*(?:meal|food)/i;
+const BEFORE_MEAL_RE = /(?:খাবার|খাওয়ার|খাওয়ার|খাওয়া|খাওয়া)(?:ের)?\s*আগে|before\s*(?:meal|food)/i;
+const AFTER_MEAL_RE = /(?:খাবার|খাওয়ার|খাওয়ার|খাওয়া|খাওয়া)(?:ের)?\s*(?:পর|পরে)|after\s*(?:meal|food)/i;
+const WITH_MEAL_RE = /(?:খাবার|খাওয়ার|খাওয়ার|খাওয়া|খাওয়া)(?:ের)?\s*(?:সাথে|সাতে)|with\s*(?:meal|food)/i;
 
 const ONGOING_RE = /চলবে|ongoing|continue/i;
 const DAYS_RE = /(\d+)\s*(?:দিন|days?)/i;
