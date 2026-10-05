@@ -1,5 +1,5 @@
 import type { DB } from '@op-engineering/op-sqlite';
-import type { NewSchedule, Schedule } from '../types';
+import type { NewSchedule, Schedule, ScheduleWithMedication } from '../types';
 
 function toSchedule(row: Record<string, unknown>): Schedule {
   return {
@@ -11,6 +11,15 @@ function toSchedule(row: Record<string, unknown>): Schedule {
     dose_quantity: Number(row.dose_quantity),
     days_of_week_mask: Number(row.days_of_week_mask),
     is_active: Number(row.is_active) === 1,
+  };
+}
+
+function toScheduleWithMedication(row: Record<string, unknown>): ScheduleWithMedication {
+  return {
+    ...toSchedule(row),
+    medicationName: String(row.medication_name),
+    medicationForm: row.medication_form as ScheduleWithMedication['medicationForm'],
+    nfcTagUid: row.nfc_tag_uid === null ? null : String(row.nfc_tag_uid),
   };
 }
 
@@ -49,6 +58,18 @@ export class SchedulesRepository {
   async listActive(): Promise<Schedule[]> {
     const { rows } = await this.db.execute('SELECT * FROM schedules WHERE is_active = 1 ORDER BY time_utc;');
     return rows.map(toSchedule);
+  }
+
+  /** The alarm scheduler's one real query: every active dose with its medication's name/form/NFC tag already joined in, so it never has to zip two separate repository calls together itself. */
+  async listActiveWithMedication(): Promise<ScheduleWithMedication[]> {
+    const { rows } = await this.db.execute(
+      `SELECT s.*, m.name AS medication_name, m.form AS medication_form, m.nfc_tag_uid AS nfc_tag_uid
+       FROM schedules s
+       JOIN medications m ON m.id = s.medication_id
+       WHERE s.is_active = 1
+       ORDER BY s.time_utc;`,
+    );
+    return rows.map(toScheduleWithMedication);
   }
 
   async setActive(id: number, isActive: boolean): Promise<void> {

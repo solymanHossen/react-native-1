@@ -9,4 +9,4 @@ export {
   summarizeDosage,
   parsePrescriptionText,
 } from './prescriptionParser';
-export { matchDrugName, type DrugMatchResult } from './drugMatcher';
+export { matchDrugName, similarityPercent, type DrugMatchResult } from './drugMatcher';

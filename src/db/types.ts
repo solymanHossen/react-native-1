@@ -60,6 +60,13 @@ export interface Schedule {
 
 export type NewSchedule = Omit<Schedule, 'id'>;
 
+/** A Schedule joined with the fields of its medication the alarm engine needs — no repository returns a bare Schedule with these attached otherwise. */
+export interface ScheduleWithMedication extends Schedule {
+  medicationName: string;
+  medicationForm: DosageForm;
+  nfcTagUid: string | null;
+}
+
 export interface IntakeLog {
   id: number;
   schedule_id: number;

@@ -59,6 +59,12 @@ export class MedicationsRepository {
     return rows.map(toMedication);
   }
 
+  /** Resolves a scanned NFC tag to the medication it was registered against — the core lookup behind the alarm's proof-of-intake check. */
+  async getByNfcTagUid(uid: string): Promise<Medication | null> {
+    const { rows } = await this.db.execute('SELECT * FROM medications WHERE nfc_tag_uid = ? LIMIT 1;', [uid]);
+    return rows[0] ? toMedication(rows[0]) : null;
+  }
+
   async delete(id: number): Promise<void> {
     await this.db.execute('DELETE FROM medications WHERE id = ?;', [id]);
   }

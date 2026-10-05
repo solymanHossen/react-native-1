@@ -43,7 +43,8 @@ function levenshteinDistance(a: string, b: string): number {
   return previousRow[b.length];
 }
 
-function similarityPercent(a: string, b: string): number {
+/** Exported for the alarm engine's vision-fallback confidence check — same "how many character-level mistakes" math, just against a single known target instead of a list of DB candidates. */
+export function similarityPercent(a: string, b: string): number {
   const left = a.trim().toLowerCase();
   const right = b.trim().toLowerCase();
   if (!left || !right) return 0;
