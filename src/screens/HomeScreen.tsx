@@ -1,3 +1,4 @@
+import { Moon, Sun, SunMoon } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -13,10 +14,14 @@ const NEXT_PREFERENCE: Record<ThemePreference, ThemePreference> = {
   dark: 'system',
 };
 
-const THEME_GLYPH: Record<ThemePreference, string> = {
-  system: '◐',
-  light: '☀',
-  dark: '☾',
+// Real vector icons, not a Unicode glyph: a glyph rendered through a
+// symbol-fallback font with unpredictable line-height once made the toggle
+// button grow into a pill instead of staying a circle (see LargeTextButton's
+// git history / the earlier fixed-size workaround this replaces).
+const THEME_ICON: Record<ThemePreference, typeof Sun> = {
+  system: SunMoon,
+  light: Sun,
+  dark: Moon,
 };
 
 function greetingForHour(hour: number): string {
@@ -32,6 +37,7 @@ export default function HomeScreen() {
   const setPreference = useSetThemePreference();
   const [syncing, setSyncing] = useState(false);
   const greeting = useMemo(() => greetingForHour(new Date().getHours()), []);
+  const ThemeIcon = THEME_ICON[preference];
 
   const handleSync = () => {
     setSyncing(true);
@@ -41,10 +47,10 @@ export default function HomeScreen() {
   return (
     <SafeAreaView className="flex-1" edges={['top', 'left', 'right']} style={{ backgroundColor: theme.colors.canvas }}>
       <View
-        className="flex-row items-center justify-between border-b px-6 py-5"
+        className="flex-row items-center justify-between border-b px-6 py-6"
         style={{ borderColor: theme.colors.hairline }}
       >
-        <View>
+        <View className="gap-1">
           <Text className="text-caption" style={{ color: theme.colors.inkSecondary }}>
             {greeting}
           </Text>
@@ -58,26 +64,22 @@ export default function HomeScreen() {
           accessibilityLabel={`Theme: ${preference}. Tap to change.`}
           className="min-h-hit min-w-hit items-center justify-center rounded-full border"
           style={{
-            // Fixed, not just min-*: the glyph below renders through a
-            // symbol-fallback font whose natural line height is much taller
-            // than text-title-lg's 30px, so a min-height-only box grew into
-            // a pill instead of staying a circle.
             width: 56,
             height: 56,
             backgroundColor: `${theme.action.base}14`,
             borderColor: `${theme.action.base}33`,
           }}
         >
-          <Text style={{ color: theme.action.base, fontSize: 22, lineHeight: 26 }}>{THEME_GLYPH[preference]}</Text>
+          <ThemeIcon color={theme.action.base} size={24} strokeWidth={2.25} />
         </Pressable>
       </View>
 
-      <ScrollView className="flex-1 px-6 py-7" contentContainerClassName="gap-8" showsVerticalScrollIndicator={false}>
+      <ScrollView className="flex-1 px-6 py-8" contentContainerClassName="gap-9" showsVerticalScrollIndicator={false}>
         {/* Hero: the single most important thing on the screen, sized and
             weighted accordingly (Display Large for the time), not sharing
             visual priority with the vitals grid below it. */}
         <View
-          className="gap-4 rounded-3xl border p-7 shadow-lg"
+          className="gap-5 rounded-3xl border p-8 shadow-lg"
           style={{ backgroundColor: theme.colors.elevated, borderColor: theme.colors.hairline }}
         >
           <View className="flex-row items-center gap-2">
@@ -100,11 +102,11 @@ export default function HomeScreen() {
           <LargeTextButton label="Mark as Taken" onPress={() => {}} />
         </View>
 
-        <View className="gap-3">
+        <View className="gap-4">
           <Text className="text-caption uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
             Today's Vitals
           </Text>
-          <View className="flex-row gap-3">
+          <View className="flex-row gap-4">
             <View className="flex-1">
               <MetricCard
                 label="Blood Glucose"
@@ -120,22 +122,22 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        <View className="gap-3">
+        <View className="gap-4">
           <Text className="text-caption uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
             Medication Status
           </Text>
-          <View className="flex-row flex-wrap gap-2">
+          <View className="flex-row flex-wrap gap-2.5">
             {ALL_STATUSES.map((key) => (
               <StatusPill key={key} status={key} />
             ))}
           </View>
         </View>
 
-        <View className="gap-3">
+        <View className="gap-4">
           <Text className="text-caption uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
             Actions
           </Text>
-          <View className="gap-3">
+          <View className="gap-4">
             <LargeTextButton label="Log a Reading" onPress={() => {}} />
             <LargeTextButton
               label={syncing ? 'Syncing…' : 'Sync with Clinic'}

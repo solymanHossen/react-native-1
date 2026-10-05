@@ -35,10 +35,10 @@ module.exports = {
             },
             // Geriatric/low-vision type scale — mirrors src/theme/tokens.ts `typography`.
             fontSize: {
-                "display-lg": ["34px", { lineHeight: "40px", fontWeight: "700" }],
-                "title-lg": ["24px", { lineHeight: "30px", fontWeight: "600" }],
-                "body-lg": ["18px", { lineHeight: "26px", fontWeight: "400" }],
-                caption: ["14px", { lineHeight: "20px", fontWeight: "500" }],
+                "display-lg": ["44px", { lineHeight: "50px", fontWeight: "800" }],
+                "title-lg": ["30px", { lineHeight: "36px", fontWeight: "700" }],
+                "body-lg": ["20px", { lineHeight: "28px", fontWeight: "400" }],
+                caption: ["15px", { lineHeight: "21px", fontWeight: "500" }],
             },
             // Absolute minimum interactive hitbox (56x56dp), usable as
             // min-h-hit / min-w-hit on any touchable boundary.

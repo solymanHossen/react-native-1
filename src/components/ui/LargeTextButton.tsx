@@ -24,11 +24,18 @@ export interface LargeTextButtonProps {
 }
 
 /**
- * Minimum 56dp-tall button (min-h-hit/min-w-hit) with spring-physics
- * scale-down feedback and a haptic pulse on press. `loading` swaps the
- * label for a spinner without changing the button's size or dimming it —
- * only `disabled` dims the button, so an in-flight async action doesn't
- * look "turned off".
+ * 56dp is the enforced *floor* (min-h-hit/min-w-hit) — the actual rendered
+ * button is taller than that by design (generous vertical padding), after
+ * direct user feedback that the original floor-height, 16px-radius buttons
+ * read as too small/cramped for an app meant to work equally well for
+ * older, middle-aged, and younger users. A fully rounded (`rounded-full`)
+ * pill shape at this height reads as a single, unambiguous tap target
+ * rather than a rounded rectangle.
+ *
+ * Spring-physics scale-down feedback plus a haptic pulse on press.
+ * `loading` swaps the label for a spinner without changing the button's
+ * size or dimming it — only `disabled` dims the button, so an in-flight
+ * async action doesn't look "turned off".
  */
 export function LargeTextButton({
   label,
@@ -80,13 +87,13 @@ export function LargeTextButton({
       accessibilityLabel={accessibilityLabel ?? label}
       accessibilityHint={accessibilityHint}
       accessibilityState={{ disabled: !isInteractive, busy: loading }}
-      className={`min-h-hit min-w-hit flex-row items-center justify-center rounded-2xl border px-6 ${disabled ? 'opacity-40' : ''}`}
+      className={`min-h-hit min-w-hit flex-row items-center justify-center rounded-full border px-8 py-5 ${disabled ? 'opacity-40' : ''}`}
       style={[{ backgroundColor, borderColor }, animatedStyle]}
     >
       {loading ? (
         <ActivityIndicator color={textColor} />
       ) : (
-        <Text className="text-body-lg" style={{ color: textColor }} numberOfLines={1}>
+        <Text className="text-body-lg" style={{ color: textColor, fontWeight: '600' }} numberOfLines={1}>
           {label}
         </Text>
       )}

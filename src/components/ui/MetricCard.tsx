@@ -51,7 +51,7 @@ export function MetricCard({ label, value, unit, caption, status, icon, onPress,
       accessible
       accessibilityRole={onPress ? 'button' : undefined}
       accessibilityLabel={accessibilityLabel}
-      className="min-h-hit rounded-3xl border p-5 shadow-md"
+      className="min-h-hit rounded-3xl border p-6 shadow-md"
       style={{ backgroundColor: theme.colors.elevated, borderColor: theme.colors.hairline }}
     >
       <View className="flex-row items-start justify-between">

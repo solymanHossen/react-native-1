@@ -102,10 +102,46 @@ export function statusText(key: StatusKey, mode: ThemeMode): string {
  * tailwind.config.js (display-lg/title-lg/body-lg/caption) for call sites
  * that need raw numbers instead of a className (e.g. measuring text, or
  * styling a component that takes a numeric `size` prop).
+ *
+ * Sized up twice from the original 34/24/18/14 pass after direct user
+ * feedback that it still read too small for an app meant to work equally
+ * well for older, middle-aged, and younger users. The second pass pushed
+ * Display/Title further (the hero/heading tier) and left Body/Caption as
+ * they were — those are continuous reading text, and 20/15 was already a
+ * generous size for that role; the complaint by then was about visual
+ * punch at the top of the hierarchy, not body-copy density. Pure size
+ * increases don't affect the WCAG contrast math above (that's about color,
+ * not scale), so no re-verification was needed there.
  */
 export const typography = {
-  displayLarge: { fontSize: 34, lineHeight: 40, fontWeight: '700' },
-  titleLarge: { fontSize: 24, lineHeight: 30, fontWeight: '600' },
-  bodyLarge: { fontSize: 18, lineHeight: 26, fontWeight: '400' },
-  caption: { fontSize: 14, lineHeight: 20, fontWeight: '500' },
+  displayLarge: { fontSize: 44, lineHeight: 50, fontWeight: '800' },
+  titleLarge: { fontSize: 30, lineHeight: 36, fontWeight: '700' },
+  bodyLarge: { fontSize: 20, lineHeight: 28, fontWeight: '400' },
+  caption: { fontSize: 15, lineHeight: 21, fontWeight: '500' },
+} as const;
+
+/**
+ * Spacing rhythm, named by role rather than raw pixel value — the thing
+ * that was actually missing from this token module (colors and type had a
+ * documented system; spacing was just whatever gap-N each screen happened
+ * to reach for). Deliberately small and T-shirt-sized rather than a parallel
+ * Tailwind scale: these are for the rare non-className call site (inline
+ * `style`, layout math); everywhere else, use the matching Tailwind utility
+ * at the same pixel value (e.g. `tight` → `gap-2`, `section` → `gap-9`) so
+ * there's exactly one way to spell each gap, not two.
+ *
+ *  - tight (8dp): within a tight inline group, e.g. an icon beside its label.
+ *  - stack (16dp): between related items in a vertical stack, e.g. rows inside a card.
+ *  - card (24dp): padding inside a standard card/surface.
+ *  - cardLarge (32dp): padding inside a hero/featured card.
+ *  - section (36dp): between major sections on a screen, and the screen's own vertical padding.
+ *  - page (24dp): a screen's horizontal margin.
+ */
+export const spacing = {
+  tight: 8,
+  stack: 16,
+  card: 24,
+  cardLarge: 32,
+  section: 36,
+  page: 24,
 } as const;

@@ -34,7 +34,7 @@ export function StatusPill({ status: statusKey, label, testID }: StatusPillProps
       accessible
       accessibilityRole="text"
       accessibilityLabel={`${displayLabel} status`}
-      className="flex-row items-center self-start rounded-full border px-3 py-1.5"
+      className="flex-row items-center self-start rounded-full border px-4 py-2"
       style={{
         backgroundColor: tint,
         borderColor: `${token.base}33`,
@@ -43,7 +43,7 @@ export function StatusPill({ status: statusKey, label, testID }: StatusPillProps
         ],
       }}
     >
-      <View className="mr-1.5 h-2 w-2 rounded-full" style={{ backgroundColor: token.base }} />
+      <View className="mr-2 h-2.5 w-2.5 rounded-full" style={{ backgroundColor: token.base }} />
       <Text className="text-caption" style={{ color: textColor }} numberOfLines={1}>
         {displayLabel}
       </Text>

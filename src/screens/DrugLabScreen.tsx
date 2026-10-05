@@ -91,19 +91,19 @@ export default function DrugLabScreen() {
 
   return (
     <SafeAreaView className="flex-1" edges={['top', 'left', 'right']} style={{ backgroundColor: theme.colors.canvas }}>
-      <View className="border-b px-6 py-4" style={{ borderColor: theme.colors.hairline }}>
+      <View className="border-b px-6 py-6" style={{ borderColor: theme.colors.hairline }}>
         <Text className="text-title-lg" style={{ color: theme.colors.ink }}>
           Drug Lab (DB verification)
         </Text>
       </View>
 
-      <ScrollView className="flex-1 px-6 py-6" contentContainerClassName="gap-7" showsVerticalScrollIndicator={false}>
+      <ScrollView className="flex-1 px-6 py-8" contentContainerClassName="gap-9" showsVerticalScrollIndicator={false}>
         {initError ? (
           <Text className="text-body-lg" style={{ color: theme.statusText('missed') }}>
             Database failed to initialize: {initError}
           </Text>
         ) : !mediusDb ? (
-          <View className="flex-row items-center gap-3">
+          <View className="flex-row items-center gap-4">
             <ActivityIndicator color={theme.action.base} />
             <Text className="text-body-lg" style={{ color: theme.colors.inkSecondary }}>
               Opening encrypted database…
@@ -111,7 +111,7 @@ export default function DrugLabScreen() {
           </View>
         ) : (
           <>
-            <View className="gap-3">
+            <View className="gap-4">
               <Text className="text-caption uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
                 FTS5 + fuzzy search
               </Text>
@@ -120,27 +120,27 @@ export default function DrugLabScreen() {
                 onChangeText={runSearch}
                 placeholder='Try "Napx" or "Napro"'
                 placeholderTextColor={theme.colors.inkMuted}
-                className="min-h-hit rounded-2xl border px-4 text-body-lg"
+                className="min-h-hit rounded-full border px-6 text-body-lg"
                 style={{ backgroundColor: theme.colors.elevated, borderColor: theme.colors.hairline, color: theme.colors.ink }}
               />
               {searching ? <ActivityIndicator color={theme.action.base} /> : null}
               {results.map((result) => (
                 <View
                   key={result.rowid}
-                  className="rounded-2xl border p-4"
+                  className="rounded-3xl border p-6"
                   style={{ backgroundColor: theme.colors.elevated, borderColor: theme.colors.hairline }}
                 >
                   <Text className="text-body-lg" style={{ color: theme.colors.ink }}>
                     {result.brand_name} ({result.generic_name}) {result.strength}
                   </Text>
-                  <Text className="text-caption" style={{ color: theme.colors.inkSecondary }}>
+                  <Text className="mt-1 text-caption" style={{ color: theme.colors.inkSecondary }}>
                     match: {result.matchType} · score: {result.score.toFixed(2)}
                   </Text>
                 </View>
               ))}
             </View>
 
-            <View className="gap-3">
+            <View className="gap-4">
               <Text className="text-caption uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
                 Conflict sentinel
               </Text>
@@ -158,13 +158,13 @@ export default function DrugLabScreen() {
               {conflicts?.map((conflict) => (
                 <View
                   key={conflict.medicationId}
-                  className="rounded-2xl border p-4"
+                  className="rounded-3xl border p-6"
                   style={{ backgroundColor: theme.colors.elevated, borderColor: theme.colors.hairline }}
                 >
                   <Text className="text-body-lg" style={{ color: theme.statusText('missed') }}>
                     {conflict.severity.toUpperCase()}: {conflict.medicationName} ({conflict.conflictingGeneric})
                   </Text>
-                  <Text className="text-caption" style={{ color: theme.colors.inkSecondary }}>
+                  <Text className="mt-1 text-caption" style={{ color: theme.colors.inkSecondary }}>
                     {conflict.description}
                   </Text>
                 </View>
