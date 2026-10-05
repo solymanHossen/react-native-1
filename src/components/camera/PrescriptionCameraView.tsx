@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, AppState, Pressable, StyleSheet, Text, View, type AppStateStatus } from 'react-native';
 import { Camera, useCameraDevice, useCameraPermission, type PhotoFile } from 'react-native-vision-camera';
+import { launchImageLibrary } from 'react-native-image-picker';
+import { Image as ImageIcon } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LargeTextButton } from '../ui';
 import { useTheme } from '../../theme/useTheme';
@@ -8,6 +10,8 @@ import { useTheme } from '../../theme/useTheme';
 export interface PrescriptionCameraViewProps {
   /** Called with the captured photo's filesystem path once the shutter completes. */
   onCapture: (photo: PhotoFile) => void;
+  /** Called with an uploaded prescription image file path when selected from gallery/file storage. */
+  onSelectImage?: (filePath: string) => void;
   /** Caller-controlled pause (e.g. while OCR is running on the previous capture) — in addition to this view's own focus/background handling. */
   paused?: boolean;
 }
@@ -29,7 +33,7 @@ export interface PrescriptionCameraViewProps {
  * running while the app is backgrounded both wastes battery and can be
  * killed uncleanly by the OS.
  */
-export function PrescriptionCameraView({ onCapture, paused = false }: PrescriptionCameraViewProps) {
+export function PrescriptionCameraView({ onCapture, onSelectImage, paused = false }: PrescriptionCameraViewProps) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const { hasPermission, requestPermission } = useCameraPermission();
@@ -58,14 +62,32 @@ export function PrescriptionCameraView({ onCapture, paused = false }: Prescripti
       const photo = await cameraRef.current.takePhoto({ flash: 'off', enableShutterSound: false });
       onCapture(photo);
     } catch (captureError) {
-      // onPress handlers aren't awaited by Pressable, so a capture failure
-      // (e.g. the native session dropping mid-shot) would otherwise surface
-      // as nothing more than a silent unhandled rejection.
       console.warn('[PrescriptionCameraView] takePhoto failed', captureError);
     } finally {
       setCapturing(false);
     }
   }, [capturing, onCapture]);
+
+  const handlePickImage = useCallback(async () => {
+    if (capturing || paused) return;
+    try {
+      const result = await launchImageLibrary({
+        mediaType: 'photo',
+        quality: 1,
+        selectionLimit: 1,
+      });
+
+      if (result.didCancel || result.errorCode || !result.assets?.[0]?.uri) {
+        return;
+      }
+
+      const rawUri = result.assets[0].uri;
+      const cleanPath = rawUri.replace(/^file:\/\//, '');
+      onSelectImage?.(cleanPath);
+    } catch (pickError) {
+      console.warn('[PrescriptionCameraView] launchImageLibrary failed', pickError);
+    }
+  }, [capturing, paused, onSelectImage]);
 
   if (!hasPermission) {
     return (
@@ -74,16 +96,40 @@ export function PrescriptionCameraView({ onCapture, paused = false }: Prescripti
           Camera access is needed to scan a prescription or blister pack.
         </Text>
         <LargeTextButton label="Allow Camera Access" onPress={requestPermission} />
+        {onSelectImage ? (
+          <Pressable
+            onPress={handlePickImage}
+            className="flex-row items-center gap-2 rounded-2xl border px-5 py-3"
+            style={{ borderColor: theme.colors.hairline, backgroundColor: theme.colors.surface }}
+          >
+            <ImageIcon color={theme.colors.ink} size={20} />
+            <Text className="text-body-md font-semibold" style={{ color: theme.colors.ink }}>
+              Upload Prescription Image
+            </Text>
+          </Pressable>
+        ) : null}
       </View>
     );
   }
 
   if (!device) {
     return (
-      <View className="flex-1 items-center justify-center p-8" style={{ backgroundColor: theme.colors.canvas }}>
+      <View className="flex-1 items-center justify-center gap-5 p-8" style={{ backgroundColor: theme.colors.canvas }}>
         <Text className="text-center text-body-lg" style={{ color: theme.colors.inkSecondary }}>
           No camera device was found on this device.
         </Text>
+        {onSelectImage ? (
+          <Pressable
+            onPress={handlePickImage}
+            className="flex-row items-center gap-2 rounded-2xl border px-5 py-3"
+            style={{ borderColor: theme.colors.hairline, backgroundColor: theme.colors.surface }}
+          >
+            <ImageIcon color={theme.colors.ink} size={20} />
+            <Text className="text-body-md font-semibold" style={{ color: theme.colors.ink }}>
+              Upload Prescription Image
+            </Text>
+          </Pressable>
+        ) : null}
       </View>
     );
   }
@@ -94,8 +140,7 @@ export function PrescriptionCameraView({ onCapture, paused = false }: Prescripti
     <View className="flex-1" style={{ backgroundColor: '#000000' }}>
       <Camera ref={cameraRef} style={StyleSheet.absoluteFill} device={device} isActive={isActive} photo={true} photoQualityBalance="quality" />
 
-      {/* Reticle: plain Views, not a Skia frame-processor overlay — a static
-          alignment guide doesn't need per-frame drawing. */}
+      {/* Reticle: plain Views, static alignment guide */}
       <View pointerEvents="none" className="flex-1 items-center justify-center">
         <View
           className="rounded-3xl"
@@ -108,15 +153,14 @@ export function PrescriptionCameraView({ onCapture, paused = false }: Prescripti
           }}
         />
         <Text className="mt-5 text-body-lg" style={{ color: '#FFFFFF' }}>
-          Align the prescription inside the frame
+          Align prescription or upload an image file
         </Text>
       </View>
 
-      {/* Safe-area-aware bottom padding, not a flat `pb-N`: a device's
-          gesture-nav inset varies, and a flat value risks the shutter
-          button landing right at the bottom edge on devices with a larger
-          inset than this one was tuned against. */}
-      <View className="absolute inset-x-0 bottom-0 items-center" style={{ paddingBottom: insets.bottom + 56 }}>
+      {/* Bottom control bar with live shutter button & file upload button */}
+      <View className="absolute inset-x-0 bottom-0 flex-row items-center justify-around px-8" style={{ paddingBottom: insets.bottom + 44 }}>
+        <View style={{ width: 48 }} />
+
         <Pressable
           onPress={handleCapture}
           disabled={capturing || paused}
@@ -135,6 +179,22 @@ export function PrescriptionCameraView({ onCapture, paused = false }: Prescripti
           ) : (
             <View className="rounded-full" style={{ width: 60, height: 60, backgroundColor: theme.action.base }} />
           )}
+        </Pressable>
+
+        <Pressable
+          onPress={handlePickImage}
+          disabled={capturing || paused}
+          accessibilityRole="button"
+          accessibilityLabel="Upload prescription file"
+          className="items-center justify-center rounded-full border border-white/20 p-3"
+          style={{
+            width: 48,
+            height: 48,
+            backgroundColor: 'rgba(255, 255, 255, 0.25)',
+            opacity: capturing || paused ? 0.5 : 1,
+          }}
+        >
+          <ImageIcon color="#FFFFFF" size={24} />
         </Pressable>
       </View>
     </View>

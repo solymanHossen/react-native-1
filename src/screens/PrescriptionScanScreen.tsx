@@ -59,15 +59,16 @@ export default function PrescriptionScanScreen() {
   const [error, setError] = useState<string | null>(null);
   const [lastConfirmedCount, setLastConfirmedCount] = useState<number | null>(null);
 
-  const handleCapture = useCallback(async (photo: PhotoFile) => {
+  const processImageFile = useCallback(async (rawFilePath: string) => {
     setProcessing(true);
     setError(null);
     setLastConfirmedCount(null);
     try {
-      const recognized = await TextRecognition.recognize(`file://${photo.path}`, OCR_SCRIPT);
+      const formattedPath = rawFilePath.startsWith('file://') ? rawFilePath : `file://${rawFilePath}`;
+      const recognized = await TextRecognition.recognize(formattedPath, OCR_SCRIPT);
       const items = await parsePrescriptionText(recognized.text);
       if (items.length === 0) {
-        setError('No dosage lines were recognized. Try aligning the prescription more closely inside the frame.');
+        setError('No dosage lines were recognized in the prescription image. Try using a clearer photo.');
         return;
       }
       reviewSheetRef.current?.present(items);
@@ -77,6 +78,13 @@ export default function PrescriptionScanScreen() {
       setProcessing(false);
     }
   }, []);
+
+  const handleCapture = useCallback(
+    (photo: PhotoFile) => {
+      processImageFile(photo.path);
+    },
+    [processImageFile],
+  );
 
   const handleConfirm = useCallback(async (items: ParsedPrescriptionItem[]) => {
     const database = await initializeDatabase();
@@ -133,7 +141,7 @@ export default function PrescriptionScanScreen() {
       </View>
 
       <View className="flex-1">
-        <PrescriptionCameraView onCapture={handleCapture} paused={processing} />
+        <PrescriptionCameraView onCapture={handleCapture} onSelectImage={processImageFile} paused={processing} />
         {processing ? (
           <View className="absolute inset-0 items-center justify-center gap-4" style={{ backgroundColor: 'rgba(0,0,0,0.55)' }}>
             <ActivityIndicator color="#FFFFFF" size="large" />

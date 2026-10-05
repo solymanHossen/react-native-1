@@ -14,7 +14,7 @@ module.exports = {
   // the same treatment, or importing them throws "Cannot use import statement
   // outside a module".
   transformIgnorePatterns: [
-    'node_modules/(?!((jest-)?react-native|@react-native(-community)?|react-native-css-interop|nativewind|react-native-safe-area-context|react-native-mmkv|react-native-haptic-feedback|@op-engineering/op-sqlite|react-native-keychain|react-native-get-random-values|react-native-svg|lucide-react-native|react-native-vision-camera|@react-native-ml-kit/text-recognition|@gorhom/bottom-sheet|react-native-gesture-handler)/)',
+    'node_modules/(?!((jest-)?react-native|@react-native(-community)?|react-native-image-picker|react-native-css-interop|nativewind|react-native-safe-area-context|react-native-mmkv|react-native-haptic-feedback|@op-engineering/op-sqlite|react-native-keychain|react-native-get-random-values|react-native-svg|lucide-react-native|react-native-vision-camera|@react-native-ml-kit/text-recognition|@gorhom/bottom-sheet|react-native-gesture-handler)/)',
   ],
   // Metro (via NativeWind) understands `import './global.css'`; Jest doesn't
   // run a bundler, so the raw Tailwind directives aren't valid JS to it. This
