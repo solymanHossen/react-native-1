@@ -1,7 +1,7 @@
 import { Moon, Sun, SunMoon } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LargeTextButton, MetricCard, StatusPill } from '../components/ui';
 import type { StatusKey } from '../theme/tokens';
 import { useTheme, useThemePreference, useSetThemePreference, type ThemePreference } from '../theme/useTheme';
@@ -33,6 +33,7 @@ function greetingForHour(hour: number): string {
 
 export default function HomeScreen() {
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const preference = useThemePreference();
   const setPreference = useSetThemePreference();
   const [syncing, setSyncing] = useState(false);
@@ -74,7 +75,17 @@ export default function HomeScreen() {
         </Pressable>
       </View>
 
-      <ScrollView className="flex-1 px-6 py-8" contentContainerClassName="gap-9" showsVerticalScrollIndicator={false}>
+      {/* Padding lives on contentContainerStyle, not the ScrollView's own
+          style: padding on the outer style only shrinks the scrollable
+          viewport, it doesn't reserve room inside the scrollable content, so
+          the last button still ends up flush against — or hidden behind —
+          the device's bottom edge/gesture bar. */}
+      <ScrollView
+        className="flex-1"
+        contentContainerClassName="gap-9 px-6 pt-8"
+        contentContainerStyle={{ paddingBottom: insets.bottom + 32 }}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Hero: the single most important thing on the screen, sized and
             weighted accordingly (Display Large for the time), not sharing
             visual priority with the vitals grid below it. */}

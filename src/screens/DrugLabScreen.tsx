@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, Text, TextInput, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LargeTextButton } from '../components/ui';
 import { initializeDatabase, type DrugConflict, type DrugSearchResult, type MediusDatabase } from '../db';
 import { useTheme } from '../theme/useTheme';
@@ -14,6 +14,7 @@ import { useTheme } from '../theme/useTheme';
  */
 export default function DrugLabScreen() {
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const [mediusDb, setMediusDb] = useState<MediusDatabase | null>(null);
   const [initError, setInitError] = useState<string | null>(null);
 
@@ -97,7 +98,12 @@ export default function DrugLabScreen() {
         </Text>
       </View>
 
-      <ScrollView className="flex-1 px-6 py-8" contentContainerClassName="gap-9" showsVerticalScrollIndicator={false}>
+      <ScrollView
+        className="flex-1"
+        contentContainerClassName="gap-9 px-6 pt-8"
+        contentContainerStyle={{ paddingBottom: insets.bottom + 32 }}
+        showsVerticalScrollIndicator={false}
+      >
         {initError ? (
           <Text className="text-body-lg" style={{ color: theme.statusText('missed') }}>
             Database failed to initialize: {initError}
