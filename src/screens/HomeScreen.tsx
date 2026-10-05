@@ -1,76 +1,152 @@
-import { Text, View, ScrollView, TouchableOpacity } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { useMemo, useState } from 'react';
+import { Pressable, ScrollView, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { LargeTextButton, MetricCard, StatusPill } from '../components/ui';
+import type { StatusKey } from '../theme/tokens';
+import { useTheme, useThemePreference, useSetThemePreference, type ThemePreference } from '../theme/useTheme';
+
+const ALL_STATUSES: StatusKey[] = ['fasting', 'taken', 'pending', 'missed', 'scheduled'];
+
+const NEXT_PREFERENCE: Record<ThemePreference, ThemePreference> = {
+  system: 'light',
+  light: 'dark',
+  dark: 'system',
+};
+
+const THEME_GLYPH: Record<ThemePreference, string> = {
+  system: '◐',
+  light: '☀',
+  dark: '☾',
+};
+
+function greetingForHour(hour: number): string {
+  if (hour < 5) return 'Good night';
+  if (hour < 12) return 'Good morning';
+  if (hour < 17) return 'Good afternoon';
+  return 'Good evening';
+}
 
 export default function HomeScreen() {
-    return (
-        <SafeAreaView className="flex-1 bg-gray-50">
-            {/* Header Section */}
-            <View className="px-6 py-4 bg-white border-b border-gray-100 flex-row items-center justify-between shadow-xs">
-                <Text className="text-xl font-extrabold text-gray-900">AppHome</Text>
-                <View className="bg-blue-50 px-3 py-1 rounded-full border border-blue-100">
-                    <Text className="text-xs font-semibold text-blue-600">NativeWind v5</Text>
-                </View>
+  const theme = useTheme();
+  const preference = useThemePreference();
+  const setPreference = useSetThemePreference();
+  const [syncing, setSyncing] = useState(false);
+  const greeting = useMemo(() => greetingForHour(new Date().getHours()), []);
+
+  const handleSync = () => {
+    setSyncing(true);
+    setTimeout(() => setSyncing(false), 1500);
+  };
+
+  return (
+    <SafeAreaView className="flex-1" edges={['top', 'left', 'right']} style={{ backgroundColor: theme.colors.canvas }}>
+      <View
+        className="flex-row items-center justify-between border-b px-6 py-5"
+        style={{ borderColor: theme.colors.hairline }}
+      >
+        <View>
+          <Text className="text-caption" style={{ color: theme.colors.inkSecondary }}>
+            {greeting}
+          </Text>
+          <Text className="text-title-lg" style={{ color: theme.colors.ink }}>
+            Medius Health
+          </Text>
+        </View>
+        <Pressable
+          onPress={() => setPreference(NEXT_PREFERENCE[preference])}
+          accessibilityRole="button"
+          accessibilityLabel={`Theme: ${preference}. Tap to change.`}
+          className="min-h-hit min-w-hit items-center justify-center rounded-full border"
+          style={{
+            // Fixed, not just min-*: the glyph below renders through a
+            // symbol-fallback font whose natural line height is much taller
+            // than text-title-lg's 30px, so a min-height-only box grew into
+            // a pill instead of staying a circle.
+            width: 56,
+            height: 56,
+            backgroundColor: `${theme.action.base}14`,
+            borderColor: `${theme.action.base}33`,
+          }}
+        >
+          <Text style={{ color: theme.action.base, fontSize: 22, lineHeight: 26 }}>{THEME_GLYPH[preference]}</Text>
+        </Pressable>
+      </View>
+
+      <ScrollView className="flex-1 px-6 py-7" contentContainerClassName="gap-8" showsVerticalScrollIndicator={false}>
+        {/* Hero: the single most important thing on the screen, sized and
+            weighted accordingly (Display Large for the time), not sharing
+            visual priority with the vitals grid below it. */}
+        <View
+          className="gap-4 rounded-3xl border p-7 shadow-lg"
+          style={{ backgroundColor: theme.colors.elevated, borderColor: theme.colors.hairline }}
+        >
+          <View className="flex-row items-center gap-2">
+            <View className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: theme.action.base }} />
+            <Text className="text-caption uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
+              Next Dose
+            </Text>
+          </View>
+          <View className="flex-row items-end justify-between">
+            <View>
+              <Text className="text-display-lg" style={{ color: theme.colors.ink }}>
+                8:00 AM
+              </Text>
+              <Text className="mt-1 text-body-lg" style={{ color: theme.colors.inkSecondary }}>
+                Metformin · 500mg
+              </Text>
             </View>
+            <StatusPill status="scheduled" />
+          </View>
+          <LargeTextButton label="Mark as Taken" onPress={() => {}} />
+        </View>
 
-            {/* Main Scrollable Content Area with flex-grow */}
-            <ScrollView
-                className="flex-1 px-6 py-6"
-                contentContainerStyle={{ flexGrow: 1 }}
-                showsVerticalScrollIndicator={false}
-            >
-                {/* Hero Card */}
-                <View className="bg-blue-600 rounded-2xl p-6 mb-6 shadow-md">
-                    <Text className="text-2xl font-extrabold text-white mb-2">
-                        Welcome Back! 🚀
-                    </Text>
-                    <Text className="text-blue-100 text-sm leading-relaxed mb-4 bg-red-600">
-                        আপনার মডার্ন এক্সপো এবং NativeWind v5 প্রোজেক্টটি এখন সম্পূর্ণ প্রস্তুত। ফ্লেক্সবক্স লেআউট ব্যবহার করে চমৎকার ইউআই ডিজাইন করুন।
-                    </Text>
-                    <TouchableOpacity className="bg-white px-5 py-3 rounded-xl self-start shadow-sm active:opacity-90">
-                        <Text className="text-blue-600 font-bold text-sm">Get Started</Text>
-                    </TouchableOpacity>
-                </View>
+        <View className="gap-3">
+          <Text className="text-caption uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
+            Today's Vitals
+          </Text>
+          <View className="flex-row gap-3">
+            <View className="flex-1">
+              <MetricCard
+                label="Blood Glucose"
+                value="126"
+                unit="mg/dL"
+                caption="Last reading 2h ago"
+                status="fasting"
+              />
+            </View>
+            <View className="flex-1">
+              <MetricCard label="Heart Rate" value="72" unit="bpm" caption="Resting" />
+            </View>
+          </View>
+        </View>
 
-                {/* Flex-Grow & Flexbox Demonstration Section */}
-                <View className="mb-6">
-                    <Text className="text-base font-bold text-gray-800 mb-3">
-                        Flexbox & Flex-Grow Layouts
-                    </Text>
+        <View className="gap-3">
+          <Text className="text-caption uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
+            Medication Status
+          </Text>
+          <View className="flex-row flex-wrap gap-2">
+            {ALL_STATUSES.map((key) => (
+              <StatusPill key={key} status={key} />
+            ))}
+          </View>
+        </View>
 
-                    {/* Row using flex-grow to distribute equal space */}
-                    <View className="flex-row gap-3 mb-3">
-                        <View className="bg-white p-4 rounded-xl border border-gray-200 flex-grow basis-0 shadow-xs">
-                            <Text className="text-xs text-gray-400 font-medium uppercase tracking-wider">Module A</Text>
-                            <Text className="text-base font-bold text-gray-800 mt-1">Flexible Item</Text>
-                            <Text className="text-xs text-gray-500 mt-1">Scales smoothly across devices.</Text>
-                        </View>
-
-                        <View className="bg-white p-4 rounded-xl border border-gray-200 flex-grow basis-0 shadow-xs">
-                            <Text className="text-xs text-gray-400 font-medium uppercase tracking-wider">Module B</Text>
-                            <Text className="text-base font-bold text-gray-800 mt-1">Auto Resize</Text>
-                            <Text className="text-xs text-gray-500 mt-1">Adapts to screen width.</Text>
-                        </View>
-                    </View>
-
-                    {/* Full Width Info Card */}
-                    <View className="bg-white p-4 rounded-xl border border-gray-200 shadow-xs">
-                        <Text className="text-sm font-semibold text-gray-800 mb-1">Performance & Architecture</Text>
-                        <Text className="text-xs text-gray-500 leading-relaxed">
-                            Tailwind CSS v4 এবং NativeWind v5 এর কম্বিনেশনে তৈরি এই লেআউটটি অত্যন্ত ফাস্ট এবং মেইনটেইন করা সহজ।
-                        </Text>
-                    </View>
-                </View>
-
-                {/* Flex-grow spacer to push footer to the bottom if screen has extra space */}
-                <View className="flex-grow" />
-
-                {/* Footer / Status Area */}
-                <View className="py-6 items-center border-t border-gray-100 mt-auto">
-                    <Text className="text-xs font-medium text-gray-400">
-                        Powered by Expo Router & Tailwind v4
-                    </Text>
-                </View>
-            </ScrollView>
-        </SafeAreaView>
-    );
+        <View className="gap-3">
+          <Text className="text-caption uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
+            Actions
+          </Text>
+          <View className="gap-3">
+            <LargeTextButton label="Log a Reading" onPress={() => {}} />
+            <LargeTextButton
+              label={syncing ? 'Syncing…' : 'Sync with Clinic'}
+              variant="secondary"
+              loading={syncing}
+              onPress={handleSync}
+            />
+            <LargeTextButton label="Unavailable Offline" disabled onPress={() => {}} />
+          </View>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
 }
