@@ -1,0 +1,140 @@
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, AppState, Pressable, StyleSheet, Text, View, type AppStateStatus } from 'react-native';
+import { Camera, useCameraDevice, useCameraPermission, type PhotoFile } from 'react-native-vision-camera';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LargeTextButton } from '../ui';
+import { useTheme } from '../../theme/useTheme';
+
+export interface PrescriptionCameraViewProps {
+  /** Called with the captured photo's filesystem path once the shutter completes. */
+  onCapture: (photo: PhotoFile) => void;
+  /** Caller-controlled pause (e.g. while OCR is running on the previous capture) — in addition to this view's own focus/background handling. */
+  paused?: boolean;
+}
+
+/**
+ * Live camera viewfinder with a document-alignment reticle. Deliberately does
+ * NOT run ML Kit as a VisionCamera frame processor: `@react-native-ml-kit/text-recognition`'s
+ * API is a Promise-based native module call over an image file path, not a
+ * frame-processor plugin, so there is nothing synchronous-per-frame to hook
+ * up — OCR runs once on the still photo taken by the shutter button, in
+ * PrescriptionScanScreen. This also means `react-native-worklets-core` and
+ * `@shopify/react-native-skia` (VisionCamera's frame-processor peer deps)
+ * aren't installed; VisionCamera degrades to "Frame Processors disabled"
+ * with a log line, which is fine since none are used.
+ *
+ * Lifecycle / leak prevention: `isActive` is turned off (a) on unmount via
+ * the effect cleanup, running before the Camera is torn out of the tree, and
+ * (b) whenever the app backgrounds, via AppState — a camera session left
+ * running while the app is backgrounded both wastes battery and can be
+ * killed uncleanly by the OS.
+ */
+export function PrescriptionCameraView({ onCapture, paused = false }: PrescriptionCameraViewProps) {
+  const theme = useTheme();
+  const insets = useSafeAreaInsets();
+  const { hasPermission, requestPermission } = useCameraPermission();
+  const device = useCameraDevice('back');
+  const cameraRef = useRef<Camera>(null);
+  const [isMounted, setIsMounted] = useState(true);
+  const [isForeground, setIsForeground] = useState(AppState.currentState === 'active');
+  const [capturing, setCapturing] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+    return () => setIsMounted(false);
+  }, []);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextState: AppStateStatus) => {
+      setIsForeground(nextState === 'active');
+    });
+    return () => subscription.remove();
+  }, []);
+
+  const handleCapture = useCallback(async () => {
+    if (!cameraRef.current || capturing) return;
+    setCapturing(true);
+    try {
+      const photo = await cameraRef.current.takePhoto({ flash: 'off', enableShutterSound: false });
+      console.warn('[DIAG] takePhoto resolved:', photo.path);
+      onCapture(photo);
+    } catch (captureError) {
+      console.warn('[DIAG] takePhoto threw:', captureError);
+    } finally {
+      setCapturing(false);
+    }
+  }, [capturing, onCapture]);
+
+  if (!hasPermission) {
+    return (
+      <View className="flex-1 items-center justify-center gap-5 p-8" style={{ backgroundColor: theme.colors.canvas }}>
+        <Text className="text-center text-body-lg" style={{ color: theme.colors.inkSecondary }}>
+          Camera access is needed to scan a prescription or blister pack.
+        </Text>
+        <LargeTextButton label="Allow Camera Access" onPress={requestPermission} />
+      </View>
+    );
+  }
+
+  if (!device) {
+    return (
+      <View className="flex-1 items-center justify-center p-8" style={{ backgroundColor: theme.colors.canvas }}>
+        <Text className="text-center text-body-lg" style={{ color: theme.colors.inkSecondary }}>
+          No camera device was found on this device.
+        </Text>
+      </View>
+    );
+  }
+
+  const isActive = isMounted && isForeground && !paused;
+
+  return (
+    <View className="flex-1" style={{ backgroundColor: '#000000' }}>
+      <Camera ref={cameraRef} style={StyleSheet.absoluteFill} device={device} isActive={isActive} photo={true} photoQualityBalance="quality" />
+
+      {/* Reticle: plain Views, not a Skia frame-processor overlay — a static
+          alignment guide doesn't need per-frame drawing. */}
+      <View pointerEvents="none" className="flex-1 items-center justify-center">
+        <View
+          className="rounded-3xl"
+          style={{
+            width: '82%',
+            aspectRatio: 1.4,
+            borderWidth: 3,
+            borderColor: theme.action.base,
+            borderStyle: 'dashed',
+          }}
+        />
+        <Text className="mt-5 text-body-lg" style={{ color: '#FFFFFF' }}>
+          Align the prescription inside the frame
+        </Text>
+      </View>
+
+      {/* Safe-area-aware bottom padding, not a flat `pb-N`: a device's
+          gesture-nav inset varies, and a flat value risks the shutter
+          button landing right at the bottom edge on devices with a larger
+          inset than this one was tuned against. */}
+      <View className="absolute inset-x-0 bottom-0 items-center" style={{ paddingBottom: insets.bottom + 56 }}>
+        <Pressable
+          onPress={handleCapture}
+          disabled={capturing || paused}
+          accessibilityRole="button"
+          accessibilityLabel="Capture photo"
+          className="min-h-hit min-w-hit items-center justify-center rounded-full"
+          style={{
+            width: 76,
+            height: 76,
+            backgroundColor: '#FFFFFF',
+            opacity: capturing || paused ? 0.6 : 1,
+          }}
+        >
+          {capturing ? (
+            <ActivityIndicator color={theme.action.base} />
+          ) : (
+            <View className="rounded-full" style={{ width: 60, height: 60, backgroundColor: theme.action.base }} />
+          )}
+        </Pressable>
+      </View>
+    </View>
+  );
+}

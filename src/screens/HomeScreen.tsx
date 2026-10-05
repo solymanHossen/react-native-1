@@ -45,7 +45,7 @@ export default function HomeScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1" edges={['top', 'left', 'right']} style={{ backgroundColor: theme.colors.canvas }}>
+    <SafeAreaView className="flex-1" edges={['left', 'right']} style={{ backgroundColor: theme.colors.canvas }}>
       <View
         className="flex-row items-center justify-between border-b px-6 py-6"
         style={{ borderColor: theme.colors.hairline }}
