@@ -23,7 +23,7 @@ export default function HomeScreen() {
                     <Text className="text-2xl font-extrabold text-white mb-2">
                         Welcome Back! 🚀
                     </Text>
-                    <Text className="text-blue-100 text-sm leading-relaxed mb-4">
+                    <Text className="text-blue-100 text-sm leading-relaxed mb-4 bg-red-600">
                         আপনার মডার্ন এক্সপো এবং NativeWind v5 প্রোজেক্টটি এখন সম্পূর্ণ প্রস্তুত। ফ্লেক্সবক্স লেআউট ব্যবহার করে চমৎকার ইউআই ডিজাইন করুন।
                     </Text>
                     <TouchableOpacity className="bg-white px-5 py-3 rounded-xl self-start shadow-sm active:opacity-90">
