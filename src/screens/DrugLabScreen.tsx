@@ -94,7 +94,7 @@ export default function DrugLabScreen() {
     <SafeAreaView className="flex-1" edges={['left', 'right']} style={{ backgroundColor: theme.colors.canvas }}>
       <View className="border-b px-6 py-6" style={{ borderColor: theme.colors.hairline }}>
         <Text className="text-title-lg" style={{ color: theme.colors.ink }}>
-          Drug Lab (DB verification)
+          Medications
         </Text>
       </View>
 
@@ -119,7 +119,7 @@ export default function DrugLabScreen() {
           <>
             <View className="gap-4">
               <Text className="text-caption uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
-                FTS5 + fuzzy search
+                Search Medications
               </Text>
               <TextInput
                 value={query}
@@ -148,16 +148,16 @@ export default function DrugLabScreen() {
 
             <View className="gap-4">
               <Text className="text-caption uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
-                Conflict sentinel
+                Drug Interaction Check
               </Text>
-              <LargeTextButton label="1. Add Warfarin to active regimen" variant="secondary" onPress={addWarfarinToActiveRegimen} />
+              <LargeTextButton label="Add Warfarin to Regimen" variant="secondary" onPress={addWarfarinToActiveRegimen} />
               {regimenStatus ? (
                 <Text className="text-caption" style={{ color: theme.colors.inkSecondary }}>
                   {regimenStatus}
                 </Text>
               ) : null}
               <LargeTextButton
-                label="2. Check conflicts for Naproxen"
+                label="Check Naproxen for Interactions"
                 loading={checkingConflicts}
                 onPress={checkNaproxenConflicts}
               />

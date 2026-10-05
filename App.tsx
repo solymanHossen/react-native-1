@@ -6,7 +6,7 @@
  */
 
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
-import { Camera, FlaskConical, Palette } from 'lucide-react-native';
+import { Camera, Home, Pill } from 'lucide-react-native';
 import { useState, type ComponentType } from 'react';
 import { Pressable, StatusBar, Text, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -20,8 +20,8 @@ import './global.css';
 type Tab = 'home' | 'drugLab' | 'scanRx';
 
 const TAB_CONFIG: Record<Tab, { label: string; Icon: ComponentType<{ size?: number; color?: string; strokeWidth?: number }> }> = {
-  home: { label: 'Design System', Icon: Palette },
-  drugLab: { label: 'Drug Lab', Icon: FlaskConical },
+  home: { label: 'Home', Icon: Home },
+  drugLab: { label: 'Medications', Icon: Pill },
   scanRx: { label: 'Scan Rx', Icon: Camera },
 };
 
