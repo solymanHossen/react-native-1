@@ -10,8 +10,8 @@ import { useTheme } from '../../theme/useTheme';
 export interface PrescriptionCameraViewProps {
   /** Called with the captured photo's filesystem path once the shutter completes. */
   onCapture: (photo: PhotoFile) => void;
-  /** Called with an uploaded prescription image file path when selected from gallery/file storage. */
-  onSelectImage?: (filePath: string) => void;
+  /** Called with the picked image's URI (typically a content:// URI on Android, not a file path) when selected from the gallery. */
+  onSelectImage?: (uri: string) => void;
   /** Caller-controlled pause (e.g. while OCR is running on the previous capture) — in addition to this view's own focus/background handling. */
   paused?: boolean;
 }
@@ -81,9 +81,12 @@ export function PrescriptionCameraView({ onCapture, onSelectImage, paused = fals
         return;
       }
 
-      const rawUri = result.assets[0].uri;
-      const cleanPath = rawUri.replace(/^file:\/\//, '');
-      onSelectImage?.(cleanPath);
+      // Pass the URI through as-is: on Android this is typically a
+      // content:// URI (from the system Photo Picker / MediaStore), not a
+      // file:// path, and ML Kit's InputImage.fromFilePath resolves either
+      // scheme itself via Uri.parse. Stripping or rewriting the scheme here
+      // produces a URI that resolves to nothing.
+      onSelectImage?.(result.assets[0].uri);
     } catch (pickError) {
       console.warn('[PrescriptionCameraView] launchImageLibrary failed', pickError);
     }

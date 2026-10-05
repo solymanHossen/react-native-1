@@ -64,7 +64,12 @@ export default function PrescriptionScanScreen() {
     setError(null);
     setLastConfirmedCount(null);
     try {
-      const formattedPath = rawFilePath.startsWith('file://') ? rawFilePath : `file://${rawFilePath}`;
+      // Only bare filesystem paths (VisionCamera's `photo.path`) need a
+      // file:// prefix added. A gallery pick already carries its own scheme
+      // (content:// on Android), and prepending file:// to that produces an
+      // unresolvable "file://content://..." URI that ML Kit silently fails
+      // to open.
+      const formattedPath = /^[a-z][a-z0-9+.-]*:\/\//i.test(rawFilePath) ? rawFilePath : `file://${rawFilePath}`;
       const recognized = await TextRecognition.recognize(formattedPath, OCR_SCRIPT);
       const items = await parsePrescriptionText(recognized.text);
       if (items.length === 0) {
