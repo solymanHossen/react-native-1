@@ -56,10 +56,12 @@ export function PrescriptionCameraView({ onCapture, paused = false }: Prescripti
     setCapturing(true);
     try {
       const photo = await cameraRef.current.takePhoto({ flash: 'off', enableShutterSound: false });
-      console.warn('[DIAG] takePhoto resolved:', photo.path);
       onCapture(photo);
     } catch (captureError) {
-      console.warn('[DIAG] takePhoto threw:', captureError);
+      // onPress handlers aren't awaited by Pressable, so a capture failure
+      // (e.g. the native session dropping mid-shot) would otherwise surface
+      // as nothing more than a silent unhandled rejection.
+      console.warn('[PrescriptionCameraView] takePhoto failed', captureError);
     } finally {
       setCapturing(false);
     }

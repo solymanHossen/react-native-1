@@ -65,11 +65,7 @@ export default function PrescriptionScanScreen() {
     setLastConfirmedCount(null);
     try {
       const recognized = await TextRecognition.recognize(`file://${photo.path}`, OCR_SCRIPT);
-      // [DIAG TEMP] emulator's synthetic scene has no real text to OCR — substitute a known string to verify the review sheet with real data.
-      const ocrText =
-        recognized.text ||
-        'Napa 500mg - 1+0+1 - After food - 7 days\nSeclo 20mg\nBefore meal, ongoing';
-      const items = await parsePrescriptionText(ocrText);
+      const items = await parsePrescriptionText(recognized.text);
       if (items.length === 0) {
         setError('No dosage lines were recognized. Try aligning the prescription more closely inside the frame.');
         return;
