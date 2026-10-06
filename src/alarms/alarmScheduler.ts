@@ -101,8 +101,31 @@ export async function scheduleSnoozeAlarm(notificationId: string, payload: Sched
   });
 }
 
+/**
+ * Cancels both the pending trigger and any currently-displayed/ongoing
+ * notification for this schedule. Those are two separate notifee states —
+ * `cancelTriggerNotification` only withdraws a *future* scheduled firing,
+ * it does nothing to a notification that has already fired and is sitting
+ * in the shade as `ongoing: true`. "Turn this alarm off" has to cover an
+ * alarm that's already ringing, not just ones still waiting to fire —
+ * otherwise a stale, never-dismissed alarm notification keeps re-showing
+ * its full-screen activity on its own.
+ */
 export async function cancelAlarm(scheduleId: number): Promise<void> {
-  await notifee.cancelTriggerNotification(notificationIdFor(scheduleId));
+  const id = notificationIdFor(scheduleId);
+  await notifee.cancelTriggerNotification(id).catch(() => {});
+  await notifee.cancelNotification(id).catch(() => {});
+}
+
+/** Flips a schedule's active flag and keeps the real notification in sync with it — off actually cancels the scheduled/displayed alarm, not just a UI toggle that drifts from what's really going to fire. */
+export async function setScheduleActive(schedule: ScheduleWithMedication, isActive: boolean): Promise<void> {
+  const database = await initializeDatabase();
+  await database.schedules.setActive(schedule.id, isActive);
+  if (isActive) {
+    await scheduleAlarm(schedule);
+  } else {
+    await cancelAlarm(schedule.id);
+  }
 }
 
 /**

@@ -72,6 +72,17 @@ export class SchedulesRepository {
     return rows.map(toScheduleWithMedication);
   }
 
+  /** Same join as `listActiveWithMedication`, but including inactive ones too — the management screen needs these to show a toggle a user can turn back on, which an active-only query would make impossible once switched off. */
+  async listAllWithMedication(): Promise<ScheduleWithMedication[]> {
+    const { rows } = await this.db.execute(
+      `SELECT s.*, m.name AS medication_name, m.form AS medication_form, m.nfc_tag_uid AS nfc_tag_uid
+       FROM schedules s
+       JOIN medications m ON m.id = s.medication_id
+       ORDER BY s.is_active DESC, s.time_utc;`,
+    );
+    return rows.map(toScheduleWithMedication);
+  }
+
   async setActive(id: number, isActive: boolean): Promise<void> {
     await this.db.execute('UPDATE schedules SET is_active = ? WHERE id = ?;', [isActive ? 1 : 0, id]);
   }

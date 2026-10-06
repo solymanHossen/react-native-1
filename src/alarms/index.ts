@@ -109,7 +109,15 @@ export { ensureExactAlarmPermission } from './alarmChannel';
 export { getCaregiverPhone, setCaregiverPhone, escalateToCaregiver } from './caregiverEscalation';
 export { confirmIntake, logManualOverride } from './intakeConfirmation';
 export * from './alarmPolicy';
-export { cancelAlarm, computeNextOccurrenceMs, rescheduleAllActiveAlarms, scheduleAlarm, scheduleSnoozeAlarm, triggerAlarmNow } from './alarmScheduler';
+export {
+  cancelAlarm,
+  computeNextOccurrenceMs,
+  rescheduleAllActiveAlarms,
+  scheduleAlarm,
+  scheduleSnoozeAlarm,
+  setScheduleActive,
+  triggerAlarmNow,
+} from './alarmScheduler';
 export { isNfcAvailable, listenForTag } from './nfcVerification';
 export { scanPackForMedication, VISION_CONFIDENCE_THRESHOLD } from './visionVerification';
 export { runSentinelCheck, runSentinelCheckForMedication, scheduleDailySentinelCheck } from './sentinel';
