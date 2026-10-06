@@ -2,6 +2,7 @@ import { Linking } from 'react-native';
 import { initializeDatabase } from '../db';
 import { storage } from '../lib/storage';
 import { getPatientProfile } from '../profile/patientProfile';
+import { useIntakeQueueStore } from '../store/intakeQueueStore';
 import type { ScheduledAlarmPayload } from './types';
 
 const CAREGIVER_PHONE_KEY = 'alarm-caregiver-phone';
@@ -47,6 +48,7 @@ export async function escalateToCaregiver(payload: ScheduledAlarmPayload): Promi
     dismissal_type: null,
     caregiver_alerted: Boolean(phone),
   });
+  useIntakeQueueStore.getState().refresh().catch(() => {});
 
   if (!phone) return;
 

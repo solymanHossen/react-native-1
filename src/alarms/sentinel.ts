@@ -71,6 +71,50 @@ async function notifyIfExpiringSoon(medication: Medication): Promise<void> {
   });
 }
 
+export interface MedicationAlert {
+  medicationId: number;
+  medicationName: string;
+  kind: 'LOW_STOCK' | 'EXPIRING' | 'EXPIRED';
+  detail: string;
+}
+
+/**
+ * Same thresholds as `notifyIfLowStock`/`notifyIfExpiringSoon`, but as a pure
+ * read with no notifee side effect — what the in-app dashboard's refill/
+ * expiry banner reads from, kept as one source of truth for "does this
+ * medication need attention" rather than a second copy of the threshold
+ * logic drifting from the notification path.
+ */
+function classifyMedicationAlert(medication: Medication): MedicationAlert | null {
+  if (medication.current_stock <= medication.refill_threshold) {
+    return {
+      medicationId: medication.id,
+      medicationName: medication.name,
+      kind: 'LOW_STOCK',
+      detail: `${Math.max(0, Math.round(medication.current_stock))} left`,
+    };
+  }
+  if (medication.expiry_date) {
+    const days = daysUntil(medication.expiry_date);
+    if (days <= EXPIRY_WARNING_DAYS) {
+      return {
+        medicationId: medication.id,
+        medicationName: medication.name,
+        kind: days < 0 ? 'EXPIRED' : 'EXPIRING',
+        detail: days < 0 ? 'expired' : days === 0 ? 'expires today' : `expires in ${days}d`,
+      };
+    }
+  }
+  return null;
+}
+
+/** In-app read for the dashboard's refill/expiry banner — the notification sentinel (`runSentinelCheck`) stays the source of truth for actually alerting the user outside the app. */
+export async function getActiveMedicationAlerts(): Promise<MedicationAlert[]> {
+  const database = await initializeDatabase();
+  const medications = await database.medications.list();
+  return medications.map(classifyMedicationAlert).filter((alert): alert is MedicationAlert => alert !== null);
+}
+
 /** Called right after a confirmed intake — checks only the one medication whose stock just changed, rather than re-scanning everything. */
 export async function runSentinelCheckForMedication(medicationId: number): Promise<void> {
   const database = await initializeDatabase();

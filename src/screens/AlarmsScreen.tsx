@@ -1,5 +1,6 @@
+import { FlashList } from '@shopify/flash-list';
 import { useCallback, useEffect, useState } from 'react';
-import { ScrollView, Switch, Text, TextInput, View } from 'react-native';
+import { Switch, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LargeTextButton } from '../components/ui';
 import { getCaregiverPhone, rescheduleAllActiveAlarms, setCaregiverPhone, setScheduleActive, triggerAlarmNow } from '../alarms';
@@ -99,73 +100,85 @@ export default function AlarmsScreen() {
         ) : null}
       </View>
 
-      <ScrollView className="flex-1" contentContainerClassName="gap-7 px-6 py-7" showsVerticalScrollIndicator={false}>
-        <View className="gap-3">
-          <Text className="text-caption uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
-            Caregiver Escalation
-          </Text>
-          <Text className="text-caption" style={{ color: theme.colors.inkMuted }}>
-            If an alarm goes unconfirmed for 15 minutes, this number opens a pre-filled SMS alert on this phone — nothing sends automatically or silently.
-          </Text>
-          <TextInput
-            value={caregiverPhone}
-            onChangeText={setCaregiverPhoneInput}
-            placeholder="+1 555 0100"
-            placeholderTextColor={theme.colors.inkMuted}
-            keyboardType="phone-pad"
-            className="min-h-hit rounded-full border px-6 text-body-lg"
-            style={{ backgroundColor: theme.colors.elevated, borderColor: theme.colors.hairline, color: theme.colors.ink }}
-          />
-          <LargeTextButton label="Save Caregiver Number" variant="secondary" onPress={handleSaveCaregiverPhone} />
-        </View>
+      {/* FlashList, not a ScrollView + .map — a caregiver's schedule list is
+          small today, but this is the one list in the app with genuine
+          unbounded growth (every medication's every dose time), and
+          virtualizing it costs nothing when short while staying flat-cost
+          if it grows into the hundreds. */}
+      <FlashList
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingHorizontal: 24, paddingVertical: 28 }}
+        data={schedules}
+        keyExtractor={(schedule) => String(schedule.id)}
+        ListHeaderComponent={
+          <View style={{ marginBottom: 28 }}>
+            <View className="gap-3" style={{ marginBottom: 28 }}>
+              <Text className="text-caption uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
+                Caregiver Escalation
+              </Text>
+              <Text className="text-caption" style={{ color: theme.colors.inkMuted }}>
+                If an alarm goes unconfirmed for 15 minutes, this number opens a pre-filled SMS alert on this phone — nothing sends automatically or silently.
+              </Text>
+              <TextInput
+                value={caregiverPhone}
+                onChangeText={setCaregiverPhoneInput}
+                placeholder="+1 555 0100"
+                placeholderTextColor={theme.colors.inkMuted}
+                keyboardType="phone-pad"
+                className="min-h-hit rounded-full border px-6 text-body-lg"
+                style={{ backgroundColor: theme.colors.elevated, borderColor: theme.colors.hairline, color: theme.colors.ink }}
+              />
+              <LargeTextButton label="Save Caregiver Number" variant="secondary" onPress={handleSaveCaregiverPhone} />
+            </View>
 
-        <View className="gap-4">
-          <Text className="text-caption uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
-            Scheduled Alarms
+            <View className="gap-4">
+              <Text className="text-caption uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
+                Scheduled Alarms
+              </Text>
+              <LargeTextButton label="Create Demo Alarm (with NFC tag)" onPress={handleCreateDemoAlarm} />
+            </View>
+          </View>
+        }
+        ListEmptyComponent={
+          <Text className="text-body-lg" style={{ color: theme.colors.inkSecondary }}>
+            No schedules yet.
           </Text>
-          <LargeTextButton label="Create Demo Alarm (with NFC tag)" onPress={handleCreateDemoAlarm} />
-          {schedules.length === 0 ? (
-            <Text className="text-body-lg" style={{ color: theme.colors.inkSecondary }}>
-              No schedules yet.
+        }
+        renderItem={({ item: schedule }) => (
+          <View
+            className="gap-3 rounded-3xl border p-5"
+            style={{
+              marginBottom: 16,
+              backgroundColor: theme.colors.elevated,
+              borderColor: theme.colors.hairline,
+              opacity: schedule.is_active ? 1 : 0.55,
+            }}
+          >
+            <View className="flex-row items-center justify-between gap-3">
+              <Text className="flex-1 text-body-lg" numberOfLines={1} style={{ color: theme.colors.ink, fontWeight: '600' }}>
+                {schedule.medicationName}
+              </Text>
+              {/* A real on/off switch, not just a "delete" option — turning an
+                  alarm off has to be reversible and has to actually cancel the
+                  live notification, not merely hide the row (see
+                  setScheduleActive's own doc comment for why). */}
+              <Switch
+                value={schedule.is_active}
+                onValueChange={(next) => handleToggleActive(schedule, next)}
+                trackColor={{ false: theme.colors.hairline, true: theme.action.base }}
+                thumbColor="#FFFFFF"
+                accessibilityLabel={`${schedule.is_active ? 'Turn off' : 'Turn on'} the alarm for ${schedule.medicationName}`}
+              />
+            </View>
+            <Text className="text-caption" style={{ color: theme.colors.inkSecondary }}>
+              {schedule.dose_quantity} {schedule.medicationForm} at {schedule.time_utc}
+              {schedule.nfcTagUid ? ' · NFC tag registered' : ' · No NFC tag — vision fallback only'}
+              {schedule.is_active ? '' : ' · Off'}
             </Text>
-          ) : (
-            schedules.map((schedule) => (
-              <View
-                key={schedule.id}
-                className="gap-3 rounded-3xl border p-5"
-                style={{
-                  backgroundColor: theme.colors.elevated,
-                  borderColor: theme.colors.hairline,
-                  opacity: schedule.is_active ? 1 : 0.55,
-                }}
-              >
-                <View className="flex-row items-center justify-between gap-3">
-                  <Text className="flex-1 text-body-lg" numberOfLines={1} style={{ color: theme.colors.ink, fontWeight: '600' }}>
-                    {schedule.medicationName}
-                  </Text>
-                  {/* A real on/off switch, not just a "delete" option — turning an
-                      alarm off has to be reversible and has to actually cancel the
-                      live notification, not merely hide the row (see
-                      setScheduleActive's own doc comment for why). */}
-                  <Switch
-                    value={schedule.is_active}
-                    onValueChange={(next) => handleToggleActive(schedule, next)}
-                    trackColor={{ false: theme.colors.hairline, true: theme.action.base }}
-                    thumbColor="#FFFFFF"
-                    accessibilityLabel={`${schedule.is_active ? 'Turn off' : 'Turn on'} the alarm for ${schedule.medicationName}`}
-                  />
-                </View>
-                <Text className="text-caption" style={{ color: theme.colors.inkSecondary }}>
-                  {schedule.dose_quantity} {schedule.medicationForm} at {schedule.time_utc}
-                  {schedule.nfcTagUid ? ' · NFC tag registered' : ' · No NFC tag — vision fallback only'}
-                  {schedule.is_active ? '' : ' · Off'}
-                </Text>
-                <LargeTextButton label="Trigger Now (Demo)" variant="secondary" onPress={() => handleTriggerNow(schedule)} />
-              </View>
-            ))
-          )}
-        </View>
-      </ScrollView>
+            <LargeTextButton label="Trigger Now (Demo)" variant="secondary" onPress={() => handleTriggerNow(schedule)} />
+          </View>
+        )}
+      />
     </SafeAreaView>
   );
 }

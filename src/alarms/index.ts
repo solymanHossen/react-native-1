@@ -120,5 +120,6 @@ export {
 } from './alarmScheduler';
 export { isNfcAvailable, listenForTag } from './nfcVerification';
 export { scanPackForMedication, VISION_CONFIDENCE_THRESHOLD } from './visionVerification';
-export { runSentinelCheck, runSentinelCheckForMedication, scheduleDailySentinelCheck } from './sentinel';
+export { getActiveMedicationAlerts, runSentinelCheck, runSentinelCheckForMedication, scheduleDailySentinelCheck } from './sentinel';
+export type { MedicationAlert } from './sentinel';
 export * from './types';

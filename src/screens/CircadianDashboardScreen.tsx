@@ -10,18 +10,19 @@ import {
   type DoseDetailSheetRef,
   type SkipReasonSheetRef,
 } from '../components/dashboard';
-import { useDoseSchedule } from '../dashboard/doseSchedule';
 import type { DoseEntry } from '../dashboard/types';
+import { useLiveDoseSchedule } from '../store/intakeQueueStore';
 import { useTheme } from '../theme/useTheme';
 
 /**
- * Showcase screen for the Skia/Reanimated circadian dashboard — a fixed
- * demo regimen, same "no live DB, not a real deliverable screen" convention
- * as DrugLabScreen, wired in behind App.tsx's dev-only tab switcher.
+ * Skia/Reanimated circadian dashboard for today's real dose schedule —
+ * `useLiveDoseSchedule` reads/writes through the shared intake-queue store
+ * (`src/store`), which is what actually talks to the database; this screen
+ * only renders whatever shape it hands back.
  */
 export default function CircadianDashboardScreen() {
   const theme = useTheme();
-  const { doses, skipReasons, adherenceRatio, markTaken, markSkipped } = useDoseSchedule();
+  const { doses, skipReasons, adherenceRatio, markTaken, markSkipped } = useLiveDoseSchedule();
   const [canvasWidth, setCanvasWidth] = useState(0);
   const skipSheetRef = useRef<SkipReasonSheetRef>(null);
   const detailSheetRef = useRef<DoseDetailSheetRef>(null);
@@ -59,16 +60,22 @@ export default function CircadianDashboardScreen() {
         </View>
 
         <View className="gap-4" style={{ paddingBottom: 32 }}>
-          {doses.map((dose) => (
-            <DoseActionCard
-              key={dose.id}
-              dose={dose}
-              skipReason={skipReasons[dose.id]}
-              onMarkTaken={markTaken}
-              onRequestSkip={handleRequestSkip}
-              onLongPressDetail={handleLongPressDetail}
-            />
-          ))}
+          {doses.length === 0 ? (
+            <Text className="text-body-lg" style={{ color: theme.colors.inkSecondary }}>
+              No doses scheduled for today yet — create one from the Medications or Alarms tab.
+            </Text>
+          ) : (
+            doses.map((dose) => (
+              <DoseActionCard
+                key={dose.id}
+                dose={dose}
+                skipReason={skipReasons[dose.id]}
+                onMarkTaken={markTaken}
+                onRequestSkip={handleRequestSkip}
+                onLongPressDetail={handleLongPressDetail}
+              />
+            ))
+          )}
         </View>
       </ScrollView>
 

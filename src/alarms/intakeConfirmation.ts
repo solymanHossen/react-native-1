@@ -1,4 +1,9 @@
 import { initializeDatabase } from '../db';
+// Leaf store modules, not the `../store` barrel — that barrel re-exports
+// `useActiveAlarmStore` from the `../alarms` barrel, which re-exports this
+// very file, so importing it here would create a cycle.
+import { useIntakeQueueStore } from '../store/intakeQueueStore';
+import { useSentinelStore } from '../store/sentinelStore';
 import { runSentinelCheckForMedication } from './sentinel';
 import type { AlarmDismissalMethod, ScheduledAlarmPayload } from './types';
 
@@ -34,6 +39,13 @@ export async function confirmIntake(payload: ScheduledAlarmPayload, method: Excl
   // part of the data write's atomicity guarantee, and reads the
   // just-committed stock level fresh.
   await runSentinelCheckForMedication(payload.medicationId);
+
+  // This write happened through the alarm engine, not through the shared
+  // intake-queue store's own `markTaken` — so the store's in-memory copy
+  // needs an explicit re-read, or Home/Rhythm would keep showing this dose
+  // as pending until their next natural remount.
+  useIntakeQueueStore.getState().refresh().catch(() => {});
+  useSentinelStore.getState().refresh().catch(() => {});
 }
 
 /** A hold-to-override silence is explicitly NOT a confirmed dose — it's logged as a manual override on an otherwise-unverified alarm, distinct from both a real TAKEN and the auto-MISSED path. */
@@ -47,4 +59,5 @@ export async function logManualOverride(payload: ScheduledAlarmPayload): Promise
     dismissal_type: 'MANUAL_OVERRIDE',
     caregiver_alerted: false,
   });
+  useIntakeQueueStore.getState().refresh().catch(() => {});
 }

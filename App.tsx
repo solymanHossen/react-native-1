@@ -12,7 +12,7 @@ import { Pressable, StatusBar, Text, View, type LayoutChangeEvent } from 'react-
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
-import { initializeAlarmSystem, useActiveAlarmStore } from './src/alarms';
+import { initializeAlarmSystem } from './src/alarms';
 import { triggerHaptic } from './src/lib/haptics';
 import AlarmScreen from './src/screens/AlarmScreen';
 import AlarmsScreen from './src/screens/AlarmsScreen';
@@ -20,6 +20,7 @@ import CircadianDashboardScreen from './src/screens/CircadianDashboardScreen';
 import DrugLabScreen from './src/screens/DrugLabScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import PrescriptionScanScreen from './src/screens/PrescriptionScanScreen';
+import { refreshAllStores, useActiveAlarmStore } from './src/store';
 import VitalsScreen from './src/screens/VitalsScreen';
 import { useTheme, useThemeMode } from './src/theme/useTheme';
 import './global.css';
@@ -189,6 +190,9 @@ function App() {
   useEffect(() => {
     initializeAlarmSystem().catch((error: unknown) => {
       console.warn('[App] failed to initialize the alarm system', error);
+    });
+    refreshAllStores().catch((error: unknown) => {
+      console.warn('[App] failed to prime the shared stores', error);
     });
   }, []);
 

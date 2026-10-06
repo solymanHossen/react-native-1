@@ -31,3 +31,11 @@ export interface DoseEntry extends CircadianZone {
 export const SKIP_REASONS = ['Feeling better', 'Side effects', 'Forgot dose', 'Out of stock', 'Doctor advised'] as const;
 
 export type SkipReason = (typeof SKIP_REASONS)[number];
+
+export interface UseDoseScheduleResult {
+  doses: DoseEntry[];
+  skipReasons: Partial<Record<string, SkipReason>>;
+  adherenceRatio: number;
+  markTaken: (id: string) => void;
+  markSkipped: (id: string, reason: SkipReason) => void;
+}

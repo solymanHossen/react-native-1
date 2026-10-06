@@ -9,6 +9,7 @@ import { LargeTextButton } from '../components/ui';
 import { initializeDatabase } from '../db';
 import type { Vital, VitalType } from '../db/types';
 import { triggerHaptic } from '../lib/haptics';
+import { useVitalsStore } from '../store';
 import { useTheme } from '../theme/useTheme';
 
 type GlucoseContext = 'Fasting' | 'Post-prandial';
@@ -35,6 +36,7 @@ function isoDaysAgo(days: number): string {
 export default function VitalsScreen() {
   const theme = useTheme();
   const symptomSheetRef = useRef<SymptomLogSheetRef>(null);
+  const refreshLatestVitals = useVitalsStore((state) => state.refresh);
 
   const [systolic, setSystolic] = useState(120);
   const [diastolic, setDiastolic] = useState(80);
@@ -70,8 +72,11 @@ export default function VitalsScreen() {
       if (type === trendType) {
         refreshTrend(trendType, trendRange).catch(() => {});
       }
+      // Home's metric cards read from the same shared store — without this
+      // they'd keep showing whatever was latest the last time Home mounted.
+      refreshLatestVitals().catch(() => {});
     },
-    [trendType, trendRange, refreshTrend],
+    [trendType, trendRange, refreshTrend, refreshLatestVitals],
   );
 
   const handleSaveBloodPressure = useCallback(async () => {
@@ -85,7 +90,8 @@ export default function VitalsScreen() {
     if (trendType === 'BP_SYS' || trendType === 'BP_DIA') {
       refreshTrend(trendType, trendRange).catch(() => {});
     }
-  }, [systolic, diastolic, trendType, trendRange, refreshTrend]);
+    refreshLatestVitals().catch(() => {});
+  }, [systolic, diastolic, trendType, trendRange, refreshTrend, refreshLatestVitals]);
 
   return (
     <SafeAreaView className="flex-1" edges={['top', 'left', 'right']} style={{ backgroundColor: theme.colors.canvas }}>
