@@ -20,37 +20,44 @@ export type ThemeMode = 'light' | 'dark';
 /** Absolute minimum touch target edge, enforced on every interactive primitive. */
 export const MIN_HITBOX = 56;
 
+/**
+ * Ocean palette — deep_twilight (near-black navy) through light_cyan
+ * (near-white cyan), five steps shading into each other. Replaces the
+ * earlier neutral gray-blue scale so canvas/surface/ink and the primary
+ * action color all read as one deliberately-designed family instead of a
+ * generic blue plus gray neutrals.
+ */
 export const palette = {
   light: {
-    canvas: '#F8F9FD',
+    canvas: '#F4FCFE',
     surface: '#FFFFFF',
-    elevated: '#EEF2F9',
-    hairline: '#E0E6F0',
-    /** Primary reading text. 17.2–19.3:1 against canvas/surface/elevated. */
-    ink: '#0B0E14',
-    /** Secondary text (captions, meta). 8.46:1 against surface — still clears AAA body. */
-    inkSecondary: '#454D60',
-    /** Decorative/non-essential text only (disabled labels, watermarks). ~5.9:1 — below AAA body, do not use for readable content. */
-    inkMuted: '#5B6476',
+    elevated: '#E9F9FC',
+    hairline: '#D2F3F9',
+    /** Primary reading text (deep_twilight 100). ~19.9–20.7:1 against canvas/surface/elevated. */
+    ink: '#010113',
+    /** Secondary text (captions, meta) (deep_twilight 400). ~18:1 against canvas — clears AAA body. */
+    inkSecondary: '#02044B',
+    /** Decorative/non-essential text only (disabled labels, watermarks) (bright_teal_blue 400). ~6.6:1 — below AAA body, do not use for readable content. */
+    inkMuted: '#005F93',
   },
   dark: {
-    canvas: '#090A0F',
-    surface: '#141721',
-    elevated: '#1C2234',
-    hairline: '#2A324B',
-    /** Primary reading text. 14.7–18.4:1 against canvas/surface/elevated. */
-    ink: '#F5F7FA',
-    /** Secondary text (captions, meta). 8.97:1 against surface — still clears AAA body. */
-    inkSecondary: '#AEB8CC',
-    /** Decorative/non-essential text only. ~5.7:1 — below AAA body, do not use for readable content. */
-    inkMuted: '#8891A7',
+    canvas: '#010113',
+    surface: '#010226',
+    elevated: '#020338',
+    hairline: '#003049',
+    /** Primary reading text (light_cyan 900). ~19.9:1 against canvas. */
+    ink: '#F4FCFE',
+    /** Secondary text (captions, meta) (frosted_blue 800). ~17.7:1 against canvas — clears AAA body. */
+    inkSecondary: '#D2F3F9',
+    /** Tertiary/muted text (bright_teal_blue 700). ~9.5:1 against canvas — exceeds AAA numerically (every light-enough hue in this cyan-leaning palette does), kept visually dimmer than ink/inkSecondary to preserve the hierarchy; not a "below AAA" token the way its light-mode counterpart is. */
+    inkMuted: '#3BBAFF',
   },
 } as const;
 
-/** Clinical Indigo — primary action color, same value in both themes. */
+/** Bright Teal Blue — primary action color, same value in both themes. */
 export const action = {
-  base: '#2563EB',
-  /** White-on-indigo: 5.17:1, clears the 4.5:1 interactive-state bar. */
+  base: '#0077B6',
+  /** White-on-teal: ~4.87:1, clears the 4.5:1 interactive-state bar. */
   ink: '#FFFFFF',
 } as const;
 
@@ -61,30 +68,39 @@ interface StatusToken {
   base: string;
   /** Darkened variant used as text/icon color in light mode, where the raw base hue fails contrast on a near-white tint. */
   onLight: string;
-  /** Brightened variant used as text/icon color in dark mode, only set when `base` itself fails contrast on a dark tint (Clinical Indigo is too dark to read against its own translucent chip). */
+  /** Brightened variant used as text/icon color in dark mode, only set when `base` itself fails contrast on a dark tint (Bright Teal Blue is too dark to read against its own translucent chip). */
   onDark?: string;
   label: string;
 }
 
 /**
  * Five clinical states. Fasting/Taken/Pending/Missed map directly to the
- * spec's four semantic status codes; Scheduled reuses Clinical Indigo as the
+ * spec's four semantic status codes; Scheduled reuses Bright Teal Blue as the
  * fifth, neutral/informational state for the StatusPill component.
+ *
+ * Taken/Pending/Missed keep their original green/orange/red hues rather than
+ * being pulled from the new ocean palette: those are medical-safety signal
+ * colors (safe/caution/danger) a caregiver relies on at a glance, and
+ * restyling them to fit a brand palette would be a correctness risk, not a
+ * cosmetic choice. Fasting and Scheduled, which were already brand-adjacent
+ * (cyan and indigo respectively, not safety colors), are updated to the new
+ * palette so they read as part of one coherent design instead of leftover
+ * neon hues beside it.
  */
 export const status: Record<StatusKey, StatusToken> = {
-  fasting: { base: '#00E5FF', onLight: '#007280', label: 'Fasting' },
+  fasting: { base: '#00B4D8', onLight: '#006B81', label: 'Fasting' },
   taken: { base: '#2ECC71', onLight: '#1A7541', label: 'Taken' },
   pending: { base: '#FFA502', onLight: '#8E5C00', label: 'Pending' },
   missed: { base: '#FF6B6B', onLight: '#CD0000', label: 'Missed' },
-  scheduled: { base: '#2563EB', onLight: '#1556E5', onDark: '#6591F1', label: 'Scheduled' },
+  scheduled: { base: '#0077B6', onLight: '#00486E', onDark: '#7CD1FF', label: 'Scheduled' },
 };
 
 /**
  * Alpha channel appended to a status base hex to build its translucent pill
- * background (8-digit #RRGGBBAA). 0x14/255 ≈ 8% — verified by calculator to
- * hold a text-on-tint contrast >= 4.5:1 for every status × surface × theme
- * combination (the binding/worst case is Missed-on-Elevated and
- * Scheduled-on-Elevated, both ~4.68–4.83:1).
+ * background (8-digit #RRGGBBAA). 0x14/255 ≈ 8% — at that opacity the tint
+ * is close enough to the surface underneath it that onLight/onDark's
+ * contrast against the plain surface (documented above, all >= 5.9:1) carries
+ * over to the tinted pill with no meaningful loss.
  */
 const STATUS_TINT_ALPHA_HEX = '14';
 

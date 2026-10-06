@@ -143,28 +143,28 @@ export function buildClinicalReportHtml(data: ClinicalReportData): string {
 <meta charset="utf-8" />
 <style>
   * { box-sizing: border-box; }
-  body { font-family: -apple-system, Roboto, Helvetica, Arial, sans-serif; color: #0B0E14; margin: 0; padding: 32px; font-size: 13px; line-height: 1.5; }
+  body { font-family: -apple-system, Roboto, Helvetica, Arial, sans-serif; color: #010113; margin: 0; padding: 32px; font-size: 13px; line-height: 1.5; }
   h1 { font-size: 22px; margin: 0 0 4px; }
-  .subtitle { color: #454D60; font-size: 12px; margin: 0 0 24px; }
-  h2 { font-size: 15px; text-transform: uppercase; letter-spacing: 0.04em; color: #454D60; border-bottom: 1px solid #E0E6F0; padding-bottom: 6px; margin: 28px 0 12px; }
-  .demographics { display: flex; flex-wrap: wrap; gap: 16px 32px; background: #F8F9FD; border: 1px solid #E0E6F0; border-radius: 12px; padding: 16px 20px; }
+  .subtitle { color: #02044B; font-size: 12px; margin: 0 0 24px; }
+  h2 { font-size: 15px; text-transform: uppercase; letter-spacing: 0.04em; color: #02044B; border-bottom: 1px solid #D2F3F9; padding-bottom: 6px; margin: 28px 0 12px; }
+  .demographics { display: flex; flex-wrap: wrap; gap: 16px 32px; background: #F4FCFE; border: 1px solid #D2F3F9; border-radius: 12px; padding: 16px 20px; }
   .demo-field { display: flex; flex-direction: column; min-width: 140px; }
-  .demo-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; color: #5B6476; }
+  .demo-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; color: #005F93; }
   .demo-value { font-size: 14px; font-weight: 600; }
   table { width: 100%; border-collapse: collapse; }
-  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #E0E6F0; font-size: 12px; vertical-align: top; }
-  th { color: #454D60; text-transform: uppercase; font-size: 10px; letter-spacing: 0.03em; }
-  .empty { color: #5B6476; font-style: italic; }
-  .adherence-summary { display: flex; align-items: center; gap: 24px; background: #F8F9FD; border: 1px solid #E0E6F0; border-radius: 12px; padding: 20px; }
-  .adherence-score { font-size: 40px; font-weight: 800; color: #2563EB; min-width: 100px; }
-  .adherence-breakdown p { margin: 0 0 8px; color: #454D60; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #D2F3F9; font-size: 12px; vertical-align: top; }
+  th { color: #02044B; text-transform: uppercase; font-size: 10px; letter-spacing: 0.03em; }
+  .empty { color: #005F93; font-style: italic; }
+  .adherence-summary { display: flex; align-items: center; gap: 24px; background: #F4FCFE; border: 1px solid #D2F3F9; border-radius: 12px; padding: 20px; }
+  .adherence-score { font-size: 40px; font-weight: 800; color: #0077B6; min-width: 100px; }
+  .adherence-breakdown p { margin: 0 0 8px; color: #02044B; }
   .adherence-breakdown ul { list-style: none; margin: 0; padding: 0; display: flex; gap: 20px; }
   .adherence-breakdown li { display: flex; align-items: center; gap: 6px; }
   .dot { width: 9px; height: 9px; border-radius: 999px; display: inline-block; }
   .dot.taken { background: #2ECC71; }
   .dot.missed { background: #FF6B6B; }
   .dot.skipped { background: #FFA502; }
-  .footer { margin-top: 36px; padding-top: 12px; border-top: 1px solid #E0E6F0; color: #5B6476; font-size: 10px; }
+  .footer { margin-top: 36px; padding-top: 12px; border-top: 1px solid #D2F3F9; color: #005F93; font-size: 10px; }
 </style>
 </head>
 <body>

@@ -23,12 +23,12 @@ module.exports = {
                 // consumed via useTheme() + an inline `style`, never via a
                 // `dark:` className. These tokens are therefore the
                 // theme-agnostic ones only.
-                // Clinical Indigo — primary action, same value in both themes
-                action: "#2563EB",
+                // Bright Teal Blue — primary action, same value in both themes
+                action: "#0077B6",
                 "action-ink": "#FFFFFF",
                 // Semantic status codes (vivid/base hue — see tokens.ts for
                 // the per-theme text/tint variants StatusPill resolves at runtime)
-                fasting: "#00E5FF",
+                fasting: "#00B4D8",
                 taken: "#2ECC71",
                 pending: "#FFA502",
                 missed: "#FF6B6B",

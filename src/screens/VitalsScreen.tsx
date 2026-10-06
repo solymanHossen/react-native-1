@@ -17,7 +17,7 @@ type GlucoseContext = 'Fasting' | 'Post-prandial';
 type TrendRange = 7 | 30;
 
 const SPARKLINE_OPTIONS: Array<{ type: VitalType; labelKey: TranslationKey; unit: string; color: string }> = [
-  { type: 'BP_SYS', labelKey: 'vitals.systolicShort', unit: 'mmHg', color: '#2563EB' },
+  { type: 'BP_SYS', labelKey: 'vitals.systolicShort', unit: 'mmHg', color: '#0077B6' },
   { type: 'BLOOD_SUGAR', labelKey: 'vitals.glucoseShort', unit: 'mmol/L', color: '#00A3A3' },
   { type: 'WEIGHT', labelKey: 'vitals.weightShort', unit: 'kg', color: '#8E5C00' },
   { type: 'TEMPERATURE', labelKey: 'vitals.tempShort', unit: '°F', color: '#CD0000' },
