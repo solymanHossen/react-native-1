@@ -13,6 +13,7 @@ export const bn: typeof en = {
     done: 'সম্পন্ন',
     decrease: 'কমান',
     increase: 'বাড়ান',
+    seeAll: 'সব দেখুন',
   },
   tabs: {
     home: 'হোম',

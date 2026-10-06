@@ -11,6 +11,7 @@ export const en = {
     done: 'Done',
     decrease: 'Decrease',
     increase: 'Increase',
+    seeAll: 'See All',
   },
   tabs: {
     home: 'Home',

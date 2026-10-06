@@ -157,7 +157,7 @@ function BottomTabBar({ tab, onChange }: { tab: Tab; onChange: (tab: Tab) => voi
 }
 
 /** A quick fade on the incoming screen, not an abrupt cut — the tab content swap is the other half of "smooth," the pill sliding over an instantly-replaced screen would look like two unrelated animations. */
-function FadingScreen({ tab }: { tab: Tab }) {
+function FadingScreen({ tab, onNavigate }: { tab: Tab; onNavigate: (tab: Tab) => void }) {
   const opacity = useSharedValue(1);
 
   useEffect(() => {
@@ -169,15 +169,15 @@ function FadingScreen({ tab }: { tab: Tab }) {
 
   return (
     <Animated.View style={[{ flex: 1 }, style]}>
-      <ActiveScreen tab={tab} />
+      <ActiveScreen tab={tab} onNavigate={onNavigate} />
     </Animated.View>
   );
 }
 
-function ActiveScreen({ tab }: { tab: Tab }) {
+function ActiveScreen({ tab, onNavigate }: { tab: Tab; onNavigate: (tab: Tab) => void }) {
   switch (tab) {
     case 'home':
-      return <HomeScreen />;
+      return <HomeScreen onNavigateToVitals={() => onNavigate('vitals')} />;
     case 'drugLab':
       return <DrugLabScreen />;
     case 'scanRx':
@@ -228,7 +228,7 @@ function App() {
           ) : (
             <>
               <StatusBar barStyle={mode === 'dark' ? 'light-content' : 'dark-content'} />
-              <FadingScreen tab={tab} />
+              <FadingScreen tab={tab} onNavigate={setTab} />
               <BottomTabBar tab={tab} onChange={setTab} />
             </>
           )}

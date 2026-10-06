@@ -1,6 +1,6 @@
-import { Moon, Sun, SunMoon } from 'lucide-react-native';
+import { ChevronRight, Moon, Sun, SunMoon } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Pressable, RefreshControl, Text, View } from 'react-native';
+import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, {
   Extrapolation,
@@ -146,7 +146,12 @@ function ThemeToggleButton({ preference, onPress }: { preference: ThemePreferenc
   );
 }
 
-export default function HomeScreen() {
+export interface HomeScreenProps {
+  /** Opens the Vitals tab — wired from App.tsx's tab state, since this screen has no navigator of its own to ask for it. */
+  onNavigateToVitals?: () => void;
+}
+
+export default function HomeScreen({ onNavigateToVitals }: HomeScreenProps) {
   const theme = useTheme();
   const { t } = useTranslation();
   const preference = useThemePreference();
@@ -269,7 +274,7 @@ export default function HomeScreen() {
         <Animated.View style={[{ flexDirection: 'row', alignItems: 'center', gap: 10 }, compactTitleStyle]}>
           <AppLogo size={30} />
           <Text className="text-title-lg" style={{ color: theme.colors.ink }} numberOfLines={1}>
-            Medius Health
+            {t('home.brand')}
           </Text>
         </Animated.View>
         <ThemeToggleButton preference={preference} onPress={() => setPreference(NEXT_PREFERENCE[preference])} />
@@ -293,7 +298,7 @@ export default function HomeScreen() {
               {greeting}
             </Text>
             <Text className="text-display-lg" numberOfLines={1} style={{ color: theme.colors.ink }}>
-              Medius Health
+              {t('home.brand')}
             </Text>
           </View>
         </Animated.View>
@@ -301,28 +306,48 @@ export default function HomeScreen() {
         {/* Today's Progress: the same Liquid Progress Ring the Rhythm tab
             uses, reused as-is rather than rebuilt — an Apple Health-style
             "rings" opening beat for the dashboard, and visual continuity
-            with the tab that shares this screen's underlying data. */}
+            with the tab that shares this screen's underlying data. The
+            per-status breakdown (formerly its own separate "Medication
+            Status" section further down the page) now lives in this same
+            card as a row of pills below a hairline divider — one score card
+            with its breakdown attached, not two sections repeating the same
+            counts a scroll apart. */}
         <RevealOnMount delay={0}>
           <View
-            className="flex-row items-center gap-5 rounded-3xl border p-6 shadow-md"
+            className="gap-5 rounded-3xl border p-6 shadow-md"
             style={{ backgroundColor: theme.colors.elevated, borderColor: theme.colors.hairline }}
           >
-            <LiquidProgressRing ratio={overallRatio} size={108} />
-            <View className="flex-1 gap-1">
-              <Text className="text-caption uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
-                {t('home.todaysProgress')}
-              </Text>
-              <Text className="text-title-lg" style={{ color: theme.colors.ink }}>
-                {t('home.doseCount', { taken: statusCounts.TAKEN, total: intakeItems.length })}
-              </Text>
-              <Text className="text-caption" style={{ color: theme.colors.inkSecondary }}>
-                {intakeItems.length === 0
-                  ? t('home.progressEmpty')
-                  : statusCounts.TAKEN === intakeItems.length
-                    ? t('home.progressAllDone')
-                    : t('home.progressSummary', { pending: statusCounts.PENDING, missed: statusCounts.MISSED })}
-              </Text>
+            <View className="flex-row items-center gap-5">
+              <LiquidProgressRing ratio={overallRatio} size={116} />
+              <View className="flex-1 gap-1">
+                <Text className="text-caption uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
+                  {t('home.todaysProgress')}
+                </Text>
+                <Text className="text-title-lg" style={{ color: theme.colors.ink }}>
+                  {t('home.doseCount', { taken: statusCounts.TAKEN, total: intakeItems.length })}
+                </Text>
+                <Text className="text-caption" style={{ color: theme.colors.inkSecondary }}>
+                  {intakeItems.length === 0
+                    ? t('home.progressEmpty')
+                    : statusCounts.TAKEN === intakeItems.length
+                      ? t('home.progressAllDone')
+                      : t('home.progressSummary', { pending: statusCounts.PENDING, missed: statusCounts.MISSED })}
+                </Text>
+              </View>
             </View>
+            {intakeItems.length > 0 ? (
+              <View className="flex-row flex-wrap gap-2.5 border-t pt-4" style={{ borderColor: theme.colors.hairline }}>
+                {(Object.keys(statusCounts) as IntakeQueueStatus[])
+                  .filter((key) => statusCounts[key] > 0)
+                  .map((key) => (
+                    <StatusPill
+                      key={key}
+                      status={STATUS_TO_KEY[key]}
+                      label={`${t(STATUS_TRANSLATION_KEY[key])} · ${statusCounts[key]}`}
+                    />
+                  ))}
+              </View>
+            ) : null}
           </View>
         </RevealOnMount>
 
@@ -375,29 +400,53 @@ export default function HomeScreen() {
           </View>
         </RevealOnMount>
 
+        {/* A horizontal carousel of compact cards, not a full-width-plus-2-up
+            grid: it scales to more vitals later without the layout needing
+            re-balancing (today it's 3 cards, tomorrow a 4th just appends),
+            and it scans like a single "today's numbers" strip rather than
+            three separately-weighted blocks. Each card keeps its own
+            `onPress` through to the Vitals tab so the dashboard stays a
+            summary — the detail, history and logging all live over there. */}
         <RevealOnMount delay={120}>
           <View className="gap-4">
-            <Text className="text-caption uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
-              {t('home.todaysVitals')}
-            </Text>
-            {/* Full width, not a half-width slot in the grid below: "120/80
-                mmHg" at display-lg size needs more room than a 2-up card can
-                give it without truncating — a three-digit "126"/"70" doesn't
-                have that problem, which is why only this one gets its own row. */}
-            {latestVitals.systolic && latestVitals.diastolic && bloodPressureStage ? (
-              <MetricCard
-                label={t('home.bloodPressure')}
-                value={`${latestVitals.systolic.value}/${latestVitals.diastolic.value}`}
-                unit="mmHg"
-                caption={t(BP_STAGE_KEY[bloodPressureStage.stage])}
-              />
-            ) : (
-              <MetricCard label={t('home.bloodPressure')} value="—" caption={t('home.noReadingYet')} />
-            )}
-            <View className="flex-row gap-4">
-              <View className="flex-1">
+            <View className="flex-row items-center justify-between">
+              <Text className="text-caption uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
+                {t('home.todaysVitals')}
+              </Text>
+              {onNavigateToVitals ? (
+                <Pressable
+                  onPress={onNavigateToVitals}
+                  accessibilityRole="button"
+                  className="min-h-hit flex-row items-center gap-0.5"
+                  hitSlop={8}
+                >
+                  <Text className="text-caption" style={{ color: theme.action.base, fontWeight: '600' }}>
+                    {t('common.seeAll')}
+                  </Text>
+                  <ChevronRight color={theme.action.base} size={16} strokeWidth={2.5} />
+                </Pressable>
+              ) : null}
+            </View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}>
+              <View style={{ width: 168 }}>
+                {latestVitals.systolic && latestVitals.diastolic && bloodPressureStage ? (
+                  <MetricCard
+                    compact
+                    onPress={onNavigateToVitals}
+                    label={t('home.bloodPressure')}
+                    value={`${latestVitals.systolic.value}/${latestVitals.diastolic.value}`}
+                    unit="mmHg"
+                    caption={t(BP_STAGE_KEY[bloodPressureStage.stage])}
+                  />
+                ) : (
+                  <MetricCard compact onPress={onNavigateToVitals} label={t('home.bloodPressure')} value="—" caption={t('home.noReadingYet')} />
+                )}
+              </View>
+              <View style={{ width: 168 }}>
                 {latestVitals.bloodGlucose ? (
                   <MetricCard
+                    compact
+                    onPress={onNavigateToVitals}
                     label={t('home.bloodGlucose')}
                     value={String(latestVitals.bloodGlucose.value)}
                     unit={latestVitals.bloodGlucose.unit}
@@ -405,22 +454,24 @@ export default function HomeScreen() {
                     status={latestVitals.bloodGlucose.notes === 'Fasting' ? 'fasting' : undefined}
                   />
                 ) : (
-                  <MetricCard label={t('home.bloodGlucose')} value="—" caption={t('home.noReadingYet')} />
+                  <MetricCard compact onPress={onNavigateToVitals} label={t('home.bloodGlucose')} value="—" caption={t('home.noReadingYet')} />
                 )}
               </View>
-              <View className="flex-1">
+              <View style={{ width: 168 }}>
                 {latestVitals.weight ? (
                   <MetricCard
+                    compact
+                    onPress={onNavigateToVitals}
                     label={t('home.weight')}
                     value={String(latestVitals.weight.value)}
                     unit={latestVitals.weight.unit}
                     caption={hoursAgoLabel(latestVitals.weight.timestamp, t)}
                   />
                 ) : (
-                  <MetricCard label={t('home.weight')} value="—" caption={t('home.noReadingYet')} />
+                  <MetricCard compact onPress={onNavigateToVitals} label={t('home.weight')} value="—" caption={t('home.noReadingYet')} />
                 )}
               </View>
-            </View>
+            </ScrollView>
           </View>
         </RevealOnMount>
 
@@ -454,31 +505,6 @@ export default function HomeScreen() {
             </View>
           </RevealOnMount>
         ) : null}
-
-        <RevealOnMount delay={240}>
-          <View className="gap-4">
-            <Text className="text-caption uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
-              {t('home.medicationStatus')}
-            </Text>
-            <View className="flex-row flex-wrap gap-2.5">
-              {intakeItems.length === 0 ? (
-                <Text className="text-body-lg" style={{ color: theme.colors.inkSecondary }}>
-                  {t('home.noScheduleToday')}
-                </Text>
-              ) : (
-                (Object.keys(statusCounts) as IntakeQueueStatus[])
-                  .filter((key) => statusCounts[key] > 0)
-                  .map((key) => (
-                    <StatusPill
-                      key={key}
-                      status={STATUS_TO_KEY[key]}
-                      label={`${t(STATUS_TRANSLATION_KEY[key])} · ${statusCounts[key]}`}
-                    />
-                  ))
-              )}
-            </View>
-          </View>
-        </RevealOnMount>
 
         <RevealOnMount delay={300}>
           <View className="gap-4">

@@ -17,6 +17,8 @@ export interface MetricCardProps {
   icon?: ReactNode;
   onPress?: (event: GestureResponderEvent) => void;
   testID?: string;
+  /** Smaller padding and a Title-Large (not Display-Large) value, for a card in a horizontal carousel rather than a full-width/2-up grid slot. */
+  compact?: boolean;
 }
 
 /**
@@ -29,7 +31,7 @@ export interface MetricCardProps {
  * because both are classed as AAA body text (>= 7:1, verified against the
  * elevated surface in both themes) rather than decorative chrome.
  */
-export function MetricCard({ label, value, unit, caption, status, icon, onPress, testID }: MetricCardProps) {
+export function MetricCard({ label, value, unit, caption, status, icon, onPress, testID, compact = false }: MetricCardProps) {
   const theme = useTheme();
   const Container = onPress ? Pressable : View;
 
@@ -51,7 +53,7 @@ export function MetricCard({ label, value, unit, caption, status, icon, onPress,
       accessible
       accessibilityRole={onPress ? 'button' : undefined}
       accessibilityLabel={accessibilityLabel}
-      className="min-h-hit rounded-3xl border p-6 shadow-md"
+      className={`min-h-hit rounded-3xl border shadow-md ${compact ? 'p-4' : 'p-6'}`}
       style={{ backgroundColor: theme.colors.elevated, borderColor: theme.colors.hairline }}
     >
       <View className="flex-row items-start justify-between">
@@ -66,7 +68,7 @@ export function MetricCard({ label, value, unit, caption, status, icon, onPress,
       </View>
 
       <View className="mt-2 flex-row items-baseline">
-        <Text className="text-display-lg" style={{ color: theme.colors.ink }} numberOfLines={1}>
+        <Text className={compact ? 'text-title-lg' : 'text-display-lg'} style={{ color: theme.colors.ink }} numberOfLines={1}>
           {value}
         </Text>
         {unit ? (
