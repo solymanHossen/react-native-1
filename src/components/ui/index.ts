@@ -1,3 +1,6 @@
+export { ActionRow, ActionRowGroup } from './ActionRow';
+export type { ActionRowProps, ActionRowGroupProps } from './ActionRow';
+
 export { AppLogo } from './AppLogo';
 export type { AppLogoProps } from './AppLogo';
 

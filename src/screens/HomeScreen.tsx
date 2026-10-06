@@ -1,4 +1,4 @@
-import { ChevronRight, Moon, Sun, SunMoon } from 'lucide-react-native';
+import { ChevronRight, FileText, HeartPulse, Moon, RefreshCw, Settings, Sun, SunMoon } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -14,7 +14,7 @@ import Animated, {
 import { HealthRecordsSheet, type HealthRecordsSheetRef } from '../components/records/HealthRecordsSheet';
 import { LiquidProgressRing } from '../components/dashboard/LiquidProgressRing';
 import { SettingsSheet, type SettingsSheetRef } from '../components/settings/SettingsSheet';
-import { AppLogo, LargeTextButton, MetricCard, StatusPill } from '../components/ui';
+import { ActionRow, ActionRowGroup, AppLogo, LargeTextButton, MetricCard, StatusPill } from '../components/ui';
 import { useTranslation, type TranslationKey } from '../i18n';
 import { triggerHaptic } from '../lib/haptics';
 import { useIntakeQueueStore, useSentinelStore, useVitalsStore, type IntakeQueueStatus } from '../store';
@@ -506,21 +506,35 @@ export default function HomeScreen({ onNavigateToVitals }: HomeScreenProps) {
           </RevealOnMount>
         ) : null}
 
+        {/* Menu rows, not stacked LargeTextButtons: every entry here is
+            navigation ("go open X"), not a commitment the way Mark as Taken
+            or Confirm is, so a repeated full-width colored pill per row gave
+            each one the same maximum visual weight and ate far more vertical
+            space than a scannable list needs. The old "Unavailable Offline"
+            entry — a permanently-disabled button with no real feature behind
+            it — is dropped rather than carried forward in the new style; a
+            dead control that can never be pressed doesn't earn a place in a
+            cleaned-up menu just because it existed before. */}
         <RevealOnMount delay={300}>
           <View className="gap-4">
             <Text className="text-caption uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
               {t('home.actions')}
             </Text>
-            <View className="gap-4">
-              <LargeTextButton label={t('home.logAReading')} onPress={() => {}} />
-              <LargeTextButton
+            <ActionRowGroup>
+              <ActionRow
+                icon={HeartPulse}
+                label={t('home.logAReading')}
+                caption={t('home.logAReadingCaption')}
+                onPress={onNavigateToVitals}
+              />
+              <ActionRow
+                icon={RefreshCw}
                 label={syncing ? t('home.syncing') : t('home.syncWithClinic')}
-                variant="secondary"
                 loading={syncing}
                 onPress={handleSync}
+                showChevron={false}
               />
-              <LargeTextButton label={t('home.unavailableOffline')} disabled onPress={() => {}} />
-            </View>
+            </ActionRowGroup>
           </View>
         </RevealOnMount>
 
@@ -529,16 +543,15 @@ export default function HomeScreen({ onNavigateToVitals }: HomeScreenProps) {
             <Text className="text-caption uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
               {t('home.healthRecords')}
             </Text>
-            <LargeTextButton
-              label={t('home.healthRecordsAndBackup')}
-              variant="secondary"
-              onPress={() => healthRecordsRef.current?.present()}
-            />
-            <LargeTextButton
-              label={t('home.settings')}
-              variant="secondary"
-              onPress={() => settingsRef.current?.present()}
-            />
+            <ActionRowGroup>
+              <ActionRow
+                icon={FileText}
+                label={t('home.healthRecordsAndBackup')}
+                caption={t('home.healthRecordsCaption')}
+                onPress={() => healthRecordsRef.current?.present()}
+              />
+              <ActionRow icon={Settings} label={t('home.settings')} onPress={() => settingsRef.current?.present()} />
+            </ActionRowGroup>
           </View>
         </RevealOnMount>
       </Animated.ScrollView>
