@@ -31,8 +31,13 @@ export const en = {
   bpStage: {
     NORMAL: 'Normal',
     ELEVATED: 'Elevated',
-    STAGE_1: 'Hypertension Stage 1',
-    STAGE_2: 'Hypertension Stage 2',
+    // The space before the stage number is a non-breaking space (U+00A0),
+    // not a regular one: in a narrow card, a regular space there lets the
+    // line wrap between "Stage" and the digit, orphaning a lone "1" or "2"
+    // on its own line — a non-breaking space keeps "Stage 1"/"Stage 2" as
+    // one unit, so a wrap (if needed) falls after "Hypertension" instead.
+    STAGE_1: 'Hypertension Stage 1',
+    STAGE_2: 'Hypertension Stage 2',
     CRISIS: 'Hypertensive Crisis',
     crisisWarning: 'This reading is in the hypertensive crisis range — seek medical attention promptly.',
   },

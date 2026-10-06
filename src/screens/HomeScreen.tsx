@@ -428,7 +428,7 @@ export default function HomeScreen({ onNavigateToVitals }: HomeScreenProps) {
               ) : null}
             </View>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}>
-              <View style={{ width: 168 }}>
+              <View style={{ width: 182 }}>
                 {latestVitals.systolic && latestVitals.diastolic && bloodPressureStage ? (
                   <MetricCard
                     compact
@@ -442,7 +442,7 @@ export default function HomeScreen({ onNavigateToVitals }: HomeScreenProps) {
                   <MetricCard compact onPress={onNavigateToVitals} label={t('home.bloodPressure')} value="—" caption={t('home.noReadingYet')} />
                 )}
               </View>
-              <View style={{ width: 168 }}>
+              <View style={{ width: 182 }}>
                 {latestVitals.bloodGlucose ? (
                   <MetricCard
                     compact
@@ -457,7 +457,7 @@ export default function HomeScreen({ onNavigateToVitals }: HomeScreenProps) {
                   <MetricCard compact onPress={onNavigateToVitals} label={t('home.bloodGlucose')} value="—" caption={t('home.noReadingYet')} />
                 )}
               </View>
-              <View style={{ width: 168 }}>
+              <View style={{ width: 182 }}>
                 {latestVitals.weight ? (
                   <MetricCard
                     compact
