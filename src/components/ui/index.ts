@@ -1,3 +1,6 @@
+export { AppLogo } from './AppLogo';
+export type { AppLogoProps } from './AppLogo';
+
 export { LargeTextButton } from './LargeTextButton';
 export type { LargeTextButtonProps, LargeTextButtonVariant } from './LargeTextButton';
 

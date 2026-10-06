@@ -14,7 +14,7 @@ import Animated, {
 import { HealthRecordsSheet, type HealthRecordsSheetRef } from '../components/records/HealthRecordsSheet';
 import { LiquidProgressRing } from '../components/dashboard/LiquidProgressRing';
 import { SettingsSheet, type SettingsSheetRef } from '../components/settings/SettingsSheet';
-import { LargeTextButton, MetricCard, StatusPill } from '../components/ui';
+import { AppLogo, LargeTextButton, MetricCard, StatusPill } from '../components/ui';
 import { useTranslation, type TranslationKey } from '../i18n';
 import { triggerHaptic } from '../lib/haptics';
 import { useIntakeQueueStore, useSentinelStore, useVitalsStore, type IntakeQueueStatus } from '../store';
@@ -228,6 +228,15 @@ export default function HomeScreen() {
   const headerHairlineStyle = useAnimatedStyle(() => ({
     opacity: interpolate(scrollY.value, [0, 24], [0, 1], Extrapolation.CLAMP),
   }));
+  // The fixed bar "lifts" above the scrolling content with a soft shadow
+  // once there's something to lift above — zero elevation at rest (where a
+  // shadow would just look like a stray line under an empty bar), growing in
+  // over the same 24dp the hairline fades in over so the two depth cues
+  // settle together instead of arriving at different moments.
+  const headerElevationStyle = useAnimatedStyle(() => ({
+    shadowOpacity: interpolate(scrollY.value, [0, 24], [0, 0.12], Extrapolation.CLAMP),
+    elevation: interpolate(scrollY.value, [0, 24], [0, 6], Extrapolation.CLAMP),
+  }));
   const largeTitleStyle = useAnimatedStyle(() => ({
     opacity: interpolate(scrollY.value, [0, 50], [1, 0], Extrapolation.CLAMP),
     transform: [{ translateY: interpolate(scrollY.value, [0, 50], [0, -8], Extrapolation.CLAMP) }],
@@ -236,14 +245,35 @@ export default function HomeScreen() {
   return (
     <SafeAreaView className="flex-1" edges={['top', 'left', 'right']} style={{ backgroundColor: theme.colors.canvas }}>
       {/* Persistent bar: always on screen, same spot a real iOS nav bar's
-          trailing button would be. Only the small title cross-fades in —
-          the theme toggle never moves or disappears. */}
-      <View style={{ height: 56, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 24 }}>
-        <Animated.Text className="text-title-lg" style={[{ color: theme.colors.ink }, compactTitleStyle]} numberOfLines={1}>
-          Medius Health
-        </Animated.Text>
+          trailing button would be. Only the small logo+title lockup cross-
+          fades in — the theme toggle never moves or disappears. A soft
+          shadow (headerElevationStyle) grows in alongside it so the bar
+          reads as lifted above the content scrolling beneath it, not just a
+          flat strip with a line under it. */}
+      <Animated.View
+        style={[
+          {
+            height: 56,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            paddingHorizontal: 24,
+            backgroundColor: theme.colors.canvas,
+            shadowColor: theme.colors.ink,
+            shadowOffset: { width: 0, height: 4 },
+            shadowRadius: 10,
+          },
+          headerElevationStyle,
+        ]}
+      >
+        <Animated.View style={[{ flexDirection: 'row', alignItems: 'center', gap: 10 }, compactTitleStyle]}>
+          <AppLogo size={30} />
+          <Text className="text-title-lg" style={{ color: theme.colors.ink }} numberOfLines={1}>
+            Medius Health
+          </Text>
+        </Animated.View>
         <ThemeToggleButton preference={preference} onPress={() => setPreference(NEXT_PREFERENCE[preference])} />
-      </View>
+      </Animated.View>
       <Animated.View style={[{ height: 1, backgroundColor: theme.colors.hairline }, headerHairlineStyle]} />
 
       <Animated.ScrollView
@@ -256,13 +286,16 @@ export default function HomeScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={handlePullToRefresh} tintColor={theme.action.base} colors={[theme.action.base]} />
         }
       >
-        <Animated.View style={[{ gap: 2 }, largeTitleStyle]}>
-          <Text className="text-caption" style={{ color: theme.colors.inkSecondary }}>
-            {greeting}
-          </Text>
-          <Text className="text-display-lg" style={{ color: theme.colors.ink }}>
-            Medius Health
-          </Text>
+        <Animated.View style={[{ flexDirection: 'row', alignItems: 'center', gap: 16 }, largeTitleStyle]}>
+          <AppLogo size={52} />
+          <View style={{ flex: 1, gap: 2 }}>
+            <Text className="text-caption" style={{ color: theme.colors.inkSecondary }}>
+              {greeting}
+            </Text>
+            <Text className="text-display-lg" numberOfLines={1} style={{ color: theme.colors.ink }}>
+              Medius Health
+            </Text>
+          </View>
         </Animated.View>
 
         {/* Today's Progress: the same Liquid Progress Ring the Rhythm tab
