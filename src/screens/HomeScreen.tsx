@@ -319,7 +319,13 @@ export default function HomeScreen({ onNavigateToVitals }: HomeScreenProps) {
 
       <Animated.ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 4, paddingBottom: 32, gap: 36 }}
+        // 24dp between sections, not the 36dp "section" spacing token — this
+        // screen is a dashboard with eight stacked sections, not a handful
+        // of widely-separated ones, so the wider token read as excess air
+        // rather than intentional breathing room. 24dp matches the "card"
+        // token instead: still a clear break between sections, not a cramped
+        // one, just not as sparse as a screen with far fewer sections wants.
+        contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 4, paddingBottom: 32, gap: 24 }}
         showsVerticalScrollIndicator={false}
         onScroll={scrollHandler}
         scrollEventThrottle={16}
