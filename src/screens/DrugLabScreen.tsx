@@ -3,6 +3,7 @@ import { ActivityIndicator, ScrollView, Text, TextInput, View } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LargeTextButton } from '../components/ui';
 import { initializeDatabase, type DrugConflict, type DrugSearchResult, type MediusDatabase } from '../db';
+import { useTranslation } from '../i18n';
 import { useTheme } from '../theme/useTheme';
 
 /**
@@ -12,6 +13,7 @@ import { useTheme } from '../theme/useTheme';
  */
 export default function DrugLabScreen() {
   const theme = useTheme();
+  const { t } = useTranslation();
   const [mediusDb, setMediusDb] = useState<MediusDatabase | null>(null);
   const [initError, setInitError] = useState<string | null>(null);
 
@@ -48,10 +50,10 @@ export default function DrugLabScreen() {
 
   const addWarfarinToActiveRegimen = useCallback(async () => {
     if (!mediusDb) return;
-    setRegimenStatus('Adding Warfarin to the active regimen…');
+    setRegimenStatus(t('medications.addingWarfarin'));
     const [warfarin] = await mediusDb.drugSearch.search('Warfarin', 1);
     if (!warfarin) {
-      setRegimenStatus('Warfarin not found in drug_directory — is the seed asset imported?');
+      setRegimenStatus(t('medications.warfarinNotFound'));
       return;
     }
     const medication = await mediusDb.medications.create({
@@ -74,8 +76,8 @@ export default function DrugLabScreen() {
       days_of_week_mask: 127,
       is_active: true,
     });
-    setRegimenStatus(`Warfarin added (medication #${medication.id}, active schedule created).`);
-  }, [mediusDb]);
+    setRegimenStatus(t('medications.warfarinAdded', { id: medication.id }));
+  }, [mediusDb, t]);
 
   const checkNaproxenConflicts = useCallback(async () => {
     if (!mediusDb) return;
@@ -91,7 +93,7 @@ export default function DrugLabScreen() {
     <SafeAreaView className="flex-1" edges={['top', 'left', 'right']} style={{ backgroundColor: theme.colors.canvas }}>
       <View className="border-b px-6 py-6" style={{ borderColor: theme.colors.hairline }}>
         <Text className="text-title-lg" style={{ color: theme.colors.ink }}>
-          Medications
+          {t('medications.title')}
         </Text>
       </View>
 
@@ -103,25 +105,25 @@ export default function DrugLabScreen() {
       >
         {initError ? (
           <Text className="text-body-lg" style={{ color: theme.statusText('missed') }}>
-            Database failed to initialize: {initError}
+            {t('medications.databaseFailed', { error: initError })}
           </Text>
         ) : !mediusDb ? (
           <View className="flex-row items-center gap-4">
             <ActivityIndicator color={theme.action.base} />
             <Text className="text-body-lg" style={{ color: theme.colors.inkSecondary }}>
-              Opening encrypted database…
+              {t('medications.openingDatabase')}
             </Text>
           </View>
         ) : (
           <>
             <View className="gap-4">
               <Text className="text-caption uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
-                Search Medications
+                {t('medications.searchMedications')}
               </Text>
               <TextInput
                 value={query}
                 onChangeText={runSearch}
-                placeholder='Try "Napx" or "Napro"'
+                placeholder={t('medications.searchPlaceholder')}
                 placeholderTextColor={theme.colors.inkMuted}
                 className="min-h-hit rounded-full border px-6 text-body-lg"
                 style={{ backgroundColor: theme.colors.elevated, borderColor: theme.colors.hairline, color: theme.colors.ink }}
@@ -137,7 +139,7 @@ export default function DrugLabScreen() {
                     {result.brand_name} ({result.generic_name}) {result.strength}
                   </Text>
                   <Text className="mt-1 text-caption" style={{ color: theme.colors.inkSecondary }}>
-                    match: {result.matchType} · score: {result.score.toFixed(2)}
+                    {t('medications.matchInfo', { type: result.matchType, score: result.score.toFixed(2) })}
                   </Text>
                 </View>
               ))}
@@ -145,16 +147,16 @@ export default function DrugLabScreen() {
 
             <View className="gap-4">
               <Text className="text-caption uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
-                Drug Interaction Check
+                {t('medications.drugInteractionCheck')}
               </Text>
-              <LargeTextButton label="Add Warfarin to Regimen" variant="secondary" onPress={addWarfarinToActiveRegimen} />
+              <LargeTextButton label={t('medications.addWarfarin')} variant="secondary" onPress={addWarfarinToActiveRegimen} />
               {regimenStatus ? (
                 <Text className="text-caption" style={{ color: theme.colors.inkSecondary }}>
                   {regimenStatus}
                 </Text>
               ) : null}
               <LargeTextButton
-                label="Check Naproxen for Interactions"
+                label={t('medications.checkNaproxen')}
                 loading={checkingConflicts}
                 onPress={checkNaproxenConflicts}
               />
@@ -174,7 +176,7 @@ export default function DrugLabScreen() {
               ))}
               {conflicts?.length === 0 ? (
                 <Text className="text-body-lg" style={{ color: theme.colors.inkSecondary }}>
-                  No conflicts found.
+                  {t('medications.noConflictsFound')}
                 </Text>
               ) : null}
             </View>

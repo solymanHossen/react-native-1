@@ -3,12 +3,28 @@ import { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState
 import { Pressable, Text, View } from 'react-native';
 import { initializeDatabase } from '../../db';
 import type { RecentIntakeContext, SymptomSeverity } from '../../db/types';
+import { useTranslation, type TranslationKey } from '../../i18n';
 import { triggerHaptic } from '../../lib/haptics';
 import { useTheme } from '../../theme/useTheme';
 import { LargeTextButton } from '../ui';
 
-const COMMON_SYMPTOMS = ['Nausea', 'Dizziness', 'Acid Reflux', 'Headache', 'Fatigue', 'Rash'];
+const COMMON_SYMPTOMS = ['Nausea', 'Dizziness', 'Acid Reflux', 'Headache', 'Fatigue', 'Rash'] as const;
 const SEVERITIES: SymptomSeverity[] = ['MILD', 'MODERATE', 'SEVERE'];
+
+const SYMPTOM_KEY: Record<(typeof COMMON_SYMPTOMS)[number], TranslationKey> = {
+  Nausea: 'vitals.symptomSheet.symptoms.Nausea',
+  Dizziness: 'vitals.symptomSheet.symptoms.Dizziness',
+  'Acid Reflux': 'vitals.symptomSheet.symptoms.Acid Reflux',
+  Headache: 'vitals.symptomSheet.symptoms.Headache',
+  Fatigue: 'vitals.symptomSheet.symptoms.Fatigue',
+  Rash: 'vitals.symptomSheet.symptoms.Rash',
+};
+
+const SEVERITY_KEY: Record<SymptomSeverity, TranslationKey> = {
+  MILD: 'vitals.symptomSheet.mild',
+  MODERATE: 'vitals.symptomSheet.moderate',
+  SEVERE: 'vitals.symptomSheet.severe',
+};
 
 export interface SymptomLogSheetRef {
   present: () => void;
@@ -23,9 +39,10 @@ export interface SymptomLogSheetRef {
  */
 export const SymptomLogSheet = forwardRef<SymptomLogSheetRef, Record<string, unknown>>(function SymptomLogSheetImpl(_props, ref) {
   const theme = useTheme();
+  const { t } = useTranslation();
   const modalRef = useRef<BottomSheetModal>(null);
   const snapPoints = useMemo(() => ['70%'], []);
-  const [symptom, setSymptom] = useState<string | null>(null);
+  const [symptom, setSymptom] = useState<(typeof COMMON_SYMPTOMS)[number] | null>(null);
   const [severity, setSeverity] = useState<SymptomSeverity>('MILD');
   const [relatedMeds, setRelatedMeds] = useState<RecentIntakeContext[] | null>(null);
   const [saving, setSaving] = useState(false);
@@ -68,10 +85,10 @@ export const SymptomLogSheet = forwardRef<SymptomLogSheetRef, Record<string, unk
       <BottomSheetView style={{ flex: 1 }}>
         <View className="gap-1 px-6 pb-4">
           <Text className="text-title-lg" style={{ color: theme.colors.ink }}>
-            Log a Symptom
+            {t('vitals.symptomSheet.title')}
           </Text>
           <Text className="text-caption" style={{ color: theme.colors.inkSecondary }}>
-            Tap what you're feeling — we'll check which medications you took in the last 4 hours.
+            {t('vitals.symptomSheet.subtitle')}
           </Text>
         </View>
 
@@ -93,7 +110,7 @@ export const SymptomLogSheet = forwardRef<SymptomLogSheetRef, Record<string, unk
                     }}
                   >
                     <Text className="text-body-lg" style={{ color: isActive ? theme.action.ink : theme.colors.ink }}>
-                      {option}
+                      {t(SYMPTOM_KEY[option])}
                     </Text>
                   </Pressable>
                 );
@@ -102,7 +119,7 @@ export const SymptomLogSheet = forwardRef<SymptomLogSheetRef, Record<string, unk
 
             <View className="gap-3">
               <Text className="text-caption uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
-                Severity
+                {t('vitals.symptomSheet.severity')}
               </Text>
               <View className="flex-row gap-3">
                 {SEVERITIES.map((level) => {
@@ -120,7 +137,7 @@ export const SymptomLogSheet = forwardRef<SymptomLogSheetRef, Record<string, unk
                       }}
                     >
                       <Text className="text-body-lg" style={{ color: isActive ? theme.action.ink : theme.colors.ink }}>
-                        {level.charAt(0) + level.slice(1).toLowerCase()}
+                        {t(SEVERITY_KEY[level])}
                       </Text>
                     </Pressable>
                   );
@@ -128,12 +145,12 @@ export const SymptomLogSheet = forwardRef<SymptomLogSheetRef, Record<string, unk
               </View>
             </View>
 
-            <LargeTextButton label="Save Symptom" onPress={handleSave} disabled={!symptom} loading={saving} />
+            <LargeTextButton label={t('vitals.symptomSheet.saveSymptom')} onPress={handleSave} disabled={!symptom} loading={saving} />
           </View>
         ) : (
           <View className="gap-4 px-6">
             <Text className="text-body-lg" style={{ color: theme.colors.ink, fontWeight: '600' }}>
-              {relatedMeds.length === 0 ? 'Logged. No medications were taken in the last 4 hours.' : 'Logged. Taken in the last 4 hours:'}
+              {relatedMeds.length === 0 ? t('vitals.symptomSheet.loggedNoMeds') : t('vitals.symptomSheet.loggedWithMeds')}
             </Text>
             {relatedMeds.map((med, index) => (
               <View
@@ -145,11 +162,11 @@ export const SymptomLogSheet = forwardRef<SymptomLogSheetRef, Record<string, unk
                   {med.medicationName}
                 </Text>
                 <Text className="text-caption" style={{ color: theme.colors.inkSecondary }}>
-                  Taken at {new Date(med.takenTime).toLocaleTimeString()}
+                  {t('vitals.symptomSheet.takenAt', { time: new Date(med.takenTime).toLocaleTimeString() })}
                 </Text>
               </View>
             ))}
-            <LargeTextButton label="Done" variant="secondary" onPress={() => modalRef.current?.dismiss()} />
+            <LargeTextButton label={t('common.done')} variant="secondary" onPress={() => modalRef.current?.dismiss()} />
           </View>
         )}
       </BottomSheetView>

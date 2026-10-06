@@ -75,7 +75,8 @@ export interface MedicationAlert {
   medicationId: number;
   medicationName: string;
   kind: 'LOW_STOCK' | 'EXPIRING' | 'EXPIRED';
-  detail: string;
+  /** Remaining units for LOW_STOCK; days until expiry for EXPIRING (0 = today); days since expiry (positive) for EXPIRED. Deliberately not a pre-formatted string — this is read by the in-app UI, which has to render it in whichever language is selected, not whatever this module happened to format it in. */
+  value: number;
 }
 
 /**
@@ -91,7 +92,7 @@ function classifyMedicationAlert(medication: Medication): MedicationAlert | null
       medicationId: medication.id,
       medicationName: medication.name,
       kind: 'LOW_STOCK',
-      detail: `${Math.max(0, Math.round(medication.current_stock))} left`,
+      value: Math.max(0, Math.round(medication.current_stock)),
     };
   }
   if (medication.expiry_date) {
@@ -101,7 +102,7 @@ function classifyMedicationAlert(medication: Medication): MedicationAlert | null
         medicationId: medication.id,
         medicationName: medication.name,
         kind: days < 0 ? 'EXPIRED' : 'EXPIRING',
-        detail: days < 0 ? 'expired' : days === 0 ? 'expires today' : `expires in ${days}d`,
+        value: Math.abs(days),
       };
     }
   }

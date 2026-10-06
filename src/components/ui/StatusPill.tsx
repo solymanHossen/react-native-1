@@ -1,10 +1,19 @@
 import { Text, View } from 'react-native';
+import { useTranslation, type TranslationKey } from '../../i18n';
 import { useTheme } from '../../theme/useTheme';
 import { status, type StatusKey } from '../../theme/tokens';
 
+const STATUS_LABEL_KEY: Record<StatusKey, TranslationKey> = {
+  fasting: 'status.fasting',
+  taken: 'status.taken',
+  pending: 'status.pending',
+  missed: 'status.missed',
+  scheduled: 'status.scheduled',
+};
+
 export interface StatusPillProps {
   status: StatusKey;
-  /** Overrides the token's default label (e.g. "Taken" -> "Taken at 8:02 AM"). */
+  /** Overrides the translated default label (e.g. "Taken" -> "Taken at 8:02 AM"). Callers that build their own label are responsible for translating it themselves. */
   label?: string;
   testID?: string;
 }
@@ -23,10 +32,11 @@ export interface StatusPillProps {
  */
 export function StatusPill({ status: statusKey, label, testID }: StatusPillProps) {
   const theme = useTheme();
+  const { t } = useTranslation();
   const token = status[statusKey];
   const textColor = theme.statusText(statusKey);
   const tint = theme.statusTint(statusKey);
-  const displayLabel = label ?? token.label;
+  const displayLabel = label ?? t(STATUS_LABEL_KEY[statusKey]);
 
   return (
     <View

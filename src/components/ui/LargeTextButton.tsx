@@ -93,7 +93,14 @@ export function LargeTextButton({
       {loading ? (
         <ActivityIndicator color={textColor} />
       ) : (
-        <Text className="text-body-lg" style={{ color: textColor, fontWeight: '600' }} numberOfLines={1}>
+        // `numberOfLines={2}`, not 1: a translated label can run noticeably
+        // longer than its English source (Bengali button text especially),
+        // and silently truncating a primary action's own label into
+        // unreadable ellipsis is a real usability problem in a medical app,
+        // not a cosmetic one — wrapping to a second line (the button grows
+        // to fit, `min-h-hit` is a floor, not a fixed height) is what a
+        // button whose text length can't be predicted up front needs.
+        <Text className="text-body-lg text-center" style={{ color: textColor, fontWeight: '600' }} numberOfLines={2}>
           {label}
         </Text>
       )}

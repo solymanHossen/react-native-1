@@ -11,6 +11,7 @@ import {
   type SkipReasonSheetRef,
 } from '../components/dashboard';
 import type { DoseEntry } from '../dashboard/types';
+import { useTranslation } from '../i18n';
 import { useLiveDoseSchedule } from '../store/intakeQueueStore';
 import { useTheme } from '../theme/useTheme';
 
@@ -22,6 +23,7 @@ import { useTheme } from '../theme/useTheme';
  */
 export default function CircadianDashboardScreen() {
   const theme = useTheme();
+  const { t } = useTranslation();
   const { doses, skipReasons, adherenceRatio, markTaken, markSkipped } = useLiveDoseSchedule();
   const [canvasWidth, setCanvasWidth] = useState(0);
   const skipSheetRef = useRef<SkipReasonSheetRef>(null);
@@ -43,16 +45,16 @@ export default function CircadianDashboardScreen() {
     <SafeAreaView className="flex-1" edges={['top', 'left', 'right']} style={{ backgroundColor: theme.colors.canvas }}>
       <View className="border-b px-6 py-6" style={{ borderColor: theme.colors.hairline }}>
         <Text className="text-title-lg" style={{ color: theme.colors.ink }}>
-          Today's Rhythm
+          {t('rhythm.title')}
         </Text>
         <Text className="mt-1 text-caption" style={{ color: theme.colors.inkSecondary }}>
-          Swipe right to mark taken, left to skip, hold for details.
+          {t('rhythm.subtitle')}
         </Text>
       </View>
 
       <ScrollView className="flex-1" contentContainerClassName="gap-7 px-6 pt-7" showsVerticalScrollIndicator={false}>
         <View className="items-center">
-          <LiquidProgressRing ratio={adherenceRatio} label="Adherence" />
+          <LiquidProgressRing ratio={adherenceRatio} label={t('rhythm.adherence')} />
         </View>
 
         <View onLayout={handleMeasureCanvas}>
@@ -62,7 +64,7 @@ export default function CircadianDashboardScreen() {
         <View className="gap-4" style={{ paddingBottom: 32 }}>
           {doses.length === 0 ? (
             <Text className="text-body-lg" style={{ color: theme.colors.inkSecondary }}>
-              No doses scheduled for today yet — create one from the Medications or Alarms tab.
+              {t('rhythm.noDosesToday')}
             </Text>
           ) : (
             doses.map((dose) => (

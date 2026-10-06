@@ -13,12 +13,14 @@ import Animated, {
 } from 'react-native-reanimated';
 import { HealthRecordsSheet, type HealthRecordsSheetRef } from '../components/records/HealthRecordsSheet';
 import { LiquidProgressRing } from '../components/dashboard/LiquidProgressRing';
+import { SettingsSheet, type SettingsSheetRef } from '../components/settings/SettingsSheet';
 import { LargeTextButton, MetricCard, StatusPill } from '../components/ui';
+import { useTranslation, type TranslationKey } from '../i18n';
 import { triggerHaptic } from '../lib/haptics';
 import { useIntakeQueueStore, useSentinelStore, useVitalsStore, type IntakeQueueStatus } from '../store';
 import type { StatusKey } from '../theme/tokens';
 import { useTheme, useThemePreference, useSetThemePreference, type ThemePreference } from '../theme/useTheme';
-import { classifyBloodPressure } from '../vitals/bpClassification';
+import { classifyBloodPressure, type BloodPressureStage } from '../vitals/bpClassification';
 
 const NEXT_PREFERENCE: Record<ThemePreference, ThemePreference> = {
   system: 'light',
@@ -43,6 +45,21 @@ const STATUS_TO_KEY: Record<IntakeQueueStatus, StatusKey> = {
   SCHEDULED: 'scheduled',
 };
 
+const STATUS_TRANSLATION_KEY: Record<IntakeQueueStatus, TranslationKey> = {
+  TAKEN: 'status.taken',
+  MISSED: 'status.missed',
+  PENDING: 'status.pending',
+  SCHEDULED: 'status.scheduled',
+};
+
+const BP_STAGE_KEY: Record<BloodPressureStage, TranslationKey> = {
+  NORMAL: 'bpStage.NORMAL',
+  ELEVATED: 'bpStage.ELEVATED',
+  STAGE_1: 'bpStage.STAGE_1',
+  STAGE_2: 'bpStage.STAGE_2',
+  CRISIS: 'bpStage.CRISIS',
+};
+
 /** Lower sorts first — an imminent dose outranks a merely-upcoming one, and a stale missed one only surfaces once nothing more actionable is left today. */
 const STATUS_PRIORITY: Record<IntakeQueueStatus, number> = { PENDING: 0, SCHEDULED: 1, MISSED: 2, TAKEN: 3 };
 
@@ -50,11 +67,11 @@ const STATUS_PRIORITY: Record<IntakeQueueStatus, number> = { PENDING: 0, SCHEDUL
 const PRESS_SPRING = { damping: 16, stiffness: 220, mass: 0.5 };
 const REVEAL_SPRING = { damping: 18, stiffness: 180, mass: 0.6 };
 
-function greetingForHour(hour: number): string {
-  if (hour < 5) return 'Good night';
-  if (hour < 12) return 'Good morning';
-  if (hour < 17) return 'Good afternoon';
-  return 'Good evening';
+function greetingKeyForHour(hour: number): TranslationKey {
+  if (hour < 5) return 'home.greetingNight';
+  if (hour < 12) return 'home.greetingMorning';
+  if (hour < 17) return 'home.greetingAfternoon';
+  return 'home.greetingEvening';
 }
 
 function formatTimeLabel(timeUtc: string): string {
@@ -64,10 +81,10 @@ function formatTimeLabel(timeUtc: string): string {
   return `${displayHour}:${minutes.toString().padStart(2, '0')} ${period}`;
 }
 
-function hoursAgoLabel(iso: string): string {
+function hoursAgoLabel(iso: string, t: ReturnType<typeof useTranslation>['t']): string {
   const hours = Math.round((Date.now() - new Date(iso).getTime()) / (1000 * 60 * 60));
-  if (hours < 1) return 'Last reading just now';
-  return `Last reading ${hours}h ago`;
+  if (hours < 1) return t('home.lastReadingJustNow');
+  return t('home.lastReadingHoursAgo', { hours });
 }
 
 /**
@@ -131,12 +148,14 @@ function ThemeToggleButton({ preference, onPress }: { preference: ThemePreferenc
 
 export default function HomeScreen() {
   const theme = useTheme();
+  const { t } = useTranslation();
   const preference = useThemePreference();
   const setPreference = useSetThemePreference();
   const healthRecordsRef = useRef<HealthRecordsSheetRef>(null);
+  const settingsRef = useRef<SettingsSheetRef>(null);
   const [syncing, setSyncing] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const greeting = useMemo(() => greetingForHour(new Date().getHours()), []);
+  const greeting = useMemo(() => t(greetingKeyForHour(new Date().getHours())), [t]);
 
   const intakeItems = useIntakeQueueStore((state) => state.items);
   const refreshIntakeQueue = useIntakeQueueStore((state) => state.refresh);
@@ -258,17 +277,17 @@ export default function HomeScreen() {
             <LiquidProgressRing ratio={overallRatio} size={108} />
             <View className="flex-1 gap-1">
               <Text className="text-caption uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
-                Today's Progress
+                {t('home.todaysProgress')}
               </Text>
               <Text className="text-title-lg" style={{ color: theme.colors.ink }}>
-                {statusCounts.TAKEN} of {intakeItems.length} doses
+                {t('home.doseCount', { taken: statusCounts.TAKEN, total: intakeItems.length })}
               </Text>
               <Text className="text-caption" style={{ color: theme.colors.inkSecondary }}>
                 {intakeItems.length === 0
-                  ? 'Nothing scheduled yet today'
+                  ? t('home.progressEmpty')
                   : statusCounts.TAKEN === intakeItems.length
-                    ? 'All done for today'
-                    : `${statusCounts.PENDING} due soon · ${statusCounts.MISSED} missed`}
+                    ? t('home.progressAllDone')
+                    : t('home.progressSummary', { pending: statusCounts.PENDING, missed: statusCounts.MISSED })}
               </Text>
             </View>
           </View>
@@ -288,7 +307,7 @@ export default function HomeScreen() {
             <View className="flex-row items-center gap-2">
               <View className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: theme.action.base }} />
               <Text className="text-caption uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
-                Next Dose
+                {t('home.nextDose')}
               </Text>
             </View>
             {nextDose ? (
@@ -311,15 +330,13 @@ export default function HomeScreen() {
                   <StatusPill status={STATUS_TO_KEY[nextDose.status]} />
                 </View>
                 <LargeTextButton
-                  label={nextDose.status === 'MISSED' ? 'Mark as Taken (Late)' : 'Mark as Taken'}
+                  label={nextDose.status === 'MISSED' ? t('home.markAsTakenLate') : t('home.markAsTaken')}
                   onPress={() => markTaken(nextDose.scheduleId)}
                 />
               </>
             ) : (
               <Text className="text-body-lg" style={{ color: theme.colors.inkSecondary }}>
-                {intakeItems.length === 0
-                  ? 'No doses scheduled for today yet — add one from the Medications or Alarms tab.'
-                  : 'Every dose for today is marked taken. Nicely done.'}
+                {intakeItems.length === 0 ? t('home.noDoseScheduled') : t('home.allDosesTaken')}
               </Text>
             )}
           </View>
@@ -328,7 +345,7 @@ export default function HomeScreen() {
         <RevealOnMount delay={120}>
           <View className="gap-4">
             <Text className="text-caption uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
-              Today's Vitals
+              {t('home.todaysVitals')}
             </Text>
             {/* Full width, not a half-width slot in the grid below: "120/80
                 mmHg" at display-lg size needs more room than a 2-up card can
@@ -336,38 +353,38 @@ export default function HomeScreen() {
                 have that problem, which is why only this one gets its own row. */}
             {latestVitals.systolic && latestVitals.diastolic && bloodPressureStage ? (
               <MetricCard
-                label="Blood Pressure"
+                label={t('home.bloodPressure')}
                 value={`${latestVitals.systolic.value}/${latestVitals.diastolic.value}`}
                 unit="mmHg"
-                caption={bloodPressureStage.label}
+                caption={t(BP_STAGE_KEY[bloodPressureStage.stage])}
               />
             ) : (
-              <MetricCard label="Blood Pressure" value="—" caption="No reading yet" />
+              <MetricCard label={t('home.bloodPressure')} value="—" caption={t('home.noReadingYet')} />
             )}
             <View className="flex-row gap-4">
               <View className="flex-1">
                 {latestVitals.bloodGlucose ? (
                   <MetricCard
-                    label="Blood Glucose"
+                    label={t('home.bloodGlucose')}
                     value={String(latestVitals.bloodGlucose.value)}
                     unit={latestVitals.bloodGlucose.unit}
-                    caption={hoursAgoLabel(latestVitals.bloodGlucose.timestamp)}
+                    caption={hoursAgoLabel(latestVitals.bloodGlucose.timestamp, t)}
                     status={latestVitals.bloodGlucose.notes === 'Fasting' ? 'fasting' : undefined}
                   />
                 ) : (
-                  <MetricCard label="Blood Glucose" value="—" caption="No reading yet" />
+                  <MetricCard label={t('home.bloodGlucose')} value="—" caption={t('home.noReadingYet')} />
                 )}
               </View>
               <View className="flex-1">
                 {latestVitals.weight ? (
                   <MetricCard
-                    label="Weight"
+                    label={t('home.weight')}
                     value={String(latestVitals.weight.value)}
                     unit={latestVitals.weight.unit}
-                    caption={hoursAgoLabel(latestVitals.weight.timestamp)}
+                    caption={hoursAgoLabel(latestVitals.weight.timestamp, t)}
                   />
                 ) : (
-                  <MetricCard label="Weight" value="—" caption="No reading yet" />
+                  <MetricCard label={t('home.weight')} value="—" caption={t('home.noReadingYet')} />
                 )}
               </View>
             </View>
@@ -378,7 +395,7 @@ export default function HomeScreen() {
           <RevealOnMount delay={180}>
             <View className="gap-4">
               <Text className="text-caption uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
-                Refill &amp; Expiry
+                {t('home.refillAndExpiry')}
               </Text>
               <View
                 className="gap-3 rounded-3xl border p-5"
@@ -390,7 +407,13 @@ export default function HomeScreen() {
                       {alert.medicationName}
                     </Text>
                     <Text className="text-caption" style={{ color: theme.statusText('missed'), fontWeight: '600' }}>
-                      {alert.detail}
+                      {alert.kind === 'LOW_STOCK'
+                        ? t('home.alertLeft', { count: alert.value })
+                        : alert.kind === 'EXPIRED'
+                          ? t('home.alertExpiredDaysAgo', { days: alert.value })
+                          : alert.value === 0
+                            ? t('home.alertExpiresToday')
+                            : t('home.alertExpiresInDays', { days: alert.value })}
                     </Text>
                   </View>
                 ))}
@@ -402,12 +425,12 @@ export default function HomeScreen() {
         <RevealOnMount delay={240}>
           <View className="gap-4">
             <Text className="text-caption uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
-              Medication Status
+              {t('home.medicationStatus')}
             </Text>
             <View className="flex-row flex-wrap gap-2.5">
               {intakeItems.length === 0 ? (
                 <Text className="text-body-lg" style={{ color: theme.colors.inkSecondary }}>
-                  No schedule yet today.
+                  {t('home.noScheduleToday')}
                 </Text>
               ) : (
                 (Object.keys(statusCounts) as IntakeQueueStatus[])
@@ -416,7 +439,7 @@ export default function HomeScreen() {
                     <StatusPill
                       key={key}
                       status={STATUS_TO_KEY[key]}
-                      label={`${theme.status[STATUS_TO_KEY[key]].label} · ${statusCounts[key]}`}
+                      label={`${t(STATUS_TRANSLATION_KEY[key])} · ${statusCounts[key]}`}
                     />
                   ))
               )}
@@ -427,17 +450,17 @@ export default function HomeScreen() {
         <RevealOnMount delay={300}>
           <View className="gap-4">
             <Text className="text-caption uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
-              Actions
+              {t('home.actions')}
             </Text>
             <View className="gap-4">
-              <LargeTextButton label="Log a Reading" onPress={() => {}} />
+              <LargeTextButton label={t('home.logAReading')} onPress={() => {}} />
               <LargeTextButton
-                label={syncing ? 'Syncing…' : 'Sync with Clinic'}
+                label={syncing ? t('home.syncing') : t('home.syncWithClinic')}
                 variant="secondary"
                 loading={syncing}
                 onPress={handleSync}
               />
-              <LargeTextButton label="Unavailable Offline" disabled onPress={() => {}} />
+              <LargeTextButton label={t('home.unavailableOffline')} disabled onPress={() => {}} />
             </View>
           </View>
         </RevealOnMount>
@@ -445,18 +468,24 @@ export default function HomeScreen() {
         <RevealOnMount delay={360}>
           <View className="gap-4">
             <Text className="text-caption uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
-              Health Records
+              {t('home.healthRecords')}
             </Text>
             <LargeTextButton
-              label="Health Records & Backup"
+              label={t('home.healthRecordsAndBackup')}
               variant="secondary"
               onPress={() => healthRecordsRef.current?.present()}
+            />
+            <LargeTextButton
+              label={t('home.settings')}
+              variant="secondary"
+              onPress={() => settingsRef.current?.present()}
             />
           </View>
         </RevealOnMount>
       </Animated.ScrollView>
 
       <HealthRecordsSheet ref={healthRecordsRef} />
+      <SettingsSheet ref={settingsRef} />
     </SafeAreaView>
   );
 }

@@ -5,6 +5,7 @@ import { launchImageLibrary } from 'react-native-image-picker';
 import { Image as ImageIcon } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LargeTextButton } from '../ui';
+import { useTranslation } from '../../i18n';
 import { useTheme } from '../../theme/useTheme';
 
 export interface PrescriptionCameraViewProps {
@@ -35,6 +36,7 @@ export interface PrescriptionCameraViewProps {
  */
 export function PrescriptionCameraView({ onCapture, onSelectImage, paused = false }: PrescriptionCameraViewProps) {
   const theme = useTheme();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { hasPermission, requestPermission } = useCameraPermission();
   const device = useCameraDevice('back');
@@ -96,9 +98,9 @@ export function PrescriptionCameraView({ onCapture, onSelectImage, paused = fals
     return (
       <View className="flex-1 items-center justify-center gap-5 p-8" style={{ backgroundColor: theme.colors.canvas }}>
         <Text className="text-center text-body-lg" style={{ color: theme.colors.inkSecondary }}>
-          Camera access is needed to scan a prescription or blister pack.
+          {t('scanRx.cameraPermission')}
         </Text>
-        <LargeTextButton label="Allow Camera Access" onPress={requestPermission} />
+        <LargeTextButton label={t('scanRx.allowCameraAccess')} onPress={requestPermission} />
         {onSelectImage ? (
           <Pressable
             onPress={handlePickImage}
@@ -107,7 +109,7 @@ export function PrescriptionCameraView({ onCapture, onSelectImage, paused = fals
           >
             <ImageIcon color={theme.colors.ink} size={20} />
             <Text className="text-body-md font-semibold" style={{ color: theme.colors.ink }}>
-              Upload Prescription Image
+              {t('scanRx.uploadPrescriptionImage')}
             </Text>
           </Pressable>
         ) : null}
@@ -119,7 +121,7 @@ export function PrescriptionCameraView({ onCapture, onSelectImage, paused = fals
     return (
       <View className="flex-1 items-center justify-center gap-5 p-8" style={{ backgroundColor: theme.colors.canvas }}>
         <Text className="text-center text-body-lg" style={{ color: theme.colors.inkSecondary }}>
-          No camera device was found on this device.
+          {t('scanRx.noCameraDevice')}
         </Text>
         {onSelectImage ? (
           <Pressable
@@ -129,7 +131,7 @@ export function PrescriptionCameraView({ onCapture, onSelectImage, paused = fals
           >
             <ImageIcon color={theme.colors.ink} size={20} />
             <Text className="text-body-md font-semibold" style={{ color: theme.colors.ink }}>
-              Upload Prescription Image
+              {t('scanRx.uploadPrescriptionImage')}
             </Text>
           </Pressable>
         ) : null}
@@ -156,7 +158,7 @@ export function PrescriptionCameraView({ onCapture, onSelectImage, paused = fals
           }}
         />
         <Text className="mt-5 text-body-lg" style={{ color: '#FFFFFF' }}>
-          Align prescription or upload an image file
+          {t('scanRx.alignPrescription')}
         </Text>
       </View>
 
@@ -168,7 +170,7 @@ export function PrescriptionCameraView({ onCapture, onSelectImage, paused = fals
           onPress={handleCapture}
           disabled={capturing || paused}
           accessibilityRole="button"
-          accessibilityLabel="Capture photo"
+          accessibilityLabel={t('scanRx.capturePhoto')}
           className="min-h-hit min-w-hit items-center justify-center rounded-full"
           style={{
             width: 76,
@@ -188,7 +190,7 @@ export function PrescriptionCameraView({ onCapture, onSelectImage, paused = fals
           onPress={handlePickImage}
           disabled={capturing || paused}
           accessibilityRole="button"
-          accessibilityLabel="Upload prescription file"
+          accessibilityLabel={t('scanRx.uploadPrescriptionFile')}
           className="items-center justify-center rounded-full border border-white/20 p-3"
           style={{
             width: 48,

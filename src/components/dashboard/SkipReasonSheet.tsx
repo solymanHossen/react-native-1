@@ -2,8 +2,17 @@ import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { SKIP_REASONS, type DoseEntry, type SkipReason } from '../../dashboard/types';
+import { useTranslation, type TranslationKey } from '../../i18n';
 import { triggerHaptic } from '../../lib/haptics';
 import { useTheme } from '../../theme/useTheme';
+
+const SKIP_REASON_KEY: Record<SkipReason, TranslationKey> = {
+  'Feeling better': 'rhythm.skipSheet.reasons.Feeling better',
+  'Side effects': 'rhythm.skipSheet.reasons.Side effects',
+  'Forgot dose': 'rhythm.skipSheet.reasons.Forgot dose',
+  'Out of stock': 'rhythm.skipSheet.reasons.Out of stock',
+  'Doctor advised': 'rhythm.skipSheet.reasons.Doctor advised',
+};
 
 export interface SkipReasonSheetRef {
   present: (dose: DoseEntry) => void;
@@ -20,6 +29,7 @@ export const SkipReasonSheet = forwardRef<SkipReasonSheetRef, SkipReasonSheetPro
   ref,
 ) {
   const theme = useTheme();
+  const { t } = useTranslation();
   const modalRef = useRef<BottomSheetModal>(null);
   const [dose, setDose] = useState<DoseEntry | null>(null);
   const snapPoints = useMemo(() => ['45%'], []);
@@ -56,10 +66,11 @@ export const SkipReasonSheet = forwardRef<SkipReasonSheetRef, SkipReasonSheetPro
       <BottomSheetView style={{ flex: 1 }}>
         <View className="gap-1 px-6 pb-4">
           <Text className="text-title-lg" style={{ color: theme.colors.ink }}>
-            Skip {dose?.medicationName ?? 'this dose'}?
+            {t('rhythm.skipSheet.titlePrefix')}
+            {dose?.medicationName ?? t('rhythm.skipSheet.titleFallback')}?
           </Text>
           <Text className="text-caption" style={{ color: theme.colors.inkSecondary }}>
-            Choose a reason — this helps your clinician spot patterns.
+            {t('rhythm.skipSheet.subtitle')}
           </Text>
         </View>
         <View className="gap-3 px-6 pb-8">
@@ -72,7 +83,7 @@ export const SkipReasonSheet = forwardRef<SkipReasonSheetRef, SkipReasonSheetPro
               style={{ backgroundColor: theme.colors.elevated, borderColor: theme.colors.hairline }}
             >
               <Text className="text-body-lg" style={{ color: theme.colors.ink }}>
-                {reason}
+                {t(SKIP_REASON_KEY[reason])}
               </Text>
             </Pressable>
           ))}

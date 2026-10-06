@@ -8,6 +8,7 @@ import { VitalStepperCard } from '../components/vitals/VitalStepperCard';
 import { LargeTextButton } from '../components/ui';
 import { initializeDatabase } from '../db';
 import type { Vital, VitalType } from '../db/types';
+import { useTranslation, type TranslationKey } from '../i18n';
 import { triggerHaptic } from '../lib/haptics';
 import { useVitalsStore } from '../store';
 import { useTheme } from '../theme/useTheme';
@@ -15,12 +16,17 @@ import { useTheme } from '../theme/useTheme';
 type GlucoseContext = 'Fasting' | 'Post-prandial';
 type TrendRange = 7 | 30;
 
-const SPARKLINE_OPTIONS: Array<{ type: VitalType; label: string; unit: string; color: string }> = [
-  { type: 'BP_SYS', label: 'Systolic', unit: 'mmHg', color: '#2563EB' },
-  { type: 'BLOOD_SUGAR', label: 'Glucose', unit: 'mmol/L', color: '#00A3A3' },
-  { type: 'WEIGHT', label: 'Weight', unit: 'kg', color: '#8E5C00' },
-  { type: 'TEMPERATURE', label: 'Temp', unit: '°F', color: '#CD0000' },
+const SPARKLINE_OPTIONS: Array<{ type: VitalType; labelKey: TranslationKey; unit: string; color: string }> = [
+  { type: 'BP_SYS', labelKey: 'vitals.systolicShort', unit: 'mmHg', color: '#2563EB' },
+  { type: 'BLOOD_SUGAR', labelKey: 'vitals.glucoseShort', unit: 'mmol/L', color: '#00A3A3' },
+  { type: 'WEIGHT', labelKey: 'vitals.weightShort', unit: 'kg', color: '#8E5C00' },
+  { type: 'TEMPERATURE', labelKey: 'vitals.tempShort', unit: '°F', color: '#CD0000' },
 ];
+
+const GLUCOSE_CONTEXT_KEY: Record<GlucoseContext, TranslationKey> = {
+  Fasting: 'vitals.fasting',
+  'Post-prandial': 'vitals.postPrandial',
+};
 
 function isoDaysAgo(days: number): string {
   const date = new Date();
@@ -35,6 +41,7 @@ function isoDaysAgo(days: number): string {
  */
 export default function VitalsScreen() {
   const theme = useTheme();
+  const { t } = useTranslation();
   const symptomSheetRef = useRef<SymptomLogSheetRef>(null);
   const refreshLatestVitals = useVitalsStore((state) => state.refresh);
 
@@ -64,11 +71,11 @@ export default function VitalsScreen() {
   }, [trendType, trendRange, refreshTrend]);
 
   const saveVital = useCallback(
-    async (type: VitalType, value: number, unit: string, notes: string | null, label: string) => {
+    async (type: VitalType, value: number, unit: string, notes: string | null, savedMessageKey: TranslationKey) => {
       const database = await initializeDatabase();
       await database.vitals.record({ timestamp: new Date().toISOString(), type, value, unit, notes });
       triggerHaptic('notificationSuccess');
-      setStatus(`${label} saved.`);
+      setStatus(t(savedMessageKey));
       if (type === trendType) {
         refreshTrend(trendType, trendRange).catch(() => {});
       }
@@ -76,7 +83,7 @@ export default function VitalsScreen() {
       // they'd keep showing whatever was latest the last time Home mounted.
       refreshLatestVitals().catch(() => {});
     },
-    [trendType, trendRange, refreshTrend, refreshLatestVitals],
+    [trendType, trendRange, refreshTrend, refreshLatestVitals, t],
   );
 
   const handleSaveBloodPressure = useCallback(async () => {
@@ -86,18 +93,18 @@ export default function VitalsScreen() {
     await database.vitals.record({ timestamp, type: 'BP_SYS', value: systolic, unit: 'mmHg', notes: null });
     await database.vitals.record({ timestamp, type: 'BP_DIA', value: diastolic, unit: 'mmHg', notes: null });
     triggerHaptic('notificationSuccess');
-    setStatus('Blood pressure saved.');
+    setStatus(t('vitals.bloodPressureSaved'));
     if (trendType === 'BP_SYS' || trendType === 'BP_DIA') {
       refreshTrend(trendType, trendRange).catch(() => {});
     }
     refreshLatestVitals().catch(() => {});
-  }, [systolic, diastolic, trendType, trendRange, refreshTrend, refreshLatestVitals]);
+  }, [systolic, diastolic, trendType, trendRange, refreshTrend, refreshLatestVitals, t]);
 
   return (
     <SafeAreaView className="flex-1" edges={['top', 'left', 'right']} style={{ backgroundColor: theme.colors.canvas }}>
       <View className="border-b px-6 py-6" style={{ borderColor: theme.colors.hairline }}>
         <Text className="text-title-lg" style={{ color: theme.colors.ink }}>
-          Vitals
+          {t('vitals.title')}
         </Text>
         {status ? (
           <Text className="mt-2 text-caption" style={{ color: theme.statusText('taken') }}>
@@ -108,7 +115,7 @@ export default function VitalsScreen() {
 
       <ScrollView className="flex-1" contentContainerClassName="gap-7 px-6 py-7" showsVerticalScrollIndicator={false}>
         <BloodPressureCard systolic={systolic} diastolic={diastolic} onChangeSystolic={setSystolic} onChangeDiastolic={setDiastolic} />
-        <LargeTextButton label="Save Blood Pressure" variant="secondary" onPress={handleSaveBloodPressure} />
+        <LargeTextButton label={t('vitals.saveBloodPressure')} variant="secondary" onPress={handleSaveBloodPressure} />
 
         <View className="gap-3">
           <View className="flex-row gap-3">
@@ -124,37 +131,50 @@ export default function VitalsScreen() {
                   style={{ backgroundColor: isActive ? theme.action.base : theme.colors.elevated, borderColor: isActive ? theme.action.base : theme.colors.hairline }}
                 >
                   <Text className="text-body-lg" style={{ color: isActive ? theme.action.ink : theme.colors.ink }}>
-                    {option}
+                    {t(GLUCOSE_CONTEXT_KEY[option])}
                   </Text>
                 </Pressable>
               );
             })}
           </View>
-          <VitalStepperCard label="Blood Glucose" value={glucose} unit="mmol/L" step={0.1} min={1} max={30} decimals={1} onChange={setGlucose} />
+          <VitalStepperCard label={t('vitals.bloodGlucose')} value={glucose} unit="mmol/L" step={0.1} min={1} max={30} decimals={1} onChange={setGlucose} />
           <LargeTextButton
-            label="Save Blood Glucose"
+            label={t('vitals.saveBloodGlucose')}
             variant="secondary"
-            onPress={() => saveVital('BLOOD_SUGAR', glucose, 'mmol/L', glucoseContext, 'Blood glucose')}
+            onPress={() => saveVital('BLOOD_SUGAR', glucose, 'mmol/L', glucoseContext, 'vitals.bloodGlucoseSaved')}
           />
         </View>
 
         <View className="gap-3">
-          <VitalStepperCard label="Body Weight" value={weight} unit="kg" step={0.1} min={2} max={300} decimals={1} onChange={setWeight} />
-          <LargeTextButton label="Save Weight" variant="secondary" onPress={() => saveVital('WEIGHT', weight, 'kg', null, 'Weight')} />
+          <VitalStepperCard label={t('vitals.bodyWeight')} value={weight} unit="kg" step={0.1} min={2} max={300} decimals={1} onChange={setWeight} />
+          <LargeTextButton
+            label={t('vitals.saveWeight')}
+            variant="secondary"
+            onPress={() => saveVital('WEIGHT', weight, 'kg', null, 'vitals.weightSaved')}
+          />
         </View>
 
         <View className="gap-3">
-          <VitalStepperCard label="Body Temperature" value={temperature} unit="°F" step={0.1} min={90} max={110} decimals={1} onChange={setTemperature} />
+          <VitalStepperCard
+            label={t('vitals.bodyTemperature')}
+            value={temperature}
+            unit="°F"
+            step={0.1}
+            min={90}
+            max={110}
+            decimals={1}
+            onChange={setTemperature}
+          />
           <LargeTextButton
-            label="Save Temperature"
+            label={t('vitals.saveTemperature')}
             variant="secondary"
-            onPress={() => saveVital('TEMPERATURE', temperature, '°F', null, 'Temperature')}
+            onPress={() => saveVital('TEMPERATURE', temperature, '°F', null, 'vitals.temperatureSaved')}
           />
         </View>
 
         <View className="gap-4">
           <Text className="text-caption uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
-            Trend
+            {t('vitals.trend')}
           </Text>
           <View className="flex-row flex-wrap gap-2">
             {SPARKLINE_OPTIONS.map((option) => {
@@ -169,7 +189,7 @@ export default function VitalsScreen() {
                   style={{ backgroundColor: isActive ? theme.action.base : theme.colors.elevated, borderColor: isActive ? theme.action.base : theme.colors.hairline }}
                 >
                   <Text className="text-caption" style={{ color: isActive ? theme.action.ink : theme.colors.ink, fontWeight: '600' }}>
-                    {option.label}
+                    {t(option.labelKey)}
                   </Text>
                 </Pressable>
               );
@@ -188,7 +208,7 @@ export default function VitalsScreen() {
                   style={{ backgroundColor: isActive ? theme.colors.hairline : 'transparent', borderColor: theme.colors.hairline }}
                 >
                   <Text className="text-caption" style={{ color: theme.colors.ink, fontWeight: '600' }}>
-                    {range} days
+                    {range === 7 ? t('vitals.days7') : t('vitals.days30')}
                   </Text>
                 </Pressable>
               );
@@ -212,9 +232,9 @@ export default function VitalsScreen() {
 
         <View className="gap-4" style={{ paddingBottom: 32 }}>
           <Text className="text-caption uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
-            Adverse Symptoms
+            {t('vitals.adverseSymptoms')}
           </Text>
-          <LargeTextButton label="Log a Symptom" onPress={() => symptomSheetRef.current?.present()} />
+          <LargeTextButton label={t('vitals.logASymptom')} onPress={() => symptomSheetRef.current?.present()} />
         </View>
       </ScrollView>
 

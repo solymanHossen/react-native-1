@@ -24,6 +24,7 @@ import {
   VISION_CONFIDENCE_THRESHOLD,
   type ActiveAlarm,
 } from '../alarms';
+import { useTranslation } from '../i18n';
 import { useTheme } from '../theme/useTheme';
 import { triggerHapticCascade, triggerHaptic } from '../lib/haptics';
 
@@ -53,6 +54,7 @@ interface AlarmScreenProps {
  */
 export default function AlarmScreen({ alarm }: AlarmScreenProps) {
   const theme = useTheme();
+  const { t } = useTranslation();
   const { payload, firedAtMs, snoozeCount } = alarm;
   const clearActiveAlarm = useActiveAlarmStore((state) => state.clearActiveAlarm);
   const incrementSnooze = useActiveAlarmStore((state) => state.incrementSnooze);
@@ -100,7 +102,7 @@ export default function AlarmScreen({ alarm }: AlarmScreenProps) {
         runOnJS(triggerHapticCascade)();
         resolveAndClose('verified', () => confirmIntake(payload, 'NFC'));
       } else {
-        setStatusMessage('That tag doesn’t match this medication — try the correct bottle.');
+        setStatusMessage(t('alarmRinging.nfcMismatch'));
         triggerHaptic('notificationError');
       }
     });
@@ -109,7 +111,7 @@ export default function AlarmScreen({ alarm }: AlarmScreenProps) {
       active = false;
       stopListening();
     };
-  }, [mode, payload, resolveAndClose]);
+  }, [mode, payload, resolveAndClose, t]);
 
   // Vision fallback: auto-captures and scores a frame on a fixed interval
   // rather than a manual shutter — the person using this may be groggy or
@@ -198,7 +200,7 @@ export default function AlarmScreen({ alarm }: AlarmScreenProps) {
       <SafeAreaView className="flex-1 items-center justify-center gap-6" style={{ backgroundColor: theme.colors.canvas }}>
         <CheckCircle2 color={theme.status.taken.base} size={96} strokeWidth={1.5} />
         <Text className="text-title-lg" style={{ color: theme.colors.ink }}>
-          {payload.medicationName} confirmed
+          {t('alarmRinging.confirmed', { name: payload.medicationName })}
         </Text>
       </SafeAreaView>
     );
@@ -208,7 +210,7 @@ export default function AlarmScreen({ alarm }: AlarmScreenProps) {
     <SafeAreaView className="flex-1" style={{ backgroundColor: '#0B0E14' }}>
       <View className="flex-1 items-center justify-center gap-5 px-8">
         <Text className="text-caption uppercase tracking-wider" style={{ color: '#8891A7' }}>
-          Medication Alarm
+          {t('alarmRinging.title')}
         </Text>
         <Text className="text-center text-display-lg" style={{ color: '#FFFFFF' }}>
           {payload.medicationName}
@@ -225,7 +227,7 @@ export default function AlarmScreen({ alarm }: AlarmScreenProps) {
               </View>
             </Animated.View>
             <Text className="text-center text-body-lg" style={{ color: '#FFFFFF' }}>
-              {nfcReady ? 'Hold the medication bottle’s tag near your phone' : 'NFC isn’t available on this device'}
+              {nfcReady ? t('alarmRinging.nfcPrompt') : t('alarmRinging.nfcUnavailable')}
             </Text>
           </View>
         ) : (
@@ -240,12 +242,12 @@ export default function AlarmScreen({ alarm }: AlarmScreenProps) {
               )}
             </View>
             <Text className="text-center text-body-lg" style={{ color: '#FFFFFF' }}>
-              Show the blister pack or label to the camera
+              {t('alarmRinging.visionPrompt')}
             </Text>
             {scanning ? <ActivityIndicator color="#FFFFFF" /> : null}
             {lastConfidence !== null ? (
               <Text className="text-caption" style={{ color: '#AEB8CC' }}>
-                Last read: {lastConfidence}% match (need {VISION_CONFIDENCE_THRESHOLD}%)
+                {t('alarmRinging.lastReadMatch', { confidence: lastConfidence, threshold: VISION_CONFIDENCE_THRESHOLD })}
               </Text>
             ) : null}
           </View>
@@ -262,26 +264,26 @@ export default function AlarmScreen({ alarm }: AlarmScreenProps) {
 
         <Pressable onPress={() => setMode(mode === 'nfc' ? 'vision' : 'nfc')} accessibilityRole="button">
           <Text className="text-body-lg underline" style={{ color: '#5B8DEF' }}>
-            {mode === 'nfc' ? 'Problem scanning? Use the camera instead' : 'Use NFC tag instead'}
+            {mode === 'nfc' ? t('alarmRinging.useCameraInstead') : t('alarmRinging.useNfcInstead')}
           </Text>
         </Pressable>
 
         <Text className="text-caption" style={{ color: '#8891A7' }}>
-          Auto-escalates to your caregiver in {formatCountdown(remainingMs)}
+          {t('alarmRinging.autoEscalates', { time: formatCountdown(remainingMs) })}
         </Text>
       </View>
 
       <View className="gap-4 px-8 pb-10">
         {canSnooze(snoozeCount) ? (
           <LargeTextButton
-            label={`Snooze 5 min (${remainingSnoozes(snoozeCount)} left)`}
+            label={t('alarmRinging.snooze', { count: remainingSnoozes(snoozeCount) })}
             variant="secondary"
             onPress={handleSnooze}
           />
         ) : (
           <View className="min-h-hit items-center justify-center rounded-full border px-8 py-5" style={{ borderColor: '#2A324B' }}>
             <Text className="text-body-lg" style={{ color: '#5B6476' }}>
-              No snoozes left
+              {t('alarmRinging.noSnoozesLeft')}
             </Text>
           </View>
         )}
@@ -290,7 +292,7 @@ export default function AlarmScreen({ alarm }: AlarmScreenProps) {
           onPressIn={handleOverridePressIn}
           onPressOut={handleOverridePressOut}
           accessibilityRole="button"
-          accessibilityLabel="Emergency silence, hold for 10 seconds"
+          accessibilityLabel={t('alarmRinging.overrideAccessibility')}
           className="min-h-hit items-center justify-center overflow-hidden rounded-full border"
           style={{ borderColor: 'rgba(255,107,107,0.4)' }}
         >
@@ -299,7 +301,7 @@ export default function AlarmScreen({ alarm }: AlarmScreenProps) {
             style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${overrideProgress * 100}%`, backgroundColor: 'rgba(255,107,107,0.25)' }}
           />
           <Text className="text-body-lg" style={{ color: '#FF9B9B' }}>
-            Hold 10s: Emergency Silence (won&apos;t count as taken)
+            {t('alarmRinging.overrideLabel')}
           </Text>
         </Pressable>
       </View>

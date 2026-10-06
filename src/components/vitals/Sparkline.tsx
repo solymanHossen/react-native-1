@@ -1,6 +1,7 @@
 import { Canvas, Path, Skia } from '@shopify/react-native-skia';
 import { useMemo } from 'react';
 import { Text, View } from 'react-native';
+import { useTranslation } from '../../i18n';
 import { useTheme } from '../../theme/useTheme';
 
 export interface SparklinePoint {
@@ -26,6 +27,7 @@ interface SparklineProps {
  */
 export function Sparkline({ points, width, height = 100, color, unit = '' }: SparklineProps) {
   const theme = useTheme();
+  const { t } = useTranslation();
   const lineColor = color ?? theme.action.base;
 
   const { linePath, fillPath, minValue, maxValue } = useMemo(() => {
@@ -62,7 +64,7 @@ export function Sparkline({ points, width, height = 100, color, unit = '' }: Spa
     return (
       <View style={{ width, height }} className="items-center justify-center">
         <Text className="text-caption" style={{ color: theme.colors.inkMuted }}>
-          No readings yet
+          {t('vitals.noReadingsYet')}
         </Text>
       </View>
     );

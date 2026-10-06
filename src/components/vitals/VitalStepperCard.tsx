@@ -1,5 +1,6 @@
 import { Minus, Plus } from 'lucide-react-native';
 import { Pressable, Text, View } from 'react-native';
+import { useTranslation } from '../../i18n';
 import { triggerHaptic } from '../../lib/haptics';
 import { useTheme } from '../../theme/useTheme';
 
@@ -22,6 +23,7 @@ interface VitalStepperCardProps {
  */
 export function VitalStepperCard({ label, value, unit, step, min = 0, max = 999, decimals = 0, onChange }: VitalStepperCardProps) {
   const theme = useTheme();
+  const { t } = useTranslation();
 
   const adjust = (delta: number) => {
     const next = Math.min(max, Math.max(min, Number((value + delta).toFixed(2))));
@@ -38,7 +40,7 @@ export function VitalStepperCard({ label, value, unit, step, min = 0, max = 999,
         <Pressable
           onPress={() => adjust(-step)}
           accessibilityRole="button"
-          accessibilityLabel={`Decrease ${label}`}
+          accessibilityLabel={`${t('common.decrease')} ${label}`}
           className="min-h-hit min-w-hit items-center justify-center rounded-full border"
           style={{ width: 56, height: 56, borderColor: theme.colors.hairline, backgroundColor: theme.colors.surface }}
         >
@@ -55,7 +57,7 @@ export function VitalStepperCard({ label, value, unit, step, min = 0, max = 999,
         <Pressable
           onPress={() => adjust(step)}
           accessibilityRole="button"
-          accessibilityLabel={`Increase ${label}`}
+          accessibilityLabel={`${t('common.increase')} ${label}`}
           className="min-h-hit min-w-hit items-center justify-center rounded-full border"
           style={{ width: 56, height: 56, borderColor: theme.colors.hairline, backgroundColor: theme.colors.surface }}
         >

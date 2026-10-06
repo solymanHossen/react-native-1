@@ -6,6 +6,7 @@ import { LargeTextButton } from '../components/ui';
 import { getCaregiverPhone, rescheduleAllActiveAlarms, setCaregiverPhone, setScheduleActive, triggerAlarmNow } from '../alarms';
 import { initializeDatabase, type MediusDatabase } from '../db';
 import type { ScheduleWithMedication } from '../db/types';
+import { useTranslation } from '../i18n';
 import { triggerHaptic } from '../lib/haptics';
 import { useTheme } from '../theme/useTheme';
 
@@ -21,6 +22,7 @@ const DEMO_NFC_UID = '04A1B2C3D4E5F6';
  */
 export default function AlarmsScreen() {
   const theme = useTheme();
+  const { t } = useTranslation();
   const [mediusDb, setMediusDb] = useState<MediusDatabase | null>(null);
   const [schedules, setSchedules] = useState<ScheduleWithMedication[]>([]);
   const [caregiverPhone, setCaregiverPhoneInput] = useState(() => getCaregiverPhone() ?? '');
@@ -62,8 +64,8 @@ export default function AlarmsScreen() {
     });
     await refresh(mediusDb);
     await rescheduleAllActiveAlarms();
-    setStatus('Demo alarm created and scheduled for its next occurrence.');
-  }, [mediusDb, refresh]);
+    setStatus(t('alarms.demoAlarmCreated'));
+  }, [mediusDb, refresh, t]);
 
   const handleTriggerNow = useCallback(async (schedule: ScheduleWithMedication) => {
     await triggerAlarmNow(schedule);
@@ -77,21 +79,25 @@ export default function AlarmsScreen() {
       // shouldn't visibly lag behind the tap that flipped it.
       setSchedules((prev) => prev.map((entry) => (entry.id === schedule.id ? { ...entry, is_active: nextActive } : entry)));
       await setScheduleActive(schedule, nextActive);
-      setStatus(nextActive ? `${schedule.medicationName} alarm turned on.` : `${schedule.medicationName} alarm turned off.`);
+      setStatus(
+        nextActive
+          ? t('alarms.turnedOn', { name: schedule.medicationName })
+          : t('alarms.turnedOff', { name: schedule.medicationName }),
+      );
     },
-    [],
+    [t],
   );
 
   const handleSaveCaregiverPhone = useCallback(() => {
     setCaregiverPhone(caregiverPhone);
-    setStatus(caregiverPhone.trim() ? 'Caregiver number saved.' : 'Caregiver number cleared.');
-  }, [caregiverPhone]);
+    setStatus(caregiverPhone.trim() ? t('alarms.caregiverSaved') : t('alarms.caregiverCleared'));
+  }, [caregiverPhone, t]);
 
   return (
     <SafeAreaView className="flex-1" edges={['top', 'left', 'right']} style={{ backgroundColor: theme.colors.canvas }}>
       <View className="border-b px-6 py-6" style={{ borderColor: theme.colors.hairline }}>
         <Text className="text-title-lg" style={{ color: theme.colors.ink }}>
-          Medication Alarms
+          {t('alarms.title')}
         </Text>
         {status ? (
           <Text className="mt-2 text-caption" style={{ color: theme.statusText('taken') }}>
@@ -114,34 +120,34 @@ export default function AlarmsScreen() {
           <View style={{ marginBottom: 28 }}>
             <View className="gap-3" style={{ marginBottom: 28 }}>
               <Text className="text-caption uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
-                Caregiver Escalation
+                {t('alarms.caregiverSection')}
               </Text>
               <Text className="text-caption" style={{ color: theme.colors.inkMuted }}>
-                If an alarm goes unconfirmed for 15 minutes, this number opens a pre-filled SMS alert on this phone — nothing sends automatically or silently.
+                {t('alarms.caregiverDescription')}
               </Text>
               <TextInput
                 value={caregiverPhone}
                 onChangeText={setCaregiverPhoneInput}
-                placeholder="+1 555 0100"
+                placeholder={t('alarms.caregiverPlaceholder')}
                 placeholderTextColor={theme.colors.inkMuted}
                 keyboardType="phone-pad"
                 className="min-h-hit rounded-full border px-6 text-body-lg"
                 style={{ backgroundColor: theme.colors.elevated, borderColor: theme.colors.hairline, color: theme.colors.ink }}
               />
-              <LargeTextButton label="Save Caregiver Number" variant="secondary" onPress={handleSaveCaregiverPhone} />
+              <LargeTextButton label={t('alarms.saveCaregiverNumber')} variant="secondary" onPress={handleSaveCaregiverPhone} />
             </View>
 
             <View className="gap-4">
               <Text className="text-caption uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
-                Scheduled Alarms
+                {t('alarms.scheduledAlarms')}
               </Text>
-              <LargeTextButton label="Create Demo Alarm (with NFC tag)" onPress={handleCreateDemoAlarm} />
+              <LargeTextButton label={t('alarms.createDemoAlarm')} onPress={handleCreateDemoAlarm} />
             </View>
           </View>
         }
         ListEmptyComponent={
           <Text className="text-body-lg" style={{ color: theme.colors.inkSecondary }}>
-            No schedules yet.
+            {t('alarms.noSchedulesYet')}
           </Text>
         }
         renderItem={({ item: schedule }) => (
@@ -167,15 +173,19 @@ export default function AlarmsScreen() {
                 onValueChange={(next) => handleToggleActive(schedule, next)}
                 trackColor={{ false: theme.colors.hairline, true: theme.action.base }}
                 thumbColor="#FFFFFF"
-                accessibilityLabel={`${schedule.is_active ? 'Turn off' : 'Turn on'} the alarm for ${schedule.medicationName}`}
+                accessibilityLabel={
+                  schedule.is_active
+                    ? t('alarms.turnOffAccessibility', { name: schedule.medicationName })
+                    : t('alarms.turnOnAccessibility', { name: schedule.medicationName })
+                }
               />
             </View>
             <Text className="text-caption" style={{ color: theme.colors.inkSecondary }}>
-              {schedule.dose_quantity} {schedule.medicationForm} at {schedule.time_utc}
-              {schedule.nfcTagUid ? ' · NFC tag registered' : ' · No NFC tag — vision fallback only'}
-              {schedule.is_active ? '' : ' · Off'}
+              {t('alarms.doseAt', { quantity: schedule.dose_quantity, form: schedule.medicationForm, time: schedule.time_utc })}
+              {schedule.nfcTagUid ? t('alarms.nfcRegistered') : t('alarms.nfcFallback')}
+              {schedule.is_active ? '' : t('alarms.off')}
             </Text>
-            <LargeTextButton label="Trigger Now (Demo)" variant="secondary" onPress={() => handleTriggerNow(schedule)} />
+            <LargeTextButton label={t('alarms.triggerNow')} variant="secondary" onPress={() => handleTriggerNow(schedule)} />
           </View>
         )}
       />

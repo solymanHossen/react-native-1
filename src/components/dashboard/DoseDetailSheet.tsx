@@ -3,6 +3,7 @@ import { AlertTriangle, Pill } from 'lucide-react-native';
 import { forwardRef, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { Text, View } from 'react-native';
 import type { DoseEntry } from '../../dashboard/types';
+import { useTranslation } from '../../i18n';
 import { useTheme } from '../../theme/useTheme';
 
 export interface DoseDetailSheetRef {
@@ -15,6 +16,7 @@ const LOW_STOCK_THRESHOLD = 7;
 /** Opened by DoseActionCard's long-press — read-only reference info, no actions to take here. */
 export const DoseDetailSheet = forwardRef<DoseDetailSheetRef, Record<string, unknown>>(function DoseDetailSheetImpl(_props, ref) {
   const theme = useTheme();
+  const { t, language } = useTranslation();
   const modalRef = useRef<BottomSheetModal>(null);
   const [dose, setDose] = useState<DoseEntry | null>(null);
   const snapPoints = useMemo(() => ['55%'], []);
@@ -57,13 +59,13 @@ export const DoseDetailSheet = forwardRef<DoseDetailSheetRef, Record<string, unk
               {dose?.medicationName ?? ''}
             </Text>
             <Text className="text-caption" style={{ color: theme.colors.inkSecondary }}>
-              {dose?.dosage} · {dose?.label} ({dose?.labelBn})
+              {dose?.dosage} · {language === 'bn' ? dose?.labelBn : dose?.label}
             </Text>
           </View>
 
           <View className="gap-2 rounded-3xl border p-5" style={{ backgroundColor: theme.colors.elevated, borderColor: theme.colors.hairline }}>
             <Text className="text-caption uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
-              Interactions
+              {t('rhythm.detailSheet.interactions')}
             </Text>
             <Text className="text-body-lg" style={{ color: theme.colors.ink }}>
               {dose?.interactionNote}
@@ -80,11 +82,11 @@ export const DoseDetailSheet = forwardRef<DoseDetailSheetRef, Record<string, unk
             {isLowStock ? <AlertTriangle color={theme.statusText('missed')} size={22} /> : null}
             <View className="flex-1">
               <Text className="text-caption uppercase tracking-wider" style={{ color: isLowStock ? theme.statusText('missed') : theme.colors.inkSecondary }}>
-                Stock Remaining
+                {t('rhythm.detailSheet.stockRemaining')}
               </Text>
               <Text className="text-body-lg" style={{ color: isLowStock ? theme.statusText('missed') : theme.colors.ink, fontWeight: '600' }}>
-                {dose?.stockRemaining} tablet{dose?.stockRemaining === 1 ? '' : 's'}
-                {isLowStock ? ' — refill soon' : ''}
+                {dose?.stockRemaining} {dose?.stockRemaining === 1 ? t('rhythm.detailSheet.tablet') : t('rhythm.detailSheet.tablets')}
+                {isLowStock ? t('rhythm.detailSheet.refillSoon') : ''}
               </Text>
             </View>
           </View>

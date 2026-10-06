@@ -9,7 +9,8 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 import { StatusPill } from '../ui';
-import type { DoseEntry } from '../../dashboard/types';
+import type { DoseEntry, SkipReason } from '../../dashboard/types';
+import { useTranslation, type TranslationKey } from '../../i18n';
 import { useTheme } from '../../theme/useTheme';
 import { triggerHaptic } from '../../lib/haptics';
 
@@ -17,11 +18,19 @@ const SWIPE_THRESHOLD = 96;
 const FLY_OUT_DISTANCE = 520;
 const SPRING_CONFIG = { damping: 18, stiffness: 220, mass: 0.6 };
 
-const STATE_LABEL: Record<DoseEntry['state'], string> = {
-  taken: 'Taken',
-  pending: 'Imminent',
-  missed: 'Missed',
-  scheduled: 'Upcoming',
+const DOSE_STATE_KEY: Record<DoseEntry['state'], TranslationKey> = {
+  taken: 'rhythm.doseState.taken',
+  pending: 'rhythm.doseState.pending',
+  missed: 'rhythm.doseState.missed',
+  scheduled: 'rhythm.doseState.scheduled',
+};
+
+const SKIP_REASON_KEY: Record<SkipReason, TranslationKey> = {
+  'Feeling better': 'rhythm.skipSheet.reasons.Feeling better',
+  'Side effects': 'rhythm.skipSheet.reasons.Side effects',
+  'Forgot dose': 'rhythm.skipSheet.reasons.Forgot dose',
+  'Out of stock': 'rhythm.skipSheet.reasons.Out of stock',
+  'Doctor advised': 'rhythm.skipSheet.reasons.Doctor advised',
 };
 
 function formatHour(hour: number): string {
@@ -67,6 +76,7 @@ function SwipeHint({ translateX, side }: { translateX: SharedValue<number>; side
  */
 export function DoseActionCard({ dose, skipReason, onMarkTaken, onRequestSkip, onLongPressDetail }: DoseActionCardProps) {
   const theme = useTheme();
+  const { t, language } = useTranslation();
   const translateX = useSharedValue(0);
 
   const commitTaken = () => {
@@ -138,19 +148,20 @@ export function DoseActionCard({ dose, skipReason, onMarkTaken, onRequestSkip, o
                 it's the (less critical, also shown via the marker's color)
                 zone/time text. */}
             <Text className="flex-1 text-caption uppercase tracking-wider" numberOfLines={1} style={{ color: theme.colors.inkSecondary }}>
-              {dose.label} · {formatHour(dose.hour)}
+              {language === 'bn' ? dose.labelBn : dose.label} · {formatHour(dose.hour)}
             </Text>
-            <StatusPill status={dose.state} label={STATE_LABEL[dose.state]} />
+            <StatusPill status={dose.state} label={t(DOSE_STATE_KEY[dose.state])} />
           </View>
           <Text className="text-body-lg" style={{ color: theme.colors.ink, fontWeight: '600' }}>
             {dose.medicationName}
           </Text>
           <Text className="text-caption" style={{ color: theme.colors.inkMuted }}>
-            {dose.dosage} · {dose.labelBn}
+            {dose.dosage}
           </Text>
-          {isSkipped ? (
+          {isSkipped && skipReason ? (
             <Text className="text-caption" style={{ color: theme.statusText('missed') }}>
-              Skipped — {skipReason}
+              {t('rhythm.skippedPrefix')}
+              {t(SKIP_REASON_KEY[skipReason])}
             </Text>
           ) : null}
         </Animated.View>
@@ -161,7 +172,7 @@ export function DoseActionCard({ dose, skipReason, onMarkTaken, onRequestSkip, o
 
 interface DoseActionCardProps {
   dose: DoseEntry;
-  skipReason?: string;
+  skipReason?: SkipReason;
   onMarkTaken: (id: string) => void;
   onRequestSkip: (dose: DoseEntry) => void;
   onLongPressDetail: (dose: DoseEntry) => void;

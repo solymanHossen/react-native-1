@@ -13,6 +13,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { initializeAlarmSystem } from './src/alarms';
+import { useTranslation, type TranslationKey } from './src/i18n';
 import { triggerHaptic } from './src/lib/haptics';
 import AlarmScreen from './src/screens/AlarmScreen';
 import AlarmsScreen from './src/screens/AlarmsScreen';
@@ -29,16 +30,26 @@ type Tab = 'home' | 'drugLab' | 'scanRx' | 'rhythm' | 'alarms' | 'vitals';
 
 const TAB_ORDER: Tab[] = ['home', 'drugLab', 'scanRx', 'rhythm', 'alarms', 'vitals'];
 
-const TAB_CONFIG: Record<Tab, { label: string; Icon: ComponentType<{ size?: number; color?: string; strokeWidth?: number }> }> = {
-  home: { label: 'Home', Icon: Home },
-  // Shortened just for this bar: six stacked icon+label columns leaves too
-  // little width per tab for the full "Medications" (the screen itself still
-  // titles itself that in full — see DrugLabScreen).
-  drugLab: { label: 'Meds', Icon: Pill },
-  scanRx: { label: 'Scan Rx', Icon: Camera },
-  rhythm: { label: 'Rhythm', Icon: Waves },
-  alarms: { label: 'Alarms', Icon: AlarmClock },
-  vitals: { label: 'Vitals', Icon: HeartPulse },
+const TAB_ICON: Record<Tab, ComponentType<{ size?: number; color?: string; strokeWidth?: number }>> = {
+  home: Home,
+  drugLab: Pill,
+  scanRx: Camera,
+  rhythm: Waves,
+  alarms: AlarmClock,
+  vitals: HeartPulse,
+};
+
+// `drugLab`'s key is shortened for this bar specifically ("Meds" not
+// "Medications"): six stacked icon+label columns leaves too little width per
+// tab for the full word (the screen itself still titles itself that in full
+// — see DrugLabScreen).
+const TAB_LABEL_KEY: Record<Tab, TranslationKey> = {
+  home: 'tabs.home',
+  drugLab: 'tabs.medications',
+  scanRx: 'tabs.scanRx',
+  rhythm: 'tabs.rhythm',
+  alarms: 'tabs.alarms',
+  vitals: 'tabs.vitals',
 };
 
 const PILL_WIDTH = 56;
@@ -58,6 +69,7 @@ const PILL_SPRING = { damping: 20, stiffness: 260, mass: 0.7 };
  */
 function BottomTabBar({ tab, onChange }: { tab: Tab; onChange: (tab: Tab) => void }) {
   const theme = useTheme();
+  const { t } = useTranslation();
   // One shared pill behind the active icon, sprung to whichever tab is
   // active, reads as a single object sliding between slots rather than six
   // independently-colored icons — the same sliding-indicator idea as before,
@@ -116,7 +128,8 @@ function BottomTabBar({ tab, onChange }: { tab: Tab; onChange: (tab: Tab) => voi
         />
         {TAB_ORDER.map((value) => {
           const isActive = tab === value;
-          const { label, Icon } = TAB_CONFIG[value];
+          const Icon = TAB_ICON[value];
+          const label = t(TAB_LABEL_KEY[value]);
           return (
             <Pressable
               key={value}

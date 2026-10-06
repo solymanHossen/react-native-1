@@ -7,6 +7,7 @@ import { PrescriptionCameraView } from '../components/camera/PrescriptionCameraV
 import { PrescriptionReviewSheet, type PrescriptionReviewSheetRef } from '../components/prescription/PrescriptionReviewSheet';
 import { initializeDatabase } from '../db';
 import type { MealRelation as SchedulesMealRelation, TimeNode } from '../db/types';
+import { useTranslation } from '../i18n';
 import { parsePrescriptionText, summarizeDosage, type ParsedPrescriptionItem } from '../ocr';
 import { useTheme } from '../theme/useTheme';
 
@@ -54,6 +55,7 @@ const DOSE_SLOT_TIME_NODES: Array<{ key: 'morning' | 'afternoon' | 'night'; time
  */
 export default function PrescriptionScanScreen() {
   const theme = useTheme();
+  const { t } = useTranslation();
   const reviewSheetRef = useRef<PrescriptionReviewSheetRef>(null);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -73,7 +75,7 @@ export default function PrescriptionScanScreen() {
       const recognized = await TextRecognition.recognize(formattedPath, OCR_SCRIPT);
       const items = await parsePrescriptionText(recognized.text);
       if (items.length === 0) {
-        setError('No dosage lines were recognized in the prescription image. Try using a clearer photo.');
+        setError(t('scanRx.noLinesRecognized'));
         return;
       }
       reviewSheetRef.current?.present(items);
@@ -82,7 +84,7 @@ export default function PrescriptionScanScreen() {
     } finally {
       setProcessing(false);
     }
-  }, []);
+  }, [t]);
 
   const handleCapture = useCallback(
     (photo: PhotoFile) => {
@@ -131,7 +133,7 @@ export default function PrescriptionScanScreen() {
     <SafeAreaView className="flex-1" edges={['top', 'left', 'right']} style={{ backgroundColor: '#000000' }}>
       <View className="border-b px-6 py-6" style={{ borderColor: theme.colors.hairline, backgroundColor: theme.colors.canvas }}>
         <Text className="text-title-lg" style={{ color: theme.colors.ink }}>
-          Scan Prescription
+          {t('scanRx.title')}
         </Text>
         {error ? (
           <Text className="mt-2 text-caption" style={{ color: theme.statusText('missed') }}>
@@ -140,7 +142,7 @@ export default function PrescriptionScanScreen() {
         ) : null}
         {lastConfirmedCount !== null ? (
           <Text className="mt-2 text-caption" style={{ color: theme.statusText('taken') }}>
-            Added {lastConfirmedCount} medication{lastConfirmedCount === 1 ? '' : 's'} to your list.
+            {t('scanRx.addedMedications', { count: lastConfirmedCount, plural: lastConfirmedCount === 1 ? '' : 's' })}
           </Text>
         ) : null}
       </View>
@@ -151,7 +153,7 @@ export default function PrescriptionScanScreen() {
           <View className="absolute inset-0 items-center justify-center gap-4" style={{ backgroundColor: 'rgba(0,0,0,0.55)' }}>
             <ActivityIndicator color="#FFFFFF" size="large" />
             <Text className="text-body-lg" style={{ color: '#FFFFFF' }}>
-              Reading prescription…
+              {t('scanRx.readingPrescription')}
             </Text>
           </View>
         ) : null}

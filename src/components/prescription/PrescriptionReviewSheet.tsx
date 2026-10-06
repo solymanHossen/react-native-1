@@ -12,6 +12,7 @@ import {
   type ConfidenceTier,
   type ParsedPrescriptionItem,
 } from '../../ocr';
+import { useTranslation } from '../../i18n';
 import type { StatusKey } from '../../theme/tokens';
 import { useTheme } from '../../theme/useTheme';
 import { LargeTextButton } from '../ui';
@@ -71,11 +72,12 @@ const TIER_STATUS_KEY: Record<ConfidenceTier, StatusKey> = { high: 'taken', medi
 
 function ConfidenceBadge({ tier, confidence }: { tier: ConfidenceTier; confidence: number }) {
   const theme = useTheme();
+  const { t } = useTranslation();
   const statusKey = TIER_STATUS_KEY[tier];
   return (
     <View className="self-start rounded-full px-3 py-1.5" style={{ backgroundColor: theme.statusTint(statusKey) }}>
       <Text className="text-caption" style={{ color: theme.statusText(statusKey) }}>
-        {confidence}% match
+        {t('scanRx.reviewSheet.matchPercent', { confidence })}
       </Text>
     </View>
   );
@@ -89,6 +91,7 @@ interface ReviewCardProps {
 
 function ReviewCard({ item, onChange, onRemove }: ReviewCardProps) {
   const theme = useTheme();
+  const { t } = useTranslation();
   return (
     <View className="gap-3 rounded-3xl border p-6" style={{ backgroundColor: theme.colors.elevated, borderColor: theme.colors.hairline }}>
       <View className="flex-row items-center justify-between">
@@ -96,7 +99,7 @@ function ReviewCard({ item, onChange, onRemove }: ReviewCardProps) {
         <Pressable
           onPress={onRemove}
           accessibilityRole="button"
-          accessibilityLabel={`Remove ${item.drugName} from this batch`}
+          accessibilityLabel={t('scanRx.reviewSheet.removeAccessibility', { name: item.drugName })}
           className="min-h-hit min-w-hit items-center justify-center"
         >
           <X color={theme.colors.inkMuted} size={20} />
@@ -106,7 +109,7 @@ function ReviewCard({ item, onChange, onRemove }: ReviewCardProps) {
       <BottomSheetTextInput
         value={item.drugName}
         onChangeText={(text) => onChange({ drugName: text })}
-        placeholder="Drug name"
+        placeholder={t('scanRx.reviewSheet.drugNamePlaceholder')}
         placeholderTextColor={theme.colors.inkMuted}
         className="min-h-hit rounded-2xl border px-4 text-body-lg"
         style={{ backgroundColor: theme.colors.surface, borderColor: theme.colors.hairline, color: theme.colors.ink }}
@@ -114,7 +117,7 @@ function ReviewCard({ item, onChange, onRemove }: ReviewCardProps) {
       <BottomSheetTextInput
         value={item.summary}
         onChangeText={(text) => onChange({ summary: text })}
-        placeholder="Dosage, timing, duration"
+        placeholder={t('scanRx.reviewSheet.summaryPlaceholder')}
         placeholderTextColor={theme.colors.inkMuted}
         className="min-h-hit rounded-2xl border px-4 text-body-lg"
         style={{ backgroundColor: theme.colors.surface, borderColor: theme.colors.hairline, color: theme.colors.ink }}
@@ -122,7 +125,7 @@ function ReviewCard({ item, onChange, onRemove }: ReviewCardProps) {
 
       {item.suggestedGeneric ? (
         <Text className="text-caption" style={{ color: theme.colors.inkMuted }}>
-          Low-confidence suggestion — please verify: {item.suggestedGeneric}
+          {t('scanRx.reviewSheet.lowConfidenceSuggestion', { generic: item.suggestedGeneric })}
         </Text>
       ) : null}
     </View>
@@ -143,6 +146,7 @@ export const PrescriptionReviewSheet = forwardRef<PrescriptionReviewSheetRef, Pr
   ref,
 ) {
   const theme = useTheme();
+  const { t } = useTranslation();
   const modalRef = useRef<BottomSheetModal>(null);
   const [reviewItems, setReviewItems] = useState<ReviewableItem[]>([]);
   const snapPoints = useMemo(() => ['75%'], []);
@@ -182,10 +186,10 @@ export const PrescriptionReviewSheet = forwardRef<PrescriptionReviewSheetRef, Pr
       <BottomSheetView style={{ flex: 1 }}>
         <View className="px-6 pb-4">
           <Text className="text-title-lg" style={{ color: theme.colors.ink }}>
-            Review {reviewItems.length} detected item{reviewItems.length === 1 ? '' : 's'}
+            {t('scanRx.reviewSheet.titleCount', { count: reviewItems.length, plural: reviewItems.length === 1 ? '' : 's' })}
           </Text>
           <Text className="mt-1 text-caption" style={{ color: theme.colors.inkSecondary }}>
-            Check each item before adding it to your medications.
+            {t('scanRx.reviewSheet.subtitle')}
           </Text>
         </View>
 
@@ -195,14 +199,14 @@ export const PrescriptionReviewSheet = forwardRef<PrescriptionReviewSheetRef, Pr
           ))}
           {reviewItems.length === 0 ? (
             <Text className="text-body-lg" style={{ color: theme.colors.inkSecondary }}>
-              No items left to review.
+              {t('scanRx.reviewSheet.noItemsLeft')}
             </Text>
           ) : null}
         </BottomSheetScrollView>
 
         <View className="border-t px-6 py-5" style={{ borderColor: theme.colors.hairline }}>
           <LargeTextButton
-            label={`Confirm ${reviewItems.length} Medication${reviewItems.length === 1 ? '' : 's'}`}
+            label={t('scanRx.reviewSheet.confirmButton', { count: reviewItems.length, plural: reviewItems.length === 1 ? '' : 's' })}
             onPress={handleConfirm}
             disabled={reviewItems.length === 0}
           />
