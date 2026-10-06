@@ -10,6 +10,8 @@ export type DismissalType = 'NFC' | 'VISION' | 'MANUAL_OVERRIDE';
 
 export type VitalType = 'BP_SYS' | 'BP_DIA' | 'BLOOD_SUGAR' | 'WEIGHT' | 'PULSE' | 'TEMPERATURE';
 
+export type SymptomSeverity = 'MILD' | 'MODERATE' | 'SEVERE';
+
 /** One row of the `drug_directory` FTS5 index. `rowid` is SQLite's implicit FTS5 row id. */
 export interface DrugDirectoryEntry {
   rowid: number;
@@ -89,6 +91,22 @@ export interface Vital {
 }
 
 export type NewVital = Omit<Vital, 'id'>;
+
+export interface SymptomLog {
+  id: number;
+  timestamp: string;
+  symptom: string;
+  severity: SymptomSeverity;
+  notes: string | null;
+}
+
+export type NewSymptomLog = Omit<SymptomLog, 'id'>;
+
+/** A medication dose taken within the trailing window checked when a symptom is logged — not a stored relation, computed fresh from `intake_logs` at read time (see SymptomsRepository.listRecentIntakesAround). */
+export interface RecentIntakeContext {
+  medicationName: string;
+  takenTime: string;
+}
 
 /** One entry of a `drug_directory.high_risk_interactions_json` array. */
 export interface HighRiskInteraction {

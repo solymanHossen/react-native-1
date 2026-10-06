@@ -2,6 +2,7 @@ import notifee, { EventType, type Event } from '@notifee/react-native';
 import { useActiveAlarmStore } from './activeAlarmStore';
 import { ensureAlarmChannel, ensureExactAlarmPermission } from './alarmChannel';
 import { rescheduleAllActiveAlarms } from './alarmScheduler';
+import { DAILY_SENTINEL_NOTIFICATION_ID, handleDailySentinelFired, runSentinelCheck, scheduleDailySentinelCheck } from './sentinel';
 import type { ScheduledAlarmPayload } from './types';
 
 function extractPayload(event: Event): ScheduledAlarmPayload | null {
@@ -35,6 +36,26 @@ function activateFromEvent(event: Event): void {
   });
 }
 
+/**
+ * Every notifee event in this app — alarm or sentinel — flows through the
+ * same single `onForegroundEvent`/`onBackgroundEvent` pair (notifee only
+ * supports one handler of each, registering a second silently replaces the
+ * first), so this is the one place that routes by notification identity
+ * rather than assuming every event is an alarm.
+ */
+async function handleNotifeeEvent(event: Event): Promise<void> {
+  const notificationId = event.detail.notification?.id;
+  if (notificationId === DAILY_SENTINEL_NOTIFICATION_ID) {
+    if (event.type === EventType.DELIVERED) {
+      await handleDailySentinelFired();
+    }
+    return;
+  }
+  if (event.type === EventType.DELIVERED || event.type === EventType.PRESS) {
+    activateFromEvent(event);
+  }
+}
+
 let initialized = false;
 
 /**
@@ -60,19 +81,26 @@ export async function initializeAlarmSystem(): Promise<void> {
   }
 
   notifee.onForegroundEvent((event) => {
-    console.warn('[DIAG] onForegroundEvent', EventType[event.type], event.detail.notification?.id);
-    if (event.type === EventType.DELIVERED || event.type === EventType.PRESS) {
-      activateFromEvent(event);
-    }
+    handleNotifeeEvent(event).catch((error: unknown) => {
+      console.warn('[alarms] failed to handle foreground notifee event', error);
+    });
   });
 
-  // Required by notifee even when there's nothing else to do here: the
-  // primary flow is the full-screen Activity launch + getInitialNotification
-  // above, which covers both the killed-app and backgrounded-app cases.
-  notifee.onBackgroundEvent(async () => {});
+  // Background events (app killed/backgrounded) go through the same router —
+  // this is also what lets the daily sentinel check run without the app
+  // ever having been opened that day.
+  notifee.onBackgroundEvent(handleNotifeeEvent);
 
   rescheduleAllActiveAlarms().catch((error: unknown) => {
     console.warn('[alarms] failed to reschedule active alarms', error);
+  });
+
+  scheduleDailySentinelCheck().catch((error: unknown) => {
+    console.warn('[alarms] failed to schedule the daily sentinel check', error);
+  });
+
+  runSentinelCheck().catch((error: unknown) => {
+    console.warn('[alarms] failed to run the startup sentinel check', error);
   });
 }
 
@@ -84,4 +112,5 @@ export * from './alarmPolicy';
 export { cancelAlarm, computeNextOccurrenceMs, rescheduleAllActiveAlarms, scheduleAlarm, scheduleSnoozeAlarm, triggerAlarmNow } from './alarmScheduler';
 export { isNfcAvailable, listenForTag } from './nfcVerification';
 export { scanPackForMedication, VISION_CONFIDENCE_THRESHOLD } from './visionVerification';
+export { runSentinelCheck, runSentinelCheckForMedication, scheduleDailySentinelCheck } from './sentinel';
 export * from './types';

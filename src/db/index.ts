@@ -5,6 +5,7 @@ import { DrugSearchService } from './services/drugSearchService';
 import { IntakeLogsRepository } from './services/intakeLogsRepository';
 import { MedicationsRepository } from './services/medicationsRepository';
 import { SchedulesRepository } from './services/schedulesRepository';
+import { SymptomsRepository } from './services/symptomsRepository';
 import { VitalsRepository } from './services/vitalsRepository';
 
 export interface MediusDatabase {
@@ -15,6 +16,7 @@ export interface MediusDatabase {
   schedules: SchedulesRepository;
   intakeLogs: IntakeLogsRepository;
   vitals: VitalsRepository;
+  symptoms: SymptomsRepository;
 }
 
 let instance: Promise<MediusDatabase> | null = null;
@@ -44,6 +46,7 @@ export function initializeDatabase(): Promise<MediusDatabase> {
           schedules: new SchedulesRepository(db),
           intakeLogs: new IntakeLogsRepository(db),
           vitals: new VitalsRepository(db),
+          symptoms: new SymptomsRepository(db),
         };
       })
       .catch((error: unknown) => {
@@ -65,4 +68,5 @@ export { DrugSearchService } from './services/drugSearchService';
 export { IntakeLogsRepository } from './services/intakeLogsRepository';
 export { MedicationsRepository } from './services/medicationsRepository';
 export { SchedulesRepository } from './services/schedulesRepository';
+export { SymptomsRepository } from './services/symptomsRepository';
 export { VitalsRepository } from './services/vitalsRepository';

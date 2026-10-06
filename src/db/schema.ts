@@ -77,13 +77,25 @@ const CREATE_VITALS = `
   );
 `;
 
+const CREATE_SYMPTOM_LOGS = `
+  CREATE TABLE IF NOT EXISTS symptom_logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    timestamp TEXT NOT NULL,
+    symptom TEXT NOT NULL,
+    severity TEXT NOT NULL CHECK (severity IN ('MILD', 'MODERATE', 'SEVERE')),
+    notes TEXT
+  );
+`;
+
 const CREATE_INDEXES = [
   `CREATE INDEX IF NOT EXISTS idx_medications_generic ON medications(generic_id);`,
   `CREATE INDEX IF NOT EXISTS idx_schedules_medication ON schedules(medication_id);`,
   `CREATE INDEX IF NOT EXISTS idx_schedules_active ON schedules(is_active);`,
   `CREATE INDEX IF NOT EXISTS idx_intake_logs_schedule ON intake_logs(schedule_id);`,
   `CREATE INDEX IF NOT EXISTS idx_intake_logs_status ON intake_logs(status);`,
+  `CREATE INDEX IF NOT EXISTS idx_intake_logs_taken_time ON intake_logs(taken_time);`,
   `CREATE INDEX IF NOT EXISTS idx_vitals_type_timestamp ON vitals(type, timestamp);`,
+  `CREATE INDEX IF NOT EXISTS idx_symptom_logs_timestamp ON symptom_logs(timestamp);`,
 ];
 
 /**
@@ -97,6 +109,7 @@ export async function runMigrations(db: DB): Promise<void> {
     await tx.execute(CREATE_SCHEDULES);
     await tx.execute(CREATE_INTAKE_LOGS);
     await tx.execute(CREATE_VITALS);
+    await tx.execute(CREATE_SYMPTOM_LOGS);
     for (const statement of CREATE_INDEXES) {
       await tx.execute(statement);
     }

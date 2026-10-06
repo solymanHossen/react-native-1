@@ -34,4 +34,10 @@ export class VitalsRepository {
     const { rows } = await this.db.execute('SELECT * FROM vitals WHERE type = ? ORDER BY timestamp DESC LIMIT ?;', [type, limit]);
     return rows.map(toVital);
   }
+
+  /** Chronological (oldest first) within a time window — what a sparkline plots left-to-right, unlike `listByType`'s newest-first feed. */
+  async listByTypeSince(type: VitalType, sinceIso: string): Promise<Vital[]> {
+    const { rows } = await this.db.execute('SELECT * FROM vitals WHERE type = ? AND timestamp >= ? ORDER BY timestamp ASC;', [type, sinceIso]);
+    return rows.map(toVital);
+  }
 }

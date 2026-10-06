@@ -6,7 +6,7 @@
  */
 
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
-import { AlarmClock, Camera, Home, Pill, Waves } from 'lucide-react-native';
+import { AlarmClock, Camera, HeartPulse, Home, Pill, Waves } from 'lucide-react-native';
 import { useEffect, useState, type ComponentType } from 'react';
 import { Pressable, StatusBar, Text, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -18,10 +18,11 @@ import CircadianDashboardScreen from './src/screens/CircadianDashboardScreen';
 import DrugLabScreen from './src/screens/DrugLabScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import PrescriptionScanScreen from './src/screens/PrescriptionScanScreen';
+import VitalsScreen from './src/screens/VitalsScreen';
 import { useThemeMode } from './src/theme/useTheme';
 import './global.css';
 
-type Tab = 'home' | 'drugLab' | 'scanRx' | 'rhythm' | 'alarms';
+type Tab = 'home' | 'drugLab' | 'scanRx' | 'rhythm' | 'alarms' | 'vitals';
 
 const TAB_CONFIG: Record<Tab, { label: string; Icon: ComponentType<{ size?: number; color?: string; strokeWidth?: number }> }> = {
   home: { label: 'Home', Icon: Home },
@@ -29,6 +30,7 @@ const TAB_CONFIG: Record<Tab, { label: string; Icon: ComponentType<{ size?: numb
   scanRx: { label: 'Scan Rx', Icon: Camera },
   rhythm: { label: 'Rhythm', Icon: Waves },
   alarms: { label: 'Alarms', Icon: AlarmClock },
+  vitals: { label: 'Vitals', Icon: HeartPulse },
 };
 
 const BAR_BACKGROUND = '#0B0E14';
@@ -57,7 +59,7 @@ function DevTabBar({ tab, onChange }: { tab: Tab; onChange: (tab: Tab) => void }
           everywhere else in this app (buttons, status pills, search field)
           instead of introducing a different, flatter nav idiom. */}
       <View style={{ flexDirection: 'row', gap: 6, padding: 6 }}>
-        {(['home', 'drugLab', 'scanRx', 'rhythm', 'alarms'] as const).map((value) => {
+        {(['home', 'drugLab', 'scanRx', 'rhythm', 'alarms', 'vitals'] as const).map((value) => {
           const isActive = tab === value;
           const { label, Icon } = TAB_CONFIG[value];
           return (
@@ -101,6 +103,8 @@ function ActiveScreen({ tab }: { tab: Tab }) {
       return <CircadianDashboardScreen />;
     case 'alarms':
       return <AlarmsScreen />;
+    case 'vitals':
+      return <VitalsScreen />;
   }
 }
 
