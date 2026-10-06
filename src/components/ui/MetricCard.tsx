@@ -80,9 +80,21 @@ export function MetricCard({ label, value, unit, caption, status, icon, onPress,
 
       {/* Stacked, not side-by-side: a pill's fixed width next to a long
           caption left too little room for either to read fully on a narrow
-          (e.g. 2-up grid) card. */}
+          (e.g. 2-up grid) card. `numberOfLines={2}` + a 2-line `minHeight`
+          (not just a cap on overflow) matters specifically for `compact`
+          cards sitting side by side in a horizontal carousel: Bengali
+          captions run longer than their English source and don't all wrap
+          at the same point, so without a reserved height, one card in the
+          row ends up visibly taller than its neighbor the moment the
+          language switches — this reserves the same two-line slot whether
+          the caption fills one line or two, so every card in the row stays
+          the same height regardless of caption length or script. */}
       {caption ? (
-        <Text className="mt-3 text-caption" style={{ color: theme.colors.inkSecondary }}>
+        <Text
+          className="mt-3 text-caption"
+          numberOfLines={2}
+          style={{ color: theme.colors.inkSecondary, minHeight: compact ? 38 : undefined }}
+        >
           {caption}
         </Text>
       ) : null}

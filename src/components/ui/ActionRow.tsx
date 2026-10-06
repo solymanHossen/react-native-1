@@ -54,14 +54,14 @@ export function ActionRow({ icon: Icon, label, caption, onPress, loading = false
       accessibilityRole={isInteractive ? 'button' : undefined}
       accessibilityLabel={caption ? `${label}. ${caption}` : label}
       accessibilityState={{ disabled: !isInteractive, busy: loading }}
-      className="min-h-hit flex-row items-center gap-4 px-5 py-4"
+      className="min-h-hit flex-row items-center gap-3 px-4 py-3"
       style={[{ opacity: disabled ? 0.5 : 1 }, style]}
     >
       <View
-        className="items-center justify-center rounded-2xl"
-        style={{ width: 44, height: 44, backgroundColor: `${theme.action.base}14` }}
+        className="items-center justify-center rounded-xl"
+        style={{ width: 36, height: 36, backgroundColor: `${theme.action.base}14` }}
       >
-        <Icon color={theme.action.base} size={22} strokeWidth={2.25} />
+        <Icon color={theme.action.base} size={18} strokeWidth={2.25} />
       </View>
       <View className="flex-1">
         <Text className="text-body-lg" numberOfLines={1} style={{ color: theme.colors.ink }}>
@@ -76,7 +76,7 @@ export function ActionRow({ icon: Icon, label, caption, onPress, loading = false
       {loading ? (
         <ActivityIndicator color={theme.action.base} />
       ) : showChevron && onPress ? (
-        <ChevronRight color={theme.colors.inkMuted} size={20} />
+        <ChevronRight color={theme.colors.inkMuted} size={18} />
       ) : null}
     </AnimatedPressable>
   );
@@ -95,7 +95,7 @@ export function ActionRowGroup({ children }: ActionRowGroupProps) {
     <View className="overflow-hidden rounded-3xl border" style={{ backgroundColor: theme.colors.elevated, borderColor: theme.colors.hairline }}>
       {rows.map((row, index) => (
         <View key={index}>
-          {index > 0 ? <View style={{ height: 1, backgroundColor: theme.colors.hairline, marginLeft: 20 + 44 + 16 }} /> : null}
+          {index > 0 ? <View style={{ height: 1, backgroundColor: theme.colors.hairline, marginLeft: 16 + 36 + 12 }} /> : null}
           {row}
         </View>
       ))}
