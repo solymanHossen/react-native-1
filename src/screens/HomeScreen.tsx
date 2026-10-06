@@ -1,7 +1,7 @@
 import { Moon, Sun, SunMoon } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { LargeTextButton, MetricCard, StatusPill } from '../components/ui';
 import type { StatusKey } from '../theme/tokens';
 import { useTheme, useThemePreference, useSetThemePreference, type ThemePreference } from '../theme/useTheme';
@@ -33,7 +33,6 @@ function greetingForHour(hour: number): string {
 
 export default function HomeScreen() {
   const theme = useTheme();
-  const insets = useSafeAreaInsets();
   const preference = useThemePreference();
   const setPreference = useSetThemePreference();
   const [syncing, setSyncing] = useState(false);
@@ -46,7 +45,7 @@ export default function HomeScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1" edges={['left', 'right']} style={{ backgroundColor: theme.colors.canvas }}>
+    <SafeAreaView className="flex-1" edges={['top', 'left', 'right']} style={{ backgroundColor: theme.colors.canvas }}>
       <View
         className="flex-row items-center justify-between border-b px-6 py-6"
         style={{ borderColor: theme.colors.hairline }}
@@ -83,7 +82,7 @@ export default function HomeScreen() {
       <ScrollView
         className="flex-1"
         contentContainerClassName="gap-9 px-6 pt-8"
-        contentContainerStyle={{ paddingBottom: insets.bottom + 32 }}
+        contentContainerStyle={{ paddingBottom: 32 }}
         showsVerticalScrollIndicator={false}
       >
         {/* Hero: the single most important thing on the screen, sized and

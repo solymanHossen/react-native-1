@@ -1,20 +1,17 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, Text, TextInput, View } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { LargeTextButton } from '../components/ui';
 import { initializeDatabase, type DrugConflict, type DrugSearchResult, type MediusDatabase } from '../db';
 import { useTheme } from '../theme/useTheme';
 
 /**
- * Manual end-to-end exercise of src/db: encrypted SQLCipher connection, the
- * bundled FTS5 seed import, DrugSearchService's prefix+fuzzy search, and
- * ConflictService's drug-drug sentinel. Not part of the design-system
- * deliverable — a verification screen for the database layer, wired in
- * behind App.tsx's dev-only tab switcher.
+ * Search, drug-drug conflict checks, and inventory for a patient's
+ * medications — backed by the encrypted SQLCipher database (bundled FTS5
+ * seed import, prefix+fuzzy search, ConflictService's drug-drug sentinel).
  */
 export default function DrugLabScreen() {
   const theme = useTheme();
-  const insets = useSafeAreaInsets();
   const [mediusDb, setMediusDb] = useState<MediusDatabase | null>(null);
   const [initError, setInitError] = useState<string | null>(null);
 
@@ -91,7 +88,7 @@ export default function DrugLabScreen() {
   }, [mediusDb]);
 
   return (
-    <SafeAreaView className="flex-1" edges={['left', 'right']} style={{ backgroundColor: theme.colors.canvas }}>
+    <SafeAreaView className="flex-1" edges={['top', 'left', 'right']} style={{ backgroundColor: theme.colors.canvas }}>
       <View className="border-b px-6 py-6" style={{ borderColor: theme.colors.hairline }}>
         <Text className="text-title-lg" style={{ color: theme.colors.ink }}>
           Medications
@@ -101,7 +98,7 @@ export default function DrugLabScreen() {
       <ScrollView
         className="flex-1"
         contentContainerClassName="gap-9 px-6 pt-8"
-        contentContainerStyle={{ paddingBottom: insets.bottom + 32 }}
+        contentContainerStyle={{ paddingBottom: 32 }}
         showsVerticalScrollIndicator={false}
       >
         {initError ? (

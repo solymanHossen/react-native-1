@@ -128,7 +128,7 @@ export default function PrescriptionScanScreen() {
   }, []);
 
   return (
-    <SafeAreaView className="flex-1" edges={['left', 'right']} style={{ backgroundColor: '#000000' }}>
+    <SafeAreaView className="flex-1" edges={['top', 'left', 'right']} style={{ backgroundColor: '#000000' }}>
       <View className="border-b px-6 py-6" style={{ borderColor: theme.colors.hairline, backgroundColor: theme.colors.canvas }}>
         <Text className="text-title-lg" style={{ color: theme.colors.ink }}>
           Scan Prescription
