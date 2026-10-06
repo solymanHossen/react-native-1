@@ -1,7 +1,8 @@
 import { Moon, Sun, SunMoon } from 'lucide-react-native';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { HealthRecordsSheet, type HealthRecordsSheetRef } from '../components/records/HealthRecordsSheet';
 import { LargeTextButton, MetricCard, StatusPill } from '../components/ui';
 import type { StatusKey } from '../theme/tokens';
 import { useTheme, useThemePreference, useSetThemePreference, type ThemePreference } from '../theme/useTheme';
@@ -35,6 +36,7 @@ export default function HomeScreen() {
   const theme = useTheme();
   const preference = useThemePreference();
   const setPreference = useSetThemePreference();
+  const healthRecordsRef = useRef<HealthRecordsSheetRef>(null);
   const [syncing, setSyncing] = useState(false);
   const greeting = useMemo(() => greetingForHour(new Date().getHours()), []);
   const ThemeIcon = THEME_ICON[preference];
@@ -158,7 +160,20 @@ export default function HomeScreen() {
             <LargeTextButton label="Unavailable Offline" disabled onPress={() => {}} />
           </View>
         </View>
+
+        <View className="gap-4">
+          <Text className="text-caption uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
+            Health Records
+          </Text>
+          <LargeTextButton
+            label="Health Records & Backup"
+            variant="secondary"
+            onPress={() => healthRecordsRef.current?.present()}
+          />
+        </View>
       </ScrollView>
+
+      <HealthRecordsSheet ref={healthRecordsRef} />
     </SafeAreaView>
   );
 }

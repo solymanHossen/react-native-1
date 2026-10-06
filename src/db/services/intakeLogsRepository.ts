@@ -40,6 +40,20 @@ export class IntakeLogsRepository {
     return rows.map(toIntakeLog);
   }
 
+  /** Every intake row scheduled on or after `sinceIso`, joined to its medication's name — the clinical PDF report's 30-day adherence table and per-medication breakdown read from this rather than re-deriving it from `listForSchedule` per schedule. */
+  async listSince(sinceIso: string): Promise<Array<IntakeLog & { medicationName: string }>> {
+    const { rows } = await this.db.execute(
+      `SELECT il.*, m.name AS medication_name
+       FROM intake_logs il
+       JOIN schedules s ON s.id = il.schedule_id
+       JOIN medications m ON m.id = s.medication_id
+       WHERE il.scheduled_time >= ?
+       ORDER BY il.scheduled_time ASC;`,
+      [sinceIso],
+    );
+    return rows.map((row) => ({ ...toIntakeLog(row), medicationName: String(row.medication_name) }));
+  }
+
   async listMissedUnalerted(): Promise<IntakeLog[]> {
     const { rows } = await this.db.execute(
       "SELECT * FROM intake_logs WHERE status = 'MISSED' AND caregiver_alerted = 0 ORDER BY scheduled_time;",

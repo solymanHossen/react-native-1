@@ -1,9 +1,16 @@
 import { Linking } from 'react-native';
 import { initializeDatabase } from '../db';
 import { storage } from '../lib/storage';
+import { getPatientProfile } from '../profile/patientProfile';
 import type { ScheduledAlarmPayload } from './types';
 
 const CAREGIVER_PHONE_KEY = 'alarm-caregiver-phone';
+
+/** Exact template from spec. Falls back to a generic "the patient" noun when no name is configured, rather than leaving a blank gap in the sentence. */
+function sosMessageBn(patientName: string, medicationName: string): string {
+  const name = patientName.trim() || 'রোগী';
+  return `জরুরি সতর্কবার্তা: ${name} নির্ধারিত সময়ে ${medicationName} গ্রহণ করেননি। অনুগ্রহ করে যোগাযোগ করুন।`;
+}
 
 export function getCaregiverPhone(): string | null {
   return storage.getString(CAREGIVER_PHONE_KEY) ?? null;
@@ -43,7 +50,7 @@ export async function escalateToCaregiver(payload: ScheduledAlarmPayload): Promi
 
   if (!phone) return;
 
-  const message = `Medius Health alert: ${payload.medicationName} (${payload.dosageLabel}) was not confirmed taken and is now marked missed.`;
+  const message = sosMessageBn(getPatientProfile().name, payload.medicationName);
   const url = `sms:${phone}?body=${encodeURIComponent(message)}`;
   if (await Linking.canOpenURL(url)) {
     await Linking.openURL(url);
