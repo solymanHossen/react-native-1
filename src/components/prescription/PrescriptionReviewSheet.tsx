@@ -8,7 +8,7 @@ import {
 } from '@gorhom/bottom-sheet';
 import { X } from 'lucide-react-native';
 import { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, Text, View, type LayoutChangeEvent } from 'react-native';
 import {
   normalizeBengaliDigits,
   parseDoseSchedule,
@@ -156,6 +156,16 @@ export const PrescriptionReviewSheet = forwardRef<PrescriptionReviewSheetRef, Pr
   const { t } = useTranslation();
   const modalRef = useRef<BottomSheetModal>(null);
   const [reviewItems, setReviewItems] = useState<ReviewableItem[]>([]);
+  // Measured, not guessed: the footer's rendered height depends on the
+  // Confirm button's label length (translations and item counts both make
+  // it wrap to a second line sometimes), so a hardcoded padding constant
+  // inevitably drifts out of sync and clips the last card behind the
+  // floating footer. Feeding the real measured height back into the scroll
+  // view's bottom padding keeps the last card always scrollable clear of it.
+  const [footerHeight, setFooterHeight] = useState(0);
+  const handleFooterLayout = useCallback((event: LayoutChangeEvent) => {
+    setFooterHeight(event.nativeEvent.layout.height);
+  }, []);
   const snapPoints = useMemo(() => ['75%'], []);
 
   useImperativeHandle(
@@ -193,7 +203,11 @@ export const PrescriptionReviewSheet = forwardRef<PrescriptionReviewSheetRef, Pr
   const renderFooter = useCallback(
     (footerProps: BottomSheetFooterProps) => (
       <BottomSheetFooter {...footerProps} bottomInset={0}>
-        <View className="border-t px-6 py-5" style={{ borderColor: theme.colors.hairline, backgroundColor: theme.colors.surface }}>
+        <View
+          onLayout={handleFooterLayout}
+          className="border-t px-6 py-5"
+          style={{ borderColor: theme.colors.hairline, backgroundColor: theme.colors.surface }}
+        >
           <LargeTextButton
             label={t('scanRx.reviewSheet.confirmButton', { count: reviewItems.length, plural: reviewItems.length === 1 ? '' : 's' })}
             onPress={handleConfirm}
@@ -202,13 +216,22 @@ export const PrescriptionReviewSheet = forwardRef<PrescriptionReviewSheetRef, Pr
         </View>
       </BottomSheetFooter>
     ),
-    [handleConfirm, reviewItems.length, t, theme.colors.hairline, theme.colors.surface],
+    [handleConfirm, handleFooterLayout, reviewItems.length, t, theme.colors.hairline, theme.colors.surface],
   );
 
   return (
     <BottomSheetModal
       ref={modalRef}
       snapPoints={snapPoints}
+      // @gorhom/bottom-sheet v5 defaults `enableDynamicSizing` to true,
+      // which measures the sheet's height from its content instead of
+      // honoring a fixed snap point — fundamentally at odds with hosting a
+      // scrollable list here. Left on, it mismeasures around the ScrollView
+      // (whose "natural" height is undefined) and silently caps the content
+      // short, which both stalled scrolling and truncated cards past the
+      // first screenful. A fixed-height sheet with an internally scrolling
+      // list needs dynamic sizing off.
+      enableDynamicSizing={false}
       backgroundStyle={{ backgroundColor: theme.colors.surface }}
       handleIndicatorStyle={{ backgroundColor: theme.colors.hairline }}
       footerComponent={renderFooter}
@@ -223,7 +246,10 @@ export const PrescriptionReviewSheet = forwardRef<PrescriptionReviewSheetRef, Pr
           </Text>
         </View>
 
-        <BottomSheetScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 140, gap: 16 }}>
+        <BottomSheetScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: footerHeight + 24, gap: 16 }}
+        >
           {reviewItems.map((item) => (
             <ReviewCard key={item.id} item={item} onChange={(patch) => updateItem(item.id, patch)} onRemove={() => removeItem(item.id)} />
           ))}
