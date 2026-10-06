@@ -1,4 +1,11 @@
-import { BottomSheetModal, BottomSheetScrollView, BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
+import {
+  BottomSheetFooter,
+  BottomSheetModal,
+  BottomSheetScrollView,
+  BottomSheetTextInput,
+  BottomSheetView,
+  type BottomSheetFooterProps,
+} from '@gorhom/bottom-sheet';
 import { X } from 'lucide-react-native';
 import { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
@@ -176,12 +183,35 @@ export const PrescriptionReviewSheet = forwardRef<PrescriptionReviewSheetRef, Pr
     modalRef.current?.dismiss();
   }, [onConfirm, reviewItems]);
 
+  // Rendered via `footerComponent`, not as a plain sibling View after the
+  // scroll view: @gorhom/bottom-sheet measures and pins `BottomSheetFooter`
+  // to the bottom of the sheet itself, independent of the scroll view's
+  // content height. A plain View footer after a BottomSheetScrollView only
+  // stays on-screen if the scroll view is correctly height-constrained by
+  // its parent at every snap point — fragile in practice — whereas the
+  // dedicated footer API guarantees the Confirm button is always visible.
+  const renderFooter = useCallback(
+    (footerProps: BottomSheetFooterProps) => (
+      <BottomSheetFooter {...footerProps} bottomInset={0}>
+        <View className="border-t px-6 py-5" style={{ borderColor: theme.colors.hairline, backgroundColor: theme.colors.surface }}>
+          <LargeTextButton
+            label={t('scanRx.reviewSheet.confirmButton', { count: reviewItems.length, plural: reviewItems.length === 1 ? '' : 's' })}
+            onPress={handleConfirm}
+            disabled={reviewItems.length === 0}
+          />
+        </View>
+      </BottomSheetFooter>
+    ),
+    [handleConfirm, reviewItems.length, t, theme.colors.hairline, theme.colors.surface],
+  );
+
   return (
     <BottomSheetModal
       ref={modalRef}
       snapPoints={snapPoints}
       backgroundStyle={{ backgroundColor: theme.colors.surface }}
       handleIndicatorStyle={{ backgroundColor: theme.colors.hairline }}
+      footerComponent={renderFooter}
     >
       <BottomSheetView style={{ flex: 1 }}>
         <View className="px-6 pb-4">
@@ -193,7 +223,7 @@ export const PrescriptionReviewSheet = forwardRef<PrescriptionReviewSheetRef, Pr
           </Text>
         </View>
 
-        <BottomSheetScrollView contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 24, gap: 16 }}>
+        <BottomSheetScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 140, gap: 16 }}>
           {reviewItems.map((item) => (
             <ReviewCard key={item.id} item={item} onChange={(patch) => updateItem(item.id, patch)} onRemove={() => removeItem(item.id)} />
           ))}
@@ -203,14 +233,6 @@ export const PrescriptionReviewSheet = forwardRef<PrescriptionReviewSheetRef, Pr
             </Text>
           ) : null}
         </BottomSheetScrollView>
-
-        <View className="border-t px-6 py-5" style={{ borderColor: theme.colors.hairline }}>
-          <LargeTextButton
-            label={t('scanRx.reviewSheet.confirmButton', { count: reviewItems.length, plural: reviewItems.length === 1 ? '' : 's' })}
-            onPress={handleConfirm}
-            disabled={reviewItems.length === 0}
-          />
-        </View>
       </BottomSheetView>
     </BottomSheetModal>
   );
