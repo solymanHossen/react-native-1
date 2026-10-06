@@ -109,16 +109,40 @@ function RevealOnMount({ delay, children }: { delay: number; children: ReactNode
   return <Animated.View style={style}>{children}</Animated.View>;
 }
 
-/** The only remaining un-animated Pressable in the header — gets the same press-scale LargeTextButton uses elsewhere, so every tappable thing on this screen responds the same way. */
+/**
+ * The only remaining un-animated Pressable in the header — gets the same
+ * press-scale LargeTextButton uses elsewhere, so every tappable thing on
+ * this screen responds the same way. The flat tinted-circle-with-a-border
+ * version of this read as a generic icon chip, not a considered control, so
+ * two things changed: the hard border is gone in favor of a soft
+ * color-matched shadow (a bordered flat tint reads dated; a softly-lifted
+ * tint reads like a native modern control), and the icon itself now pops
+ * into place — scaling and rotating in from its resting state — every time
+ * the preference changes, instead of silently swapping with no transition
+ * at all.
+ */
 function ThemeToggleButton({ preference, onPress }: { preference: ThemePreference; onPress: () => void }) {
   const theme = useTheme();
   const scale = useSharedValue(1);
+  const iconEntrance = useSharedValue(1);
   const ThemeIcon = THEME_ICON[preference];
 
-  const style = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  useEffect(() => {
+    iconEntrance.value = 0;
+    iconEntrance.value = withSpring(1, { damping: 12, stiffness: 180 });
+  }, [preference, iconEntrance]);
+
+  const pressStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  const iconStyle = useAnimatedStyle(() => ({
+    opacity: iconEntrance.value,
+    transform: [
+      { scale: interpolate(iconEntrance.value, [0, 1], [0.4, 1], Extrapolation.CLAMP) },
+      { rotate: `${interpolate(iconEntrance.value, [0, 1], [-50, 0], Extrapolation.CLAMP)}deg` },
+    ],
+  }));
 
   return (
-    <Animated.View style={style}>
+    <Animated.View style={pressStyle}>
       <Pressable
         onPressIn={() => {
           scale.value = withSpring(0.92, PRESS_SPRING);
@@ -132,15 +156,27 @@ function ThemeToggleButton({ preference, onPress }: { preference: ThemePreferenc
         }}
         accessibilityRole="button"
         accessibilityLabel={`Theme: ${preference}. Tap to change.`}
-        className="min-h-hit min-w-hit items-center justify-center rounded-full border"
+        // Visually smaller than the app's 56dp MIN_HITBOX floor, but not a
+        // smaller *touch target* — `hitSlop` pads the invisible tappable
+        // area back out to 56dp on every side so the geriatric/low-vision
+        // accessibility floor every other interactive control on this
+        // screen gets still applies here, it just isn't drawn that large.
+        hitSlop={6}
+        className="items-center justify-center rounded-full"
         style={{
-          width: 56,
-          height: 56,
+          width: 44,
+          height: 44,
           backgroundColor: `${theme.action.base}14`,
-          borderColor: `${theme.action.base}33`,
+          shadowColor: theme.action.base,
+          shadowOffset: { width: 0, height: 3 },
+          shadowOpacity: 0.22,
+          shadowRadius: 8,
+          elevation: 3,
         }}
       >
-        <ThemeIcon color={theme.action.base} size={24} strokeWidth={2.25} />
+        <Animated.View style={iconStyle}>
+          <ThemeIcon color={theme.action.base} size={20} strokeWidth={2.25} />
+        </Animated.View>
       </Pressable>
     </Animated.View>
   );
