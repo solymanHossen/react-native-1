@@ -24,13 +24,21 @@ interface TimeSlot {
   mealRelation: MealRelation;
   labelKey: TranslationKey;
   icon: ComponentType<{ size?: number; color?: string; strokeWidth?: number }>;
+  /** Each slot gets its own shade from the app's ocean palette (not a repeat
+   * of the single teal action color) — a light-to-dark progression that
+   * actually tracks the time of day, so the four chips read as genuinely
+   * different choices at a glance instead of four identical pills. White
+   * text/icon on every one is intentional: each shade was picked to clear
+   * 4.5:1 contrast with white, the same bar every other status/action color
+   * in this app's token file is held to. */
+  color: string;
 }
 
 const TIME_SLOTS: TimeSlot[] = [
-  { node: 'BREAKFAST', timeUtc: '08:00', mealRelation: 'WITH', labelKey: 'alarms.timeMorning', icon: Sunrise },
-  { node: 'LUNCH', timeUtc: '13:00', mealRelation: 'WITH', labelKey: 'alarms.timeAfternoon', icon: Sun },
-  { node: 'DINNER', timeUtc: '20:00', mealRelation: 'WITH', labelKey: 'alarms.timeEvening', icon: Sunset },
-  { node: 'BEDTIME', timeUtc: '22:00', mealRelation: 'WITH', labelKey: 'alarms.timeBedtime', icon: Moon },
+  { node: 'BREAKFAST', timeUtc: '08:00', mealRelation: 'WITH', labelKey: 'alarms.timeMorning', icon: Sunrise, color: '#005F93' },
+  { node: 'LUNCH', timeUtc: '13:00', mealRelation: 'WITH', labelKey: 'alarms.timeAfternoon', icon: Sun, color: '#006B81' },
+  { node: 'DINNER', timeUtc: '20:00', mealRelation: 'WITH', labelKey: 'alarms.timeEvening', icon: Sunset, color: '#00486E' },
+  { node: 'BEDTIME', timeUtc: '22:00', mealRelation: 'WITH', labelKey: 'alarms.timeBedtime', icon: Moon, color: '#020338' },
 ];
 
 /**
@@ -200,17 +208,17 @@ export default function AlarmsScreen() {
                           onPress={() => setSelectedMedicationId(selected ? null : medication.id)}
                           accessibilityRole="button"
                           accessibilityState={{ selected }}
-                          className="min-h-hit flex-row items-center gap-2 rounded-full border px-5"
+                          className="min-h-hit flex-row items-center gap-1.5 rounded-full border px-4 py-2"
                           style={{
                             backgroundColor: selected ? theme.action.base : theme.colors.surface,
                             borderColor: selected ? theme.action.base : theme.colors.hairline,
                           }}
                         >
-                          {selected ? <Check color={theme.action.ink} size={16} strokeWidth={2.5} /> : null}
+                          {selected ? <Check color={theme.action.ink} size={15} strokeWidth={2.5} /> : null}
                           <Text
-                            className="text-body-lg"
+                            className="text-caption"
                             numberOfLines={1}
-                            style={{ color: selected ? theme.action.ink : theme.colors.ink }}
+                            style={{ color: selected ? theme.action.ink : theme.colors.ink, fontWeight: '600' }}
                           >
                             {medication.name}
                           </Text>
@@ -224,7 +232,7 @@ export default function AlarmsScreen() {
                       <Text className="text-caption" style={{ color: theme.colors.inkMuted }}>
                         {t('alarms.pickTime')}
                       </Text>
-                      <View className="flex-row flex-wrap gap-2.5">
+                      <View className="gap-2.5">
                         {TIME_SLOTS.map((slot) => {
                           const SlotIcon = slot.icon;
                           return (
@@ -232,12 +240,20 @@ export default function AlarmsScreen() {
                               key={slot.node}
                               onPress={() => handleAddReminder(slot)}
                               accessibilityRole="button"
-                              className="min-h-hit flex-row items-center gap-2 rounded-full border px-5"
-                              style={{ backgroundColor: theme.colors.surface, borderColor: theme.colors.hairline }}
+                              className="min-h-hit flex-row items-center gap-3 rounded-2xl px-5 py-4"
+                              style={{ backgroundColor: slot.color }}
                             >
-                              <SlotIcon color={theme.action.base} size={17} strokeWidth={2.25} />
-                              <Text className="text-body-lg" style={{ color: theme.colors.ink }}>
-                                {t(slot.labelKey)} · {formatTimeLabel(slot.timeUtc)}
+                              <View
+                                className="items-center justify-center rounded-full"
+                                style={{ width: 40, height: 40, backgroundColor: 'rgba(255,255,255,0.2)' }}
+                              >
+                                <SlotIcon color="#FFFFFF" size={20} strokeWidth={2.25} />
+                              </View>
+                              <Text className="flex-1 text-body-lg" style={{ color: '#FFFFFF', fontWeight: '700' }}>
+                                {t(slot.labelKey)}
+                              </Text>
+                              <Text className="text-body-lg" style={{ color: 'rgba(255,255,255,0.85)' }}>
+                                {formatTimeLabel(slot.timeUtc)}
                               </Text>
                             </Pressable>
                           );
