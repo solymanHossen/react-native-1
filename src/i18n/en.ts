@@ -134,7 +134,7 @@ export const en = {
     noSchedulesYet: 'No schedules yet.',
     doseAt: '{{quantity}} {{form}} at {{time}}',
     nfcRegistered: 'Tag registered',
-    nfcFallback: 'No tag yet — confirm with your camera instead',
+    nfcFallback: 'Camera confirm',
     off: 'Off',
     turnedOn: '{{name}} alarm turned on.',
     turnedOff: '{{name}} alarm turned off.',

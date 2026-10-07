@@ -1,5 +1,5 @@
 import { FlashList } from '@shopify/flash-list';
-import { Check, Moon, Pill, ShieldAlert, Sun, Sunrise, Sunset } from 'lucide-react-native';
+import { Camera, Check, Clock, Moon, Nfc, ShieldAlert, Sun, Sunrise, Sunset } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useState, type ComponentType } from 'react';
 import { Pressable, Switch, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -40,6 +40,24 @@ const TIME_SLOTS: TimeSlot[] = [
   { node: 'DINNER', timeUtc: '20:00', mealRelation: 'WITH', labelKey: 'alarms.timeEvening', icon: Sunset, color: '#00486E' },
   { node: 'BEDTIME', timeUtc: '22:00', mealRelation: 'WITH', labelKey: 'alarms.timeBedtime', icon: Moon, color: '#020338' },
 ];
+
+/**
+ * The same icon + color every TIME_SLOTS entry uses, keyed by time_node so a
+ * saved schedule's card can be colored identically to however it looked when
+ * it was added — the "Add a Reminder" picker and "Scheduled Alarms" list
+ * read as one coherent feature instead of a colorful picker feeding into a
+ * flat gray list. FASTING isn't offered by the picker above (nothing in this
+ * screen creates it anymore), but existing schedules from before this
+ * redesign can still carry it, so it gets its own entry rather than crashing
+ * on a missing lookup.
+ */
+const TIME_NODE_STYLE: Record<TimeNode, { icon: ComponentType<{ size?: number; color?: string; strokeWidth?: number }>; color: string }> = {
+  BREAKFAST: { icon: Sunrise, color: '#005F93' },
+  LUNCH: { icon: Sun, color: '#006B81' },
+  DINNER: { icon: Sunset, color: '#00486E' },
+  BEDTIME: { icon: Moon, color: '#020338' },
+  FASTING: { icon: Clock, color: '#137586' },
+};
 
 /**
  * Manage reminder times for your medications, plus the caregiver escalation
@@ -275,43 +293,64 @@ export default function AlarmsScreen() {
             {t('alarms.noSchedulesYet')}
           </Text>
         }
-        renderItem={({ item: schedule }) => (
-          <View
-            className="flex-row items-center gap-4 rounded-3xl border p-5"
-            style={{
-              marginBottom: 16,
-              backgroundColor: theme.colors.elevated,
-              borderColor: theme.colors.hairline,
-              opacity: schedule.is_active ? 1 : 0.55,
-            }}
-          >
+        renderItem={({ item: schedule }) => {
+          const nodeStyle = TIME_NODE_STYLE[schedule.time_node];
+          const NodeIcon = nodeStyle.icon;
+          const confirmTint = schedule.nfcTagUid ? theme.statusTint('taken') : theme.statusTint('pending');
+          const confirmText = schedule.nfcTagUid ? theme.statusText('taken') : theme.statusText('pending');
+          return (
             <View
-              className="items-center justify-center rounded-2xl"
-              style={{ width: 44, height: 44, backgroundColor: `${theme.action.base}14` }}
+              className="flex-row items-start gap-4 rounded-3xl border p-5"
+              style={{ marginBottom: 16, backgroundColor: theme.colors.elevated, borderColor: theme.colors.hairline }}
             >
-              <Pill color={theme.action.base} size={22} strokeWidth={2.25} />
-            </View>
-            <View className="flex-1 gap-1">
-              <Text className="text-body-lg" numberOfLines={1} style={{ color: theme.colors.ink, fontWeight: '600' }}>
-                {schedule.medicationName}
-              </Text>
-              <Text className="text-caption" style={{ color: theme.colors.inkSecondary }}>
-                {t('alarms.doseAt', {
-                  quantity: schedule.dose_quantity,
-                  form: schedule.medicationForm,
-                  time: formatTimeLabel(schedule.time_utc),
-                })}
-              </Text>
-              <Text className="text-caption" style={{ color: theme.colors.inkMuted }}>
-                {schedule.nfcTagUid ? t('alarms.nfcRegistered') : t('alarms.nfcFallback')}
-                {schedule.is_active ? '' : ` · ${t('alarms.off')}`}
-              </Text>
-            </View>
-            {/* A real on/off switch, not just a "delete" option — turning an
-                alarm off has to be reversible and has to actually cancel the
-                live notification, not merely hide the row (see
-                setScheduleActive's own doc comment for why). */}
+              {/* Colored to match whichever time-of-day pill this schedule
+                  was created from (see TIME_NODE_STYLE) — the badge goes
+                  neutral gray when paused instead of dimming the whole card,
+                  so the medication name and dose stay fully legible even for
+                  a reminder that's currently off. */}
+              <View
+                className="items-center justify-center rounded-2xl"
+                style={{ width: 44, height: 44, backgroundColor: schedule.is_active ? nodeStyle.color : theme.colors.hairline }}
+              >
+                <NodeIcon color={schedule.is_active ? '#FFFFFF' : theme.colors.inkMuted} size={22} strokeWidth={2.25} />
+              </View>
+              <View className="flex-1 gap-1.5">
+                <Text className="text-body-lg" numberOfLines={1} style={{ color: theme.colors.ink, fontWeight: '600' }}>
+                  {schedule.medicationName}
+                </Text>
+                <Text className="text-caption" style={{ color: theme.colors.inkSecondary }}>
+                  {t('alarms.doseAt', {
+                    quantity: schedule.dose_quantity,
+                    form: schedule.medicationForm,
+                    time: formatTimeLabel(schedule.time_utc),
+                  })}
+                </Text>
+                <View className="flex-row flex-wrap items-center gap-1.5">
+                  <View className="flex-row items-center gap-1 rounded-full px-2.5 py-1" style={{ backgroundColor: confirmTint }}>
+                    {schedule.nfcTagUid ? (
+                      <Nfc color={confirmText} size={12} strokeWidth={2.5} />
+                    ) : (
+                      <Camera color={confirmText} size={12} strokeWidth={2.5} />
+                    )}
+                    <Text className="text-caption" numberOfLines={1} style={{ color: confirmText }}>
+                      {schedule.nfcTagUid ? t('alarms.nfcRegistered') : t('alarms.nfcFallback')}
+                    </Text>
+                  </View>
+                  {!schedule.is_active ? (
+                    <View className="rounded-full px-2.5 py-1" style={{ backgroundColor: theme.colors.hairline }}>
+                      <Text className="text-caption" style={{ color: theme.colors.inkMuted }}>
+                        {t('alarms.off')}
+                      </Text>
+                    </View>
+                  ) : null}
+                </View>
+              </View>
+              {/* A real on/off switch, not just a "delete" option — turning an
+                  alarm off has to be reversible and has to actually cancel the
+                  live notification, not merely hide the row (see
+                  setScheduleActive's own doc comment for why). */}
             <Switch
+              className="self-center"
               value={schedule.is_active}
               onValueChange={(next) => handleToggleActive(schedule, next)}
               trackColor={{ false: theme.colors.hairline, true: theme.action.base }}
@@ -322,8 +361,9 @@ export default function AlarmsScreen() {
                   : t('alarms.turnOnAccessibility', { name: schedule.medicationName })
               }
             />
-          </View>
-        )}
+            </View>
+          );
+        }}
       />
     </SafeAreaView>
   );

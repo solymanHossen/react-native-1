@@ -131,7 +131,7 @@ export const bn: typeof en = {
     noSchedulesYet: 'এখনো কোনো সময়সূচি নেই।',
     doseAt: '{{time}} সময়ে {{quantity}} {{form}}',
     nfcRegistered: 'ট্যাগ নিবন্ধিত',
-    nfcFallback: 'এখনো কোনো ট্যাগ নেই — এর বদলে ক্যামেরা দিয়ে নিশ্চিত করুন',
+    nfcFallback: 'ক্যামেরা নিশ্চিতকরণ',
     off: 'বন্ধ',
     turnedOn: '{{name}} অ্যালার্ম চালু করা হয়েছে।',
     turnedOff: '{{name}} অ্যালার্ম বন্ধ করা হয়েছে।',
