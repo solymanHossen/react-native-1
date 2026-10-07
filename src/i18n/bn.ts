@@ -70,6 +70,7 @@ export const bn: typeof en = {
     logAReading: 'রিডিং লগ করুন',
     logAReadingCaption: 'রক্তচাপ, গ্লুকোজ, ওজন',
     syncWithClinic: 'ক্লিনিকের সাথে সিঙ্ক করুন',
+    syncWithClinicCaption: 'আপনার পরিচর্যা দলের সাথে সর্বশেষ রিপোর্ট শেয়ার করুন',
     syncing: 'সিঙ্ক হচ্ছে…',
     healthRecords: 'স্বাস্থ্য রেকর্ড',
     healthRecordsAndBackup: 'স্বাস্থ্য রেকর্ড ও ব্যাকআপ',

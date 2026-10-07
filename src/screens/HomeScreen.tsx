@@ -17,6 +17,7 @@ import { SettingsSheet, type SettingsSheetRef } from '../components/settings/Set
 import { ActionRow, ActionRowGroup, AppLogo, LargeTextButton, MetricCard, StatusPill } from '../components/ui';
 import { useTranslation, type TranslationKey } from '../i18n';
 import { triggerHaptic } from '../lib/haptics';
+import { generateClinicalReportPdf, shareClinicalReportPdf } from '../reports/pdfService';
 import { useIntakeQueueStore, useSentinelStore, useVitalsStore, type IntakeQueueStatus } from '../store';
 import type { StatusKey } from '../theme/tokens';
 import { useTheme, useThemePreference, useSetThemePreference, type ThemePreference } from '../theme/useTheme';
@@ -195,6 +196,7 @@ export default function HomeScreen({ onNavigateToVitals }: HomeScreenProps) {
   const healthRecordsRef = useRef<HealthRecordsSheetRef>(null);
   const settingsRef = useRef<SettingsSheetRef>(null);
   const [syncing, setSyncing] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const greeting = useMemo(() => t(greetingKeyForHour(new Date().getHours())), [t]);
 
@@ -249,10 +251,28 @@ export default function HomeScreen({ onNavigateToVitals }: HomeScreenProps) {
       ? classifyBloodPressure(latestVitals.systolic.value, latestVitals.diastolic.value)
       : null;
 
-  const handleSync = () => {
+  // There is no clinic server this app talks to — it's zero-cloud by design
+  // (see the vault/report features elsewhere in this app, all on-device).
+  // "Sync with Clinic" previously faked that with a 1.5s timeout that did
+  // nothing at all. The honest, actually-useful version of "sync" for an
+  // offline-first app is the same thing Health Records already does for the
+  // same data: generate the current clinical PDF and hand it to the OS share
+  // sheet, so the person can actually get it to their clinic over whatever
+  // channel they already use (email, WhatsApp, their portal's upload form).
+  const handleSync = useCallback(async () => {
     setSyncing(true);
-    setTimeout(() => setSyncing(false), 1500);
-  };
+    setSyncStatus(null);
+    try {
+      const filePath = await generateClinicalReportPdf();
+      await shareClinicalReportPdf(filePath);
+      setSyncStatus(t('healthRecords.reportGenerated'));
+      triggerHaptic('notificationSuccess');
+    } catch (error) {
+      setSyncStatus(t('healthRecords.reportFailed', { error: error instanceof Error ? error.message : String(error) }));
+    } finally {
+      setSyncing(false);
+    }
+  }, [t]);
 
   // Large-title-collapse: the greeting/title block lives in the scrollable
   // content (not pinned), so it naturally scrolls away as the user scrolls
@@ -572,11 +592,17 @@ export default function HomeScreen({ onNavigateToVitals }: HomeScreenProps) {
               <ActionRow
                 icon={RefreshCw}
                 label={syncing ? t('home.syncing') : t('home.syncWithClinic')}
+                caption={t('home.syncWithClinicCaption')}
                 loading={syncing}
                 onPress={handleSync}
                 showChevron={false}
               />
             </ActionRowGroup>
+            {syncStatus ? (
+              <Text className="text-caption" style={{ color: theme.colors.inkSecondary }}>
+                {syncStatus}
+              </Text>
+            ) : null}
           </View>
         </RevealOnMount>
 

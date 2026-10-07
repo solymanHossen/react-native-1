@@ -73,6 +73,7 @@ export const en = {
     logAReading: 'Log a Reading',
     logAReadingCaption: 'Blood pressure, blood sugar, weight',
     syncWithClinic: 'Sync with Clinic',
+    syncWithClinicCaption: 'Share your latest report with your care team',
     syncing: 'Syncing…',
     healthRecords: 'Health Records',
     healthRecordsAndBackup: 'Health Records & Backup',
