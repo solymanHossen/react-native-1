@@ -44,7 +44,7 @@ export const bn: typeof en = {
     greetingMorning: 'শুভ সকাল',
     greetingAfternoon: 'শুভ অপরাহ্ন',
     greetingEvening: 'শুভ সন্ধ্যা',
-    brand: 'Medius Health',
+    brand: 'Medicine Reminder',
     todaysProgress: 'আজকের অগ্রগতি',
     doseCount: '{{total}}টির মধ্যে {{taken}}টি ডোজ',
     progressEmpty: 'আজ এখনো কিছু নির্ধারিত নেই',
@@ -323,7 +323,7 @@ export const bn: typeof en = {
     exportFailed: 'ব্যাকআপ এক্সপোর্ট করা যায়নি: {{error}}',
     restoreFromBackup: 'ব্যাকআপ থেকে পুনরুদ্ধার করুন',
     checkingFile: 'ফাইল পরীক্ষা করা হচ্ছে…',
-    restoreInvalid: 'এই ফাইলটি এই ডিভাইসের জন্য একটি বৈধ Medius Health ব্যাকআপ নয়: {{error}}',
+    restoreInvalid: 'এই ফাইলটি এই ডিভাইসের জন্য একটি বৈধ Medicine Reminder ব্যাকআপ নয়: {{error}}',
     restoreConfirmTitle: '"{{fileName}}" পুনরুদ্ধার করবেন?',
     restoreConfirmBody:
       'এটি এই ডিভাইসের বর্তমান সমস্ত ওষুধ, সময়সূচি, ভাইটালস রিডিং এবং উপসর্গ লগ এই ব্যাকআপের তথ্য দিয়ে প্রতিস্থাপন করবে। আপনার বর্তমান তথ্য প্রথমে পাশে সংরক্ষিত হবে, তবে অ্যাপের ভেতর থেকে এটি পূর্বাবস্থায় ফেরানো যাবে না।',

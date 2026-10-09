@@ -47,7 +47,7 @@ export const en = {
     greetingMorning: 'Good morning',
     greetingAfternoon: 'Good afternoon',
     greetingEvening: 'Good evening',
-    brand: 'Medius Health',
+    brand: 'Medicine Reminder',
     todaysProgress: "Today's Progress",
     doseCount: '{{taken}} of {{total}} doses',
     progressEmpty: 'Nothing scheduled yet today',
@@ -326,7 +326,7 @@ export const en = {
     exportFailed: 'Could not export the backup: {{error}}',
     restoreFromBackup: 'Restore from Backup',
     checkingFile: 'Checking file…',
-    restoreInvalid: "That file isn't a valid Medius Health backup for this device: {{error}}",
+    restoreInvalid: "That file isn't a valid Medicine Reminder backup for this device: {{error}}",
     restoreConfirmTitle: 'Restore "{{fileName}}"?',
     restoreConfirmBody:
       "This replaces every medication, schedule, vitals reading, and symptom log currently on this device with what's in this backup. Your current data is saved alongside it first, but this cannot be undone from within the app.",

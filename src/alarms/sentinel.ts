@@ -151,7 +151,7 @@ export async function scheduleDailySentinelCheck(hour = 9, minute = 0): Promise<
   await notifee.createTriggerNotification(
     {
       id: DAILY_SENTINEL_NOTIFICATION_ID,
-      title: 'Medius Health',
+      title: 'Medicine Reminder',
       body: 'Checking your medication stock and expiry dates…',
       android: { channelId: SENTINEL_CHANNEL_ID },
     },

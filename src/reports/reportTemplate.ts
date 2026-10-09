@@ -169,7 +169,7 @@ export function buildClinicalReportHtml(data: ClinicalReportData): string {
 </head>
 <body>
   <h1>Clinical Medication &amp; Vitals Report</h1>
-  <p class="subtitle">Generated ${formatDateTime(data.generatedAtIso)} · Medius Health (offline, patient-reported record)</p>
+  <p class="subtitle">Generated ${formatDateTime(data.generatedAtIso)} · Medicine Reminder (offline, patient-reported record)</p>
 
   <h2>Patient Demographics &amp; Emergency Identifiers</h2>
   <div class="demographics">${patientRows}</div>
