@@ -330,13 +330,24 @@ export default function HomeScreen({ onNavigateToVitals, onOpenSettings }: HomeS
           headerElevationStyle,
         ]}
       >
-        <Animated.View style={[{ flexDirection: 'row', alignItems: 'center', gap: 10 }, compactTitleStyle]}>
+        <Animated.View style={[{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }, compactTitleStyle]}>
           <AppLogo size={30} />
           <Text className="text-title-lg" style={{ color: theme.colors.ink }} numberOfLines={1}>
             {t('home.brand')}
           </Text>
         </Animated.View>
-        <ThemeToggleButton preference={preference} onPress={() => setPreference(NEXT_PREFERENCE[preference])} />
+        <View className="flex-row items-center gap-2">
+          <Pressable
+            onPress={onOpenSettings}
+            accessibilityRole="button"
+            accessibilityLabel={t('home.settings')}
+            className="min-h-hit min-w-hit items-center justify-center rounded-full"
+            style={{ backgroundColor: `${theme.action.base}14` }}
+          >
+            <Settings color={theme.action.base} size={21} strokeWidth={2.25} />
+          </Pressable>
+          <ThemeToggleButton preference={preference} onPress={() => setPreference(NEXT_PREFERENCE[preference])} />
+        </View>
       </Animated.View>
       <Animated.View style={[{ height: 1, backgroundColor: theme.colors.hairline }, headerHairlineStyle]} />
 
@@ -629,7 +640,6 @@ export default function HomeScreen({ onNavigateToVitals, onOpenSettings }: HomeS
                 caption={t('home.healthRecordsCaption')}
                 onPress={() => healthRecordsRef.current?.present()}
               />
-              <ActionRow icon={Settings} label={t('home.settings')} onPress={onOpenSettings} />
             </ActionRowGroup>
           </View>
         </RevealOnMount>
