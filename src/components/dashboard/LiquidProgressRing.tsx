@@ -94,11 +94,19 @@ export function LiquidProgressRing({ ratio, size = 180, label }: LiquidProgressR
         <Circle cx={radius} cy={radius} r={radius - 2} style="stroke" strokeWidth={3} color={theme.colors.hairline} />
       </Canvas>
       <View pointerEvents="none" style={{ position: 'absolute', alignItems: 'center' }}>
-        <Text className="text-title-lg" style={{ color: theme.colors.ink }}>
+        <Text
+          className="text-title-lg"
+          style={{
+            color: displayPercent >= 35 ? theme.action.ink : theme.colors.ink,
+            textShadowColor: displayPercent >= 35 ? 'rgba(0, 0, 0, 0.18)' : 'transparent',
+            textShadowOffset: { width: 0, height: 1 },
+            textShadowRadius: 2,
+          }}
+        >
           {displayPercent}%
         </Text>
         {label ? (
-          <Text className="text-caption" style={{ color: theme.colors.inkSecondary }}>
+          <Text className="text-caption" style={{ color: displayPercent >= 35 ? theme.action.ink : theme.colors.inkSecondary }}>
             {label}
           </Text>
         ) : null}
