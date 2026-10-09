@@ -8,6 +8,7 @@ export const en = {
   common: {
     save: 'Save',
     cancel: 'Cancel',
+    close: 'Close',
     done: 'Done',
     decrease: 'Decrease',
     increase: 'Increase',
@@ -174,6 +175,10 @@ export const en = {
   },
   vitals: {
     title: 'Vitals',
+    logVital: 'Log a vital',
+    logVitalAccessibility: 'Log {{vital}}',
+    tapToLog: 'Tap to enter a reading',
+    modalSubtitle: 'Enter a new reading and save it securely on this device.',
     bloodPressure: 'Blood Pressure',
     systolic: 'Systolic',
     diastolic: 'Diastolic',

@@ -10,6 +10,7 @@ export const bn: typeof en = {
   common: {
     save: 'সংরক্ষণ করুন',
     cancel: 'বাতিল',
+    close: 'বন্ধ করুন',
     done: 'সম্পন্ন',
     decrease: 'কমান',
     increase: 'বাড়ান',
@@ -171,6 +172,10 @@ export const bn: typeof en = {
   },
   vitals: {
     title: 'ভাইটালস',
+    logVital: 'ভাইটাল রেকর্ড করুন',
+    logVitalAccessibility: '{{vital}} রেকর্ড করুন',
+    tapToLog: 'রিডিং দিতে ট্যাপ করুন',
+    modalSubtitle: 'নতুন রিডিং লিখে এই ডিভাইসে নিরাপদে সংরক্ষণ করুন।',
     bloodPressure: 'রক্তচাপ',
     systolic: 'সিস্টোলিক',
     diastolic: 'ডায়াস্টোলিক',

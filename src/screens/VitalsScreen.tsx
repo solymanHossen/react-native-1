@@ -1,5 +1,7 @@
-import { useCallback, useEffect, useRef, useState, type ElementRef } from 'react';
-import { Pressable, ScrollView, Text, View, type LayoutChangeEvent } from 'react-native';
+import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
+import { Activity, Droplets, Scale, Thermometer, X } from 'lucide-react-native';
+import { useCallback, useEffect, useMemo, useRef, useState, type ElementRef, type RefObject } from 'react';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BloodPressureCard } from '../components/vitals/BloodPressureCard';
 import { Sparkline } from '../components/vitals/Sparkline';
@@ -15,6 +17,7 @@ import { useTheme } from '../theme/useTheme';
 
 type GlucoseContext = 'Fasting' | 'Post-prandial';
 type TrendRange = 7 | 30;
+type VitalEntryType = 'BP' | 'BLOOD_SUGAR' | 'WEIGHT' | 'TEMPERATURE';
 
 export interface VitalsScreenProps {
   focusVital?: VitalType | null;
@@ -31,6 +34,121 @@ const GLUCOSE_CONTEXT_KEY: Record<GlucoseContext, TranslationKey> = {
   Fasting: 'vitals.fasting',
   'Post-prandial': 'vitals.postPrandial',
 };
+
+function VitalEntrySheet({
+  modalRef,
+  selected,
+  systolic,
+  diastolic,
+  glucose,
+  glucoseContext,
+  weight,
+  temperature,
+  onChangeSystolic,
+  onChangeDiastolic,
+  onChangeGlucose,
+  onChangeGlucoseContext,
+  onChangeWeight,
+  onChangeTemperature,
+  onSaveBloodPressure,
+  onSaveGlucose,
+  onSaveWeight,
+  onSaveTemperature,
+}: {
+  modalRef: RefObject<ElementRef<typeof BottomSheetModal> | null>;
+  selected: VitalEntryType | null;
+  systolic: number;
+  diastolic: number;
+  glucose: number;
+  glucoseContext: GlucoseContext;
+  weight: number;
+  temperature: number;
+  onChangeSystolic: (value: number) => void;
+  onChangeDiastolic: (value: number) => void;
+  onChangeGlucose: (value: number) => void;
+  onChangeGlucoseContext: (value: GlucoseContext) => void;
+  onChangeWeight: (value: number) => void;
+  onChangeTemperature: (value: number) => void;
+  onSaveBloodPressure: () => void;
+  onSaveGlucose: () => void;
+  onSaveWeight: () => void;
+  onSaveTemperature: () => void;
+}) {
+  const theme = useTheme();
+  const { t } = useTranslation();
+  const snapPoints = useMemo(() => ['64%'], []);
+  if (!selected) return null;
+  const title =
+    selected === 'BP'
+      ? t('vitals.bloodPressure')
+      : selected === 'BLOOD_SUGAR'
+        ? t('vitals.bloodGlucose')
+        : selected === 'WEIGHT'
+          ? t('vitals.bodyWeight')
+          : t('vitals.bodyTemperature');
+
+  return (
+    <BottomSheetModal
+      ref={modalRef}
+      snapPoints={snapPoints}
+      backgroundStyle={{ backgroundColor: theme.colors.surface }}
+      handleIndicatorStyle={{ backgroundColor: theme.colors.hairline }}
+    >
+      <BottomSheetView className="flex-1 gap-5 px-6 pt-2">
+        <View className="flex-row items-center justify-between">
+          <View>
+            <Text className="text-title-lg" style={{ color: theme.colors.ink }}>
+              {title}
+            </Text>
+            <Text className="text-caption" style={{ color: theme.colors.inkSecondary }}>
+              {t('vitals.modalSubtitle')}
+            </Text>
+          </View>
+          <Pressable onPress={() => modalRef.current?.dismiss()} accessibilityRole="button" accessibilityLabel={t('common.close')} className="min-h-hit min-w-hit items-center justify-center">
+            <X color={theme.colors.inkMuted} size={22} />
+          </Pressable>
+        </View>
+        {selected === 'BP' ? (
+          <>
+            <BloodPressureCard systolic={systolic} diastolic={diastolic} onChangeSystolic={onChangeSystolic} onChangeDiastolic={onChangeDiastolic} />
+            <LargeTextButton label={t('vitals.saveBloodPressure')} onPress={() => { onSaveBloodPressure(); modalRef.current?.dismiss(); }} />
+          </>
+        ) : selected === 'BLOOD_SUGAR' ? (
+          <>
+            <View className="flex-row gap-3">
+              {(['Fasting', 'Post-prandial'] as const).map((option) => (
+                <Pressable
+                  key={option}
+                  onPress={() => onChangeGlucoseContext(option)}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: glucoseContext === option }}
+                  className="min-h-hit flex-1 items-center justify-center rounded-full border"
+                  style={{ backgroundColor: glucoseContext === option ? theme.action.base : theme.colors.elevated, borderColor: glucoseContext === option ? theme.action.base : theme.colors.hairline }}
+                >
+                  <Text className="text-caption" style={{ color: glucoseContext === option ? theme.action.ink : theme.colors.ink }}>
+                    {t(GLUCOSE_CONTEXT_KEY[option])}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+            <VitalStepperCard label={title} value={glucose} unit="mmol/L" step={0.1} min={1} max={30} decimals={1} onChange={onChangeGlucose} />
+            <LargeTextButton label={t('vitals.saveBloodGlucose')} onPress={() => { onSaveGlucose(); modalRef.current?.dismiss(); }} />
+          </>
+        ) : selected === 'WEIGHT' ? (
+          <>
+            <VitalStepperCard label={title} value={weight} unit="kg" step={0.1} min={2} max={300} decimals={1} onChange={onChangeWeight} />
+            <LargeTextButton label={t('vitals.saveWeight')} onPress={() => { onSaveWeight(); modalRef.current?.dismiss(); }} />
+          </>
+        ) : (
+          <>
+            <VitalStepperCard label={title} value={temperature} unit="°F" step={0.1} min={90} max={110} decimals={1} onChange={onChangeTemperature} />
+            <LargeTextButton label={t('vitals.saveTemperature')} onPress={() => { onSaveTemperature(); modalRef.current?.dismiss(); }} />
+          </>
+        )}
+      </BottomSheetView>
+    </BottomSheetModal>
+  );
+}
 
 function isoDaysAgo(days: number): string {
   const date = new Date();
@@ -57,6 +175,8 @@ export default function VitalsScreen({ focusVital = null }: VitalsScreenProps) {
   const [glucoseContext, setGlucoseContext] = useState<GlucoseContext>('Fasting');
   const [weight, setWeight] = useState(70);
   const [temperature, setTemperature] = useState(98.6);
+  const [selectedEntry, setSelectedEntry] = useState<VitalEntryType | null>(null);
+  const entrySheetRef = useRef<ElementRef<typeof BottomSheetModal>>(null);
   const [status, setStatus] = useState<string | null>(null);
 
   const [trendType, setTrendType] = useState<VitalType>('BP_SYS');
@@ -119,6 +239,30 @@ export default function VitalsScreen({ focusVital = null }: VitalsScreenProps) {
     refreshLatestVitals().catch(() => {});
   }, [systolic, diastolic, trendType, trendRange, refreshTrend, refreshLatestVitals, t]);
 
+  const openEntry = useCallback((type: VitalEntryType) => {
+    setSelectedEntry(type);
+    setTimeout(() => entrySheetRef.current?.present(), 50);
+    triggerHaptic('selection');
+  }, []);
+
+  useEffect(() => {
+    if (!focusVital) return;
+    const timer = setTimeout(() => {
+      const entryType: VitalEntryType =
+        focusVital === 'BP_SYS' || focusVital === 'BP_DIA' ? 'BP' :
+          focusVital === 'BLOOD_SUGAR' || focusVital === 'WEIGHT' || focusVital === 'TEMPERATURE' ? focusVital : 'BP';
+      openEntry(entryType);
+    }, 180);
+    return () => clearTimeout(timer);
+  }, [focusVital, openEntry]);
+
+  const entryCards: Array<{ type: VitalEntryType; label: string; icon: typeof Activity; color: string }> = [
+    { type: 'BP', label: t('vitals.bloodPressure'), icon: Activity, color: '#B62616' },
+    { type: 'BLOOD_SUGAR', label: t('vitals.bloodGlucose'), icon: Droplets, color: '#007F7F' },
+    { type: 'WEIGHT', label: t('vitals.bodyWeight'), icon: Scale, color: '#8E5C00' },
+    { type: 'TEMPERATURE', label: t('vitals.bodyTemperature'), icon: Thermometer, color: '#CD0000' },
+  ];
+
   return (
     <SafeAreaView className="flex-1" edges={['top', 'left', 'right']} style={{ backgroundColor: theme.colors.canvas }}>
       <View className="border-b px-6 py-6" style={{ borderColor: theme.colors.hairline }}>
@@ -133,74 +277,32 @@ export default function VitalsScreen({ focusVital = null }: VitalsScreenProps) {
       </View>
 
       <ScrollView ref={scrollRef} className="flex-1" contentContainerClassName="gap-7 px-6 py-7" showsVerticalScrollIndicator={false}>
-        <BloodPressureCard systolic={systolic} diastolic={diastolic} onChangeSystolic={setSystolic} onChangeDiastolic={setDiastolic} />
-        <LargeTextButton label={t('vitals.saveBloodPressure')} variant="secondary" onPress={handleSaveBloodPressure} />
-
-        <View
-          className="gap-3"
-          onLayout={(event: LayoutChangeEvent) => {
-            sectionOffsets.current.BLOOD_SUGAR = event.nativeEvent.layout.y;
-            if (focusVital === 'BLOOD_SUGAR') scrollToVital('BLOOD_SUGAR');
-          }}
-        >
-          <View className="flex-row gap-3">
-            {(['Fasting', 'Post-prandial'] as const).map((option) => {
-              const isActive = glucoseContext === option;
-              return (
-                <Pressable
-                  key={option}
-                  onPress={() => setGlucoseContext(option)}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: isActive }}
-                  className="min-h-hit flex-1 items-center justify-center rounded-full border"
-                  style={{ backgroundColor: isActive ? theme.action.base : theme.colors.elevated, borderColor: isActive ? theme.action.base : theme.colors.hairline }}
-                >
-                  <Text className="text-body-lg" style={{ color: isActive ? theme.action.ink : theme.colors.ink }}>
-                    {t(GLUCOSE_CONTEXT_KEY[option])}
-                  </Text>
-                </Pressable>
-              );
-            })}
+        <View className="gap-4">
+          <Text className="text-caption uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
+            {t('vitals.logVital')}
+          </Text>
+          <View className="flex-row flex-wrap gap-3">
+            {entryCards.map(({ type, label, icon: Icon, color }) => (
+              <Pressable
+                key={type}
+                onPress={() => openEntry(type)}
+                accessibilityRole="button"
+                accessibilityLabel={t('vitals.logVitalAccessibility', { vital: label })}
+                className="min-h-hit flex-1 basis-[46%] gap-3 rounded-3xl border p-5"
+                style={{ minWidth: '46%', backgroundColor: theme.colors.elevated, borderColor: theme.colors.hairline }}
+              >
+                <View className="items-center justify-center self-start rounded-2xl" style={{ width: 42, height: 42, backgroundColor: `${color}18` }}>
+                  <Icon color={color} size={22} strokeWidth={2.25} />
+                </View>
+                <Text className="text-body-lg" style={{ color: theme.colors.ink, fontWeight: '700' }}>
+                  {label}
+                </Text>
+                <Text className="text-caption" style={{ color: theme.colors.inkSecondary }}>
+                  {t('vitals.tapToLog')}
+                </Text>
+              </Pressable>
+            ))}
           </View>
-          <VitalStepperCard label={t('vitals.bloodGlucose')} value={glucose} unit="mmol/L" step={0.1} min={1} max={30} decimals={1} onChange={setGlucose} />
-          <LargeTextButton
-            label={t('vitals.saveBloodGlucose')}
-            variant="secondary"
-            onPress={() => saveVital('BLOOD_SUGAR', glucose, 'mmol/L', glucoseContext, 'vitals.bloodGlucoseSaved')}
-          />
-        </View>
-
-        <View
-          className="gap-3"
-          onLayout={(event: LayoutChangeEvent) => {
-            sectionOffsets.current.WEIGHT = event.nativeEvent.layout.y;
-            if (focusVital === 'WEIGHT') scrollToVital('WEIGHT');
-          }}
-        >
-          <VitalStepperCard label={t('vitals.bodyWeight')} value={weight} unit="kg" step={0.1} min={2} max={300} decimals={1} onChange={setWeight} />
-          <LargeTextButton
-            label={t('vitals.saveWeight')}
-            variant="secondary"
-            onPress={() => saveVital('WEIGHT', weight, 'kg', null, 'vitals.weightSaved')}
-          />
-        </View>
-
-        <View className="gap-3">
-          <VitalStepperCard
-            label={t('vitals.bodyTemperature')}
-            value={temperature}
-            unit="°F"
-            step={0.1}
-            min={90}
-            max={110}
-            decimals={1}
-            onChange={setTemperature}
-          />
-          <LargeTextButton
-            label={t('vitals.saveTemperature')}
-            variant="secondary"
-            onPress={() => saveVital('TEMPERATURE', temperature, '°F', null, 'vitals.temperatureSaved')}
-          />
         </View>
 
         <View className="gap-4">
@@ -268,6 +370,26 @@ export default function VitalsScreen({ focusVital = null }: VitalsScreenProps) {
           <LargeTextButton label={t('vitals.logASymptom')} onPress={() => symptomSheetRef.current?.present()} />
         </View>
       </ScrollView>
+      <VitalEntrySheet
+        modalRef={entrySheetRef}
+        selected={selectedEntry}
+        systolic={systolic}
+        diastolic={diastolic}
+        glucose={glucose}
+        glucoseContext={glucoseContext}
+        weight={weight}
+        temperature={temperature}
+        onChangeSystolic={setSystolic}
+        onChangeDiastolic={setDiastolic}
+        onChangeGlucose={setGlucose}
+        onChangeGlucoseContext={setGlucoseContext}
+        onChangeWeight={setWeight}
+        onChangeTemperature={setTemperature}
+        onSaveBloodPressure={handleSaveBloodPressure}
+        onSaveGlucose={() => saveVital('BLOOD_SUGAR', glucose, 'mmol/L', glucoseContext, 'vitals.bloodGlucoseSaved')}
+        onSaveWeight={() => saveVital('WEIGHT', weight, 'kg', null, 'vitals.weightSaved')}
+        onSaveTemperature={() => saveVital('TEMPERATURE', temperature, '°F', null, 'vitals.temperatureSaved')}
+      />
 
       <SymptomLogSheet ref={symptomSheetRef} />
     </SafeAreaView>
