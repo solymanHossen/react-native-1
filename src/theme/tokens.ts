@@ -178,10 +178,10 @@ export function severityText(key: SeverityKey, mode: ThemeMode): string {
  * not scale), so no re-verification was needed there.
  */
 export const typography = {
-  displayLarge: { fontSize: 44, lineHeight: 50, fontWeight: '800' },
-  titleLarge: { fontSize: 30, lineHeight: 36, fontWeight: '700' },
-  bodyLarge: { fontSize: 20, lineHeight: 28, fontWeight: '400' },
-  caption: { fontSize: 15, lineHeight: 21, fontWeight: '500' },
+  displayLarge: { fontSize: 44, lineHeight: 50, fontWeight: '800', fontFamily: 'NunitoSans' },
+  titleLarge: { fontSize: 30, lineHeight: 36, fontWeight: '700', fontFamily: 'NunitoSans' },
+  bodyLarge: { fontSize: 20, lineHeight: 28, fontWeight: '400', fontFamily: 'NunitoSans' },
+  caption: { fontSize: 15, lineHeight: 21, fontWeight: '500', fontFamily: 'NunitoSans' },
 } as const;
 
 /**

@@ -57,5 +57,10 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
+	<key>UIAppFonts</key>
+	<array>
+		<string>NunitoSans-Italic.ttf</string>
+		<string>NunitoSans.ttf</string>
+	</array>
 </dict>
 </plist>
