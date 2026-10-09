@@ -80,6 +80,12 @@ export interface IntakeLog {
   caregiver_alerted: boolean;
 }
 
+export interface MedicationHistoryItem extends IntakeLog {
+  medication_name: string;
+  medication_strength: string | null;
+  time_node: TimeNode;
+}
+
 export type NewIntakeLog = Omit<IntakeLog, 'id'>;
 
 export interface Vital {

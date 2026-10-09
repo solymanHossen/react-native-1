@@ -1,5 +1,5 @@
 import type { DB } from '@op-engineering/op-sqlite';
-import type { IntakeLog, NewIntakeLog } from '../types';
+import type { IntakeLog, MedicationHistoryItem, NewIntakeLog } from '../types';
 
 function toIntakeLog(row: Record<string, unknown>): IntakeLog {
   return {
@@ -52,6 +52,24 @@ export class IntakeLogsRepository {
       [sinceIso],
     );
     return rows.map((row) => ({ ...toIntakeLog(row), medicationName: String(row.medication_name) }));
+  }
+
+  async listMedicationHistory(limit = 100): Promise<MedicationHistoryItem[]> {
+    const { rows } = await this.db.execute(
+      `SELECT il.*, m.name AS medication_name, m.strength AS medication_strength, s.time_node
+       FROM intake_logs il
+       JOIN schedules s ON s.id = il.schedule_id
+       JOIN medications m ON m.id = s.medication_id
+       ORDER BY il.scheduled_time DESC
+       LIMIT ?;`,
+      [limit],
+    );
+    return rows.map((row) => ({
+      ...toIntakeLog(row),
+      medication_name: String(row.medication_name),
+      medication_strength: row.medication_strength === null ? null : String(row.medication_strength),
+      time_node: row.time_node as MedicationHistoryItem['time_node'],
+    }));
   }
 
   async listMissedUnalerted(): Promise<IntakeLog[]> {

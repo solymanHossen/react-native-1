@@ -1,10 +1,11 @@
-import { ChevronRight, Droplet, Pill, Plus, Syringe, TriangleAlert, X } from 'lucide-react-native';
+import { ChevronRight, Droplet, History, Pill, Plus, Syringe, TriangleAlert, X } from 'lucide-react-native';
 import { useCallback, useEffect, useRef, useState, type ComponentType } from 'react';
 import { ActivityIndicator, Alert, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ManualMedicationSheet, type ManualMedicationInput, type ManualMedicationSheetRef } from '../components/medications/ManualMedicationSheet';
-import { StatusPill } from '../components/ui';
+import { MedicationHistorySheet, type MedicationHistorySheetRef } from '../components/medications/MedicationHistorySheet';
+import { ActionRow, ActionRowGroup, StatusPill } from '../components/ui';
 import { DuplicateMedicationError, initializeDatabase, type DrugConflict, type DrugSearchResult, type Medication, type MediusDatabase } from '../db';
 import { useTranslation } from '../i18n';
 import { triggerHaptic } from '../lib/haptics';
@@ -203,6 +204,7 @@ export default function DrugLabScreen() {
   const [manualAddedName, setManualAddedName] = useState<string | null>(null);
   const [removeError, setRemoveError] = useState<string | null>(null);
   const manualSheetRef = useRef<ManualMedicationSheetRef>(null);
+  const historySheetRef = useRef<MedicationHistorySheetRef>(null);
 
   const refreshMedications = useCallback(async (database: MediusDatabase) => {
     setMedications(await database.medications.list());
@@ -389,6 +391,15 @@ export default function DrugLabScreen() {
               </Text>
             ) : null}
 
+            <ActionRowGroup>
+              <ActionRow
+                icon={History}
+                label={t('medications.historyTitle')}
+                caption={t('medications.historyEntryCaption')}
+                onPress={() => historySheetRef.current?.present()}
+              />
+            </ActionRowGroup>
+
             <View className="gap-4 border-t pt-6" style={{ borderColor: theme.colors.hairline }}>
               <Text className="text-caption uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
                 {t('medications.searchMedications')}
@@ -476,6 +487,7 @@ export default function DrugLabScreen() {
       </ScrollView>
 
       <ManualMedicationSheet ref={manualSheetRef} onSave={addManualMedication} />
+      <MedicationHistorySheet ref={historySheetRef} />
     </SafeAreaView>
   );
 }
