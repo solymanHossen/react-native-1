@@ -5,7 +5,7 @@ import TextRecognition, { TextRecognitionScript } from '@react-native-ml-kit/tex
 import type { PhotoFile } from 'react-native-vision-camera';
 import { PrescriptionCameraView } from '../components/camera/PrescriptionCameraView';
 import { PrescriptionReviewSheet, type PrescriptionReviewSheetRef } from '../components/prescription/PrescriptionReviewSheet';
-import { initializeDatabase } from '../db';
+import { DuplicateMedicationError, initializeDatabase } from '../db';
 import type { MealRelation as SchedulesMealRelation, TimeNode } from '../db/types';
 import { useTranslation } from '../i18n';
 import { parsePrescriptionText, summarizeDosage, type ParsedPrescriptionItem } from '../ocr';
@@ -60,11 +60,13 @@ export default function PrescriptionScanScreen() {
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastConfirmedCount, setLastConfirmedCount] = useState<number | null>(null);
+  const [skippedDuplicateCount, setSkippedDuplicateCount] = useState(0);
 
   const processImageFile = useCallback(async (rawFilePath: string) => {
     setProcessing(true);
     setError(null);
     setLastConfirmedCount(null);
+    setSkippedDuplicateCount(0);
     try {
       // Only bare filesystem paths (VisionCamera's `photo.path`) need a
       // file:// prefix added. A gallery pick already carries its own scheme
@@ -95,19 +97,34 @@ export default function PrescriptionScanScreen() {
 
   const handleConfirm = useCallback(async (items: ParsedPrescriptionItem[]) => {
     const database = await initializeDatabase();
+    let addedCount = 0;
+    let duplicateCount = 0;
 
     for (const item of items) {
-      const medication = await database.medications.create({
-        name: item.matchedDrug?.brand_name ?? item.drugNameRaw,
-        generic_id: item.matchedDrug?.rowid ?? null,
-        strength: item.matchedDrug?.strength ?? null,
-        form: 'tablet',
-        current_stock: 0,
-        refill_threshold: 0,
-        expiry_date: null,
-        instructions: summarizeDosage(item),
-        nfc_tag_uid: null,
-      });
+      let medication;
+      try {
+        medication = await database.medications.create({
+          name: item.matchedDrug?.brand_name ?? item.drugNameRaw,
+          generic_id: item.matchedDrug?.rowid ?? null,
+          strength: item.matchedDrug?.strength ?? null,
+          form: 'tablet',
+          current_stock: 0,
+          refill_threshold: 0,
+          expiry_date: null,
+          instructions: summarizeDosage(item),
+          nfc_tag_uid: null,
+        });
+      } catch (createError) {
+        // A prescription can legitimately list a refill of something
+        // already on the list — skip just this line and keep processing
+        // the rest of the prescription rather than aborting the whole batch.
+        if (createError instanceof DuplicateMedicationError) {
+          duplicateCount += 1;
+          continue;
+        }
+        throw createError;
+      }
+      addedCount += 1;
 
       if (!item.doseSchedule) continue;
       const mealRelation = mapMealRelation(item.mealRelation);
@@ -126,7 +143,8 @@ export default function PrescriptionScanScreen() {
       }
     }
 
-    setLastConfirmedCount(items.length);
+    setLastConfirmedCount(addedCount);
+    setSkippedDuplicateCount(duplicateCount);
   }, []);
 
   return (
@@ -143,6 +161,11 @@ export default function PrescriptionScanScreen() {
         {lastConfirmedCount !== null ? (
           <Text className="mt-2 text-caption" style={{ color: theme.statusText('taken') }}>
             {t('scanRx.addedMedications', { count: lastConfirmedCount, plural: lastConfirmedCount === 1 ? '' : 's' })}
+          </Text>
+        ) : null}
+        {skippedDuplicateCount > 0 ? (
+          <Text className="mt-2 text-caption" style={{ color: theme.colors.inkSecondary }}>
+            {t('scanRx.skippedDuplicates', { count: skippedDuplicateCount, plural: skippedDuplicateCount === 1 ? '' : 's' })}
           </Text>
         ) : null}
       </View>

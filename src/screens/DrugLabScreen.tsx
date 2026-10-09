@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState, type ComponentType } from 'react';
 import { ActivityIndicator, Alert, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusPill } from '../components/ui';
-import { initializeDatabase, type DrugConflict, type DrugSearchResult, type Medication, type MediusDatabase } from '../db';
+import { DuplicateMedicationError, initializeDatabase, type DrugConflict, type DrugSearchResult, type Medication, type MediusDatabase } from '../db';
 import { useTranslation } from '../i18n';
 import { triggerHaptic } from '../lib/haptics';
 import type { SeverityKey } from '../theme/tokens';
@@ -144,6 +144,7 @@ export default function DrugLabScreen() {
   const [addingRowid, setAddingRowid] = useState<number | null>(null);
   const [addedName, setAddedName] = useState<string | null>(null);
   const [addedConflicts, setAddedConflicts] = useState<DrugConflict[] | null>(null);
+  const [duplicateName, setDuplicateName] = useState<string | null>(null);
 
   const refreshMedications = useCallback(async (database: MediusDatabase) => {
     setMedications(await database.medications.list());
@@ -181,6 +182,7 @@ export default function DrugLabScreen() {
       setAddingRowid(result.rowid);
       setAddedName(null);
       setAddedConflicts(null);
+      setDuplicateName(null);
       try {
         await mediusDb.medications.create({
           name: result.brand_name,
@@ -200,6 +202,13 @@ export default function DrugLabScreen() {
         setQuery('');
         setResults([]);
         await refreshMedications(mediusDb);
+      } catch (error) {
+        if (error instanceof DuplicateMedicationError) {
+          triggerHaptic('notificationWarning');
+          setDuplicateName(result.brand_name);
+          return;
+        }
+        throw error;
       } finally {
         setAddingRowid(null);
       }
@@ -293,6 +302,11 @@ export default function DrugLabScreen() {
                   onAdd={() => addMedication(result)}
                 />
               ))}
+              {duplicateName ? (
+                <Text className="text-body-lg" style={{ color: theme.colors.inkSecondary }}>
+                  {t('medications.alreadyAdded', { name: duplicateName })}
+                </Text>
+              ) : null}
             </View>
 
             {addedName ? (

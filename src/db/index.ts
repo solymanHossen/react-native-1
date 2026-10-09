@@ -66,7 +66,7 @@ export * from './types';
 export { ConflictService } from './services/conflictService';
 export { DrugSearchService } from './services/drugSearchService';
 export { IntakeLogsRepository } from './services/intakeLogsRepository';
-export { MedicationsRepository } from './services/medicationsRepository';
+export { DuplicateMedicationError, MedicationsRepository } from './services/medicationsRepository';
 export { SchedulesRepository } from './services/schedulesRepository';
 export { SymptomsRepository } from './services/symptomsRepository';
 export { VitalsRepository } from './services/vitalsRepository';

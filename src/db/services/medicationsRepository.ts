@@ -16,10 +16,50 @@ function toMedication(row: Record<string, unknown>): Medication {
   };
 }
 
+/**
+ * Thrown by `create` when `findDuplicate` finds an existing row for the same
+ * drug — callers should catch this and show a friendly "already added"
+ * message instead of letting a duplicate row get created silently.
+ */
+export class DuplicateMedicationError extends Error {
+  constructor(public readonly existing: Medication) {
+    super(`"${existing.name}" is already in your medications.`);
+    this.name = 'DuplicateMedicationError';
+  }
+}
+
 export class MedicationsRepository {
   constructor(private readonly db: DB) {}
 
+  /**
+   * Finds an existing row representing the same drug as `candidate`. Matches
+   * by `generic_id` when the candidate has one (the normal case — added via
+   * drug-directory search, so two rows sharing a `generic_id` are
+   * unambiguously the same catalog drug). Falls back to a case-insensitive
+   * name+strength match for OCR-added medications, where `generic_id` is
+   * null because no directory entry was confidently matched and there's no
+   * catalog identity to compare instead.
+   */
+  async findDuplicate(candidate: Pick<NewMedication, 'generic_id' | 'name' | 'strength'>): Promise<Medication | null> {
+    const existing = await this.list();
+    if (candidate.generic_id !== null) {
+      return existing.find((medication) => medication.generic_id === candidate.generic_id) ?? null;
+    }
+    const candidateName = candidate.name.trim().toLowerCase();
+    return (
+      existing.find(
+        (medication) =>
+          medication.generic_id === null &&
+          medication.name.trim().toLowerCase() === candidateName &&
+          (medication.strength ?? null) === (candidate.strength ?? null),
+      ) ?? null
+    );
+  }
+
   async create(medication: NewMedication): Promise<Medication> {
+    const duplicate = await this.findDuplicate(medication);
+    if (duplicate) throw new DuplicateMedicationError(duplicate);
+
     const { insertId } = await this.db.execute(
       `INSERT INTO medications (name, generic_id, strength, form, current_stock, refill_threshold, expiry_date, instructions, nfc_tag_uid)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);`,
