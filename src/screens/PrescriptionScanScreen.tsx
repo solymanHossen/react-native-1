@@ -40,6 +40,20 @@ function mapMealRelation(mealRelation: ParsedPrescriptionItem['mealRelation']): 
   return mealRelation.timing;
 }
 
+function courseDates(duration: ParsedPrescriptionItem['duration']): { start: string | null; end: string | null } {
+  if (!duration || duration.isOngoing || !duration.days || duration.days < 1) return { start: null, end: null };
+  const start = new Date();
+  const end = new Date(start);
+  end.setDate(end.getDate() + duration.days - 1);
+  const toDate = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+  return { start: toDate(start), end: toDate(end) };
+}
+
 const DOSE_SLOT_TIME_NODES: Array<{ key: 'morning' | 'afternoon' | 'night'; timeNode: TimeNode; timeUtc: string }> = [
   { key: 'morning', timeNode: 'BREAKFAST', timeUtc: '08:00' },
   { key: 'afternoon', timeNode: 'LUNCH', timeUtc: '13:00' },
@@ -101,6 +115,7 @@ export default function PrescriptionScanScreen() {
     let duplicateCount = 0;
 
     for (const item of items) {
+      const dates = courseDates(item.duration);
       let medication;
       try {
         medication = await database.medications.create({
@@ -113,6 +128,8 @@ export default function PrescriptionScanScreen() {
           expiry_date: null,
           instructions: summarizeDosage(item),
           nfc_tag_uid: null,
+          course_start_date: dates.start,
+          course_end_date: dates.end,
         });
       } catch (createError) {
         // A prescription can legitimately list a refill of something

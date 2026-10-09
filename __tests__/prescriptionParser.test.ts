@@ -87,6 +87,10 @@ describe('South Asian Clinical Syntax Regex Engine', () => {
       expect(parseDuration('10 days')).toEqual({ days: 10, isOngoing: false });
     });
 
+    it('converts a one-month course to the standard 30-day duration', () => {
+      expect(parseDuration('1 month')).toEqual({ days: 30, isOngoing: false });
+    });
+
     it('parses ongoing regimen (চলবে)', () => {
       expect(parseDuration('চলবে')).toEqual({ days: null, isOngoing: true });
     });

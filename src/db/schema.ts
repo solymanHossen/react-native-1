@@ -35,7 +35,9 @@ const CREATE_MEDICATIONS = `
     refill_threshold REAL NOT NULL DEFAULT 0,
     expiry_date TEXT,
     instructions TEXT,
-    nfc_tag_uid TEXT
+    nfc_tag_uid TEXT,
+    course_start_date TEXT,
+    course_end_date TEXT
   );
 `;
 
@@ -117,6 +119,13 @@ export async function runMigrations(db: DB): Promise<void> {
     const { rows } = await tx.execute('PRAGMA table_info(medications);');
     if (!rows.some((row) => row.name === 'is_archived')) {
       await tx.execute('ALTER TABLE medications ADD COLUMN is_archived INTEGER NOT NULL DEFAULT 0;');
+    }
+    const medicationColumns = rows.length ? rows : (await tx.execute('PRAGMA table_info(medications);')).rows;
+    if (!medicationColumns.some((row) => row.name === 'course_start_date')) {
+      await tx.execute('ALTER TABLE medications ADD COLUMN course_start_date TEXT;');
+    }
+    if (!medicationColumns.some((row) => row.name === 'course_end_date')) {
+      await tx.execute('ALTER TABLE medications ADD COLUMN course_end_date TEXT;');
     }
   });
 }

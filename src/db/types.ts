@@ -44,10 +44,13 @@ export interface Medication {
   expiry_date: string | null;
   instructions: string | null;
   nfc_tag_uid: string | null;
+  course_start_date: string | null;
+  course_end_date: string | null;
   is_archived: boolean;
 }
 
-export type NewMedication = Omit<Medication, 'id' | 'is_archived'>;
+export type NewMedication = Omit<Medication, 'id' | 'is_archived' | 'course_start_date' | 'course_end_date'> &
+  Partial<Pick<Medication, 'course_start_date' | 'course_end_date'>>;
 
 export interface Schedule {
   id: number;
@@ -68,6 +71,7 @@ export interface ScheduleWithMedication extends Schedule {
   medicationName: string;
   medicationForm: DosageForm;
   nfcTagUid: string | null;
+  courseEndDate: string | null;
 }
 
 export interface IntakeLog {

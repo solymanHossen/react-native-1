@@ -62,6 +62,11 @@ function MedicationRow({ medication, onRemove }: { medication: Medication; onRem
             {medication.instructions}
           </Text>
         ) : null}
+        {medication.course_end_date ? (
+          <Text className="text-caption" numberOfLines={1} style={{ color: theme.colors.inkMuted }}>
+            {t('medications.courseEnds', { date: medication.course_end_date })}
+          </Text>
+        ) : null}
         {/* Only shown when it needs attention — a pill on every row saying
             "24 left" is noise; a patient only needs to notice this one when
             it's running out. */}
@@ -255,6 +260,8 @@ export default function DrugLabScreen() {
           expiry_date: null,
           instructions: null,
           nfc_tag_uid: null,
+          course_start_date: null,
+          course_end_date: null,
         });
         const conflicts = await mediusDb.conflicts.checkDrugConflicts(result.generic_name);
         triggerHaptic(conflicts.length > 0 ? 'notificationWarning' : 'notificationSuccess');
@@ -301,6 +308,8 @@ export default function DrugLabScreen() {
           expiry_date: null,
           instructions: null,
           nfc_tag_uid: null,
+          course_start_date: null,
+          course_end_date: null,
         });
         triggerHaptic('notificationSuccess');
         setManualAddedName(input.name);

@@ -96,7 +96,8 @@ export class ConflictService {
       FROM medications m
       JOIN schedules s ON s.medication_id = m.id AND s.is_active = 1
       JOIN drug_directory dd ON dd.rowid = m.generic_id
-      WHERE dd.generic_name IS NOT NULL;
+      WHERE dd.generic_name IS NOT NULL
+        AND (m.course_end_date IS NULL OR date(m.course_end_date) >= date('now', 'localtime'));
     `);
 
     return rows.map((row) => ({

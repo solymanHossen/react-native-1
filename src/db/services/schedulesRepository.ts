@@ -20,6 +20,7 @@ function toScheduleWithMedication(row: Record<string, unknown>): ScheduleWithMed
     medicationName: String(row.medication_name),
     medicationForm: row.medication_form as ScheduleWithMedication['medicationForm'],
     nfcTagUid: row.nfc_tag_uid === null ? null : String(row.nfc_tag_uid),
+    courseEndDate: row.course_end_date === null ? null : String(row.course_end_date),
   };
 }
 
@@ -56,7 +57,13 @@ export class SchedulesRepository {
   }
 
   async listActive(): Promise<Schedule[]> {
-    const { rows } = await this.db.execute('SELECT * FROM schedules WHERE is_active = 1 ORDER BY time_utc;');
+    const { rows } = await this.db.execute(
+      `SELECT s.* FROM schedules s
+       JOIN medications m ON m.id = s.medication_id
+       WHERE s.is_active = 1
+         AND (m.course_end_date IS NULL OR date(m.course_end_date) >= date('now', 'localtime'))
+       ORDER BY s.time_utc;`,
+    );
     return rows.map(toSchedule);
   }
 
@@ -67,6 +74,7 @@ export class SchedulesRepository {
        FROM schedules s
        JOIN medications m ON m.id = s.medication_id
        WHERE s.is_active = 1
+         AND (m.course_end_date IS NULL OR date(m.course_end_date) >= date('now', 'localtime'))
        ORDER BY s.time_utc;`,
     );
     return rows.map(toScheduleWithMedication);

@@ -81,6 +81,13 @@ async function buildAlarmNotification(schedule: ScheduleWithMedication, schedule
 /** Schedules (or replaces) the next-occurrence alarm for one active schedule entry. */
 export async function scheduleAlarm(schedule: ScheduleWithMedication): Promise<void> {
   const scheduledAtMs = computeNextOccurrenceMs(schedule.time_utc, schedule.days_of_week_mask);
+  if (schedule.courseEndDate) {
+    const courseEnd = new Date(`${schedule.courseEndDate}T23:59:59`).getTime();
+    if (scheduledAtMs > courseEnd) {
+      await cancelAlarm(schedule.id);
+      return;
+    }
+  }
   const notification = await buildAlarmNotification(schedule, scheduledAtMs);
   await notifee.createTriggerNotification(notification, {
     type: TriggerType.TIMESTAMP,

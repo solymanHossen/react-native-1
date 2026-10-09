@@ -233,6 +233,7 @@ export const en = {
     yourMedications: 'Your Medications',
     noMedicationsYet: 'No medications yet — search below to add one.',
     lowStock: 'Low Stock',
+    courseEnds: 'Course ends {{date}}',
     removeAccessibility: 'Remove {{name}}',
     remove: 'Remove',
     removeConfirmTitle: 'Remove {{name}}?',

@@ -230,6 +230,7 @@ export const bn: typeof en = {
     yourMedications: 'আপনার ওষুধ',
     noMedicationsYet: 'এখনো কোনো ওষুধ নেই — একটি যোগ করতে নিচে খুঁজুন।',
     lowStock: 'কম মজুদ',
+    courseEnds: 'কোর্স শেষ হবে {{date}}',
     removeAccessibility: '{{name}} সরান',
     remove: 'সরান',
     removeConfirmTitle: '{{name}} সরাবেন?',

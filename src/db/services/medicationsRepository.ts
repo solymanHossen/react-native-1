@@ -13,6 +13,8 @@ function toMedication(row: Record<string, unknown>): Medication {
     expiry_date: row.expiry_date === null ? null : String(row.expiry_date),
     instructions: row.instructions === null ? null : String(row.instructions),
     nfc_tag_uid: row.nfc_tag_uid === null ? null : String(row.nfc_tag_uid),
+    course_start_date: row.course_start_date === null ? null : String(row.course_start_date),
+    course_end_date: row.course_end_date === null ? null : String(row.course_end_date),
     is_archived: Number(row.is_archived ?? 0) === 1,
   };
 }
@@ -62,8 +64,8 @@ export class MedicationsRepository {
     if (duplicate) throw new DuplicateMedicationError(duplicate);
 
     const { insertId } = await this.db.execute(
-      `INSERT INTO medications (name, generic_id, strength, form, current_stock, refill_threshold, expiry_date, instructions, nfc_tag_uid)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+      `INSERT INTO medications (name, generic_id, strength, form, current_stock, refill_threshold, expiry_date, instructions, nfc_tag_uid, course_start_date, course_end_date)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
       [
         medication.name,
         medication.generic_id,
@@ -74,6 +76,8 @@ export class MedicationsRepository {
         medication.expiry_date,
         medication.instructions,
         medication.nfc_tag_uid,
+        medication.course_start_date ?? null,
+        medication.course_end_date ?? null,
       ],
     );
     const created = await this.getById(insertId as number);

@@ -40,6 +40,7 @@ const WITH_MEAL_RE = /(?:খাবার|খাওয়ার|খাওয়া�
 
 const ONGOING_RE = /চলবে|ongoing|continue/i;
 const DAYS_RE = /(\d+)\s*(?:দিন|days?)/i;
+const MONTHS_RE = /(\d+)\s*(?:মাস|months?)/i;
 
 /** Re-applies `re` as a fresh global regex so repeated `.replace()` calls across many lines never hit the shared-`lastIndex` footgun of reusing a stateful `g`-flagged RegExp literal. */
 function stripAll(text: string, re: RegExp): string {
@@ -93,6 +94,10 @@ export function parseDuration(normalizedText: string): RegimenDuration | null {
   if (daysMatch) {
     return { days: Number(daysMatch[1]), isOngoing: false };
   }
+  const monthsMatch = normalizedText.match(MONTHS_RE);
+  if (monthsMatch) {
+    return { days: Number(monthsMatch[1]) * 30, isOngoing: false };
+  }
   return null;
 }
 
@@ -110,6 +115,7 @@ const STRIP_FOR_NAME_RES = [
   WITH_MEAL_RE,
   ONGOING_RE,
   DAYS_RE,
+  MONTHS_RE,
 ];
 
 /** Whatever's left of a line after every recognized dosage/meal/duration token is stripped out — the drug-name candidate. */
