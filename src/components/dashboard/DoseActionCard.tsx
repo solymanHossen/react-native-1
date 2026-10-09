@@ -156,7 +156,7 @@ export function DoseActionCard({ dose, skipReason, onMarkTaken, onRequestSkip, o
             {dose.medicationName}
           </Text>
           <Text className="text-caption" style={{ color: theme.colors.inkMuted }}>
-            {dose.dosage}
+            {dose.dosage} · {t(`rhythm.mealRelation.${dose.mealRelation}` as never)}
           </Text>
           {isSkipped && skipReason ? (
             <Text className="text-caption" style={{ color: theme.statusText('missed') }}>

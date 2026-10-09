@@ -1,4 +1,5 @@
 export type AlarmDismissalMethod = 'NFC' | 'VISION' | 'MANUAL_OVERRIDE';
+import type { MealRelation } from '../db/types';
 
 /**
  * Everything the full-screen alarm screen needs to render and verify a dose,
@@ -14,6 +15,7 @@ export interface ScheduledAlarmPayload {
   medicationName: string;
   dosageLabel: string;
   doseQuantity: number;
+  mealRelation: MealRelation;
   nfcTagUid: string | null;
   /** Epoch ms this specific occurrence was scheduled for — identifies the dose being confirmed, independent of when the alarm actually fires or is resolved. */
   scheduledAtMs: number;

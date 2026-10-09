@@ -1,4 +1,5 @@
 import type { StatusKey } from '../theme/tokens';
+import type { MealRelation } from '../db/types';
 
 /**
  * Reuses the app's existing 5-state status vocabulary instead of inventing a
@@ -22,6 +23,7 @@ export interface CircadianZone {
   /** Plain-language interaction/stock note shown in the long-press detail sheet. */
   interactionNote: string;
   stockRemaining: number;
+  mealRelation: MealRelation;
 }
 
 export interface DoseEntry extends CircadianZone {

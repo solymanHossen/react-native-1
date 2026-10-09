@@ -47,6 +47,7 @@ function toPayload(schedule: ScheduleWithMedication, scheduledAtMs: number): Sch
     medicationName: schedule.medicationName,
     dosageLabel: `${schedule.dose_quantity} ${schedule.medicationForm}${schedule.dose_quantity === 1 ? '' : 's'}`,
     doseQuantity: schedule.dose_quantity,
+    mealRelation: schedule.meal_relation,
     nfcTagUid: schedule.nfcTagUid,
     scheduledAtMs,
   };
@@ -56,7 +57,7 @@ function buildNotification(notificationId: string, payload: ScheduledAlarmPayloa
   return {
     id: notificationId,
     title: `Time for ${payload.medicationName}`,
-    body: body ?? `${payload.dosageLabel} — scan the bottle's NFC tag or show the pack to the camera to confirm.`,
+    body: body ?? `${payload.dosageLabel} — ${mealGuidance(payload.mealRelation)} Scan the bottle's NFC tag or show the pack to the camera to confirm.`,
     data: { payload },
     android: {
       channelId: ALARM_CHANNEL_ID,
@@ -70,6 +71,13 @@ function buildNotification(notificationId: string, payload: ScheduledAlarmPayloa
       pressAction: { id: 'default', launchActivity: 'default' },
     },
   };
+}
+
+function mealGuidance(relation: ScheduledAlarmPayload['mealRelation']): string {
+  if (relation === 'BEFORE') return 'Take before food. ';
+  if (relation === 'AFTER') return 'Take after food. ';
+  if (relation === 'MINUTES_OFFSET') return 'Follow the prescribed meal interval. ';
+  return 'Take with food. ';
 }
 
 async function buildAlarmNotification(schedule: ScheduleWithMedication, scheduledAtMs: number): Promise<Notification> {

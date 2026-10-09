@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { create } from 'zustand';
 import { initializeDatabase } from '../db';
-import type { TimeNode } from '../db/types';
+import type { MealRelation, TimeNode } from '../db/types';
 import type { DoseEntry, SkipReason, UseDoseScheduleResult } from '../dashboard/types';
 import { useSentinelStore } from './sentinelStore';
 
@@ -15,6 +15,7 @@ export interface IntakeQueueItem {
   doseQuantity: number;
   timeNode: TimeNode;
   timeUtc: string;
+  mealRelation: MealRelation;
   instructions: string | null;
   stockRemaining: number;
   status: IntakeQueueStatus;
@@ -86,6 +87,7 @@ async function buildQueueItems(): Promise<IntakeQueueItem[]> {
         doseQuantity: schedule.dose_quantity,
         timeNode: schedule.time_node,
         timeUtc: schedule.time_utc,
+        mealRelation: schedule.meal_relation,
         instructions: medication?.instructions ?? null,
         stockRemaining: medication?.current_stock ?? 0,
         status,
@@ -215,6 +217,7 @@ export function useLiveDoseSchedule(): UseDoseScheduleResult {
           dosage: item.dosageLabel,
           interactionNote: item.instructions ?? 'No additional instructions recorded.',
           stockRemaining: item.stockRemaining,
+          mealRelation: item.mealRelation,
           state: STATUS_TO_DOSE_STATE[item.status],
         };
       }),

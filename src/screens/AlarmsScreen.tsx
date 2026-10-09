@@ -134,7 +134,6 @@ function formatTimeLabel(timeUtc: string): string {
 interface TimeSlot {
   node: TimeNode;
   timeUtc: string;
-  mealRelation: MealRelation;
   labelKey: TranslationKey;
   icon: ComponentType<{ size?: number; color?: string; strokeWidth?: number }>;
   /** Each slot gets its own shade from the app's brand (pomegranate) family
@@ -148,10 +147,16 @@ interface TimeSlot {
 }
 
 const TIME_SLOTS: TimeSlot[] = [
-  { node: 'BREAKFAST', timeUtc: '08:00', mealRelation: 'WITH', labelKey: 'alarms.timeMorning', icon: Sunrise, color: '#B62616' },
-  { node: 'LUNCH', timeUtc: '13:00', mealRelation: 'WITH', labelKey: 'alarms.timeAfternoon', icon: Sun, color: '#962013' },
-  { node: 'DINNER', timeUtc: '20:00', mealRelation: 'WITH', labelKey: 'alarms.timeEvening', icon: Sunset, color: '#6D170D' },
-  { node: 'BEDTIME', timeUtc: '22:00', mealRelation: 'WITH', labelKey: 'alarms.timeBedtime', icon: Moon, color: '#240804' },
+  { node: 'BREAKFAST', timeUtc: '08:00', labelKey: 'alarms.timeMorning', icon: Sunrise, color: '#B62616' },
+  { node: 'LUNCH', timeUtc: '13:00', labelKey: 'alarms.timeAfternoon', icon: Sun, color: '#962013' },
+  { node: 'DINNER', timeUtc: '20:00', labelKey: 'alarms.timeEvening', icon: Sunset, color: '#6D170D' },
+  { node: 'BEDTIME', timeUtc: '22:00', labelKey: 'alarms.timeBedtime', icon: Moon, color: '#240804' },
+];
+
+const MEAL_RELATIONS: Array<{ value: MealRelation; labelKey: TranslationKey }> = [
+  { value: 'BEFORE', labelKey: 'alarms.mealBefore' },
+  { value: 'WITH', labelKey: 'alarms.mealWith' },
+  { value: 'AFTER', labelKey: 'alarms.mealAfter' },
 ];
 
 /**
@@ -192,6 +197,7 @@ export default function AlarmsScreen() {
   const [schedules, setSchedules] = useState<ScheduleWithMedication[]>([]);
   const [medications, setMedications] = useState<Medication[]>([]);
   const [selectedMedicationId, setSelectedMedicationId] = useState<number | null>(null);
+  const [selectedMealRelation, setSelectedMealRelation] = useState<MealRelation>('WITH');
   const [savedCaregiverPhone, setSavedCaregiverPhone] = useState(() => getCaregiverPhone());
   const [status, setStatus] = useState<string | null>(null);
   const caregiverSheetRef = useRef<CaregiverContactSheetRef>(null);
@@ -224,7 +230,7 @@ export default function AlarmsScreen() {
         medication_id: selectedMedication.id,
         time_utc: slot.timeUtc,
         time_node: slot.node,
-        meal_relation: slot.mealRelation,
+        meal_relation: selectedMealRelation,
         dose_quantity: 1,
         days_of_week_mask: 127,
         is_active: true,
@@ -235,7 +241,7 @@ export default function AlarmsScreen() {
       setSelectedMedicationId(null);
       setStatus(t('alarms.reminderAdded', { name: selectedMedication.name }));
     },
-    [mediusDb, refresh, selectedMedication, t],
+    [mediusDb, refresh, selectedMealRelation, selectedMedication, t],
   );
 
   const handleToggleActive = useCallback(
@@ -411,6 +417,34 @@ export default function AlarmsScreen() {
                       <Text className="text-caption" style={{ color: theme.colors.inkMuted }}>
                         {t('alarms.pickTime')}
                       </Text>
+                      <Text className="text-caption" style={{ color: theme.colors.inkSecondary }}>
+                        {t('alarms.mealRelationLabel')}
+                      </Text>
+                      <View className="flex-row flex-wrap gap-2">
+                        {MEAL_RELATIONS.map((relation) => {
+                          const selectedRelation = selectedMealRelation === relation.value;
+                          return (
+                            <Pressable
+                              key={relation.value}
+                              onPress={() => setSelectedMealRelation(relation.value)}
+                              accessibilityRole="button"
+                              accessibilityState={{ selected: selectedRelation }}
+                              className="min-h-hit rounded-full border px-4 py-2 justify-center"
+                              style={{
+                                backgroundColor: selectedRelation ? theme.action.base : theme.colors.surface,
+                                borderColor: selectedRelation ? theme.action.base : theme.colors.hairline,
+                              }}
+                            >
+                              <Text className="text-body" style={{ color: selectedRelation ? theme.action.ink : theme.colors.ink, fontWeight: '600' }}>
+                                {t(relation.labelKey)}
+                              </Text>
+                            </Pressable>
+                          );
+                        })}
+                      </View>
+                      <Text className="text-caption" style={{ color: theme.colors.inkMuted }}>
+                        {t('alarms.mealRelationHint')}
+                      </Text>
                       <View className="gap-2.5">
                         {TIME_SLOTS.map((slot) => {
                           const SlotIcon = slot.icon;
@@ -485,6 +519,9 @@ export default function AlarmsScreen() {
                     form: schedule.medicationForm,
                     time: formatTimeLabel(schedule.time_utc),
                   })}
+                </Text>
+                <Text className="text-caption" style={{ color: theme.colors.inkMuted }}>
+                  {t(`alarms.mealRelation.${schedule.meal_relation}` as never)}
                 </Text>
                 <View className="flex-row flex-wrap items-center gap-1.5">
                   <View className="flex-row items-center gap-1 rounded-full px-2.5 py-1" style={{ backgroundColor: confirmTint }}>
