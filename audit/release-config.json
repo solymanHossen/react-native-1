@@ -1,0 +1,20 @@
+{
+  "android": {
+    "applicationId": "com.myapp",
+    "minSdk": 24,
+    "targetSdk": 36,
+    "releaseSigning": "production-keystore-required",
+    "artifactTask": ":app:assembleRelease"
+  },
+  "ios": {
+    "deploymentTarget": "15.1",
+    "scheme": "myApp",
+    "bundleIdentifier": "$(PRODUCT_BUNDLE_IDENTIFIER)",
+    "privacyManifest": "ios/myApp/PrivacyInfo.xcprivacy"
+  },
+  "environment": {
+    "nodeRequired": ">=22.11.0",
+    "observedPlatform": "Linux",
+    "iosBuildAvailable": false
+  }
+}

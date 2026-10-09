@@ -1,0 +1,14 @@
+{
+  "targetApi": {
+    "minimum": 35,
+    "source": "android/build.gradle",
+    "note": "Verify the current Google Play target API requirement on the actual submission date."
+  },
+  "required": [
+    "releaseSigning",
+    "cleartextTransport",
+    "iosPrivacyManifest",
+    "cameraPurposeStrings",
+    "versionMetadata"
+  ]
+}

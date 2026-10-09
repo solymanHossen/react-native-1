@@ -6,7 +6,13 @@
     "android": "react-native run-android",
     "ios": "react-native run-ios",
     "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
     "start": "react-native start",
+    "audit:policy": "node scripts/audit-policy.mjs",
+    "audit:secrets": "node scripts/audit-secrets.mjs",
+    "audit:dependencies": "node scripts/audit-dependencies.mjs",
+    "audit:report": "node scripts/merge-reports.mjs",
+    "audit": "npm run audit:policy; npm run audit:secrets; npm run audit:dependencies; npm run audit:report",
     "test": "jest"
   },
   "dependencies": {

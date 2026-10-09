@@ -1,0 +1,53 @@
+{
+  "generatedAt": "2026-10-09T12:38:35.819Z",
+  "results": [
+    {
+      "id": "POLICY-ANDROID-TARGET",
+      "title": "Android target API",
+      "status": "PASS",
+      "severity": "high",
+      "evidence": "targetSdkVersion=36",
+      "recommendation": "Verify the current Play target API requirement before submission."
+    },
+    {
+      "id": "POLICY-ANDROID-SIGNING",
+      "title": "Android release signing",
+      "status": "FAIL",
+      "severity": "critical",
+      "evidence": "release build uses signingConfigs.debug",
+      "recommendation": "Configure a production keystore through CI secrets and remove the debug fallback."
+    },
+    {
+      "id": "POLICY-CLEARTEXT",
+      "title": "Cleartext transport disabled",
+      "status": "REVIEW_REQUIRED",
+      "severity": "high",
+      "evidence": "manifest placeholder present; explicit property=false",
+      "recommendation": null
+    },
+    {
+      "id": "POLICY-IOS-PRIVACY",
+      "title": "Apple privacy manifest exists",
+      "status": "PASS",
+      "severity": "high",
+      "evidence": "ios/myApp/PrivacyInfo.xcprivacy exists",
+      "recommendation": null
+    },
+    {
+      "id": "POLICY-CAMERA-PURPOSE",
+      "title": "Camera purpose string",
+      "status": "PASS",
+      "severity": "high",
+      "evidence": "Camera purpose explains prescription scanning",
+      "recommendation": null
+    },
+    {
+      "id": "POLICY-VERSION",
+      "title": "Version metadata",
+      "status": "PASS",
+      "severity": "medium",
+      "evidence": "package=0.0.1",
+      "recommendation": null
+    }
+  ]
+}

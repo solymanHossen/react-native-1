@@ -1,0 +1,98 @@
+[
+  {
+    "id": "FUNC-001",
+    "category": "functional",
+    "platform": "both",
+    "severity": "high",
+    "title": "Cold start and database initialization",
+    "preconditions": ["Fresh install or existing local database"],
+    "steps": ["Launch the app", "Wait for the home dashboard"],
+    "expected": "The app initializes local storage and renders a usable screen without a crash",
+    "automation": "jest",
+    "status": "PASS"
+  },
+  {
+    "id": "FUNC-002",
+    "category": "functional",
+    "platform": "both",
+    "severity": "high",
+    "title": "Medication course and alarm policy",
+    "preconditions": ["Test medication with an optional course end date"],
+    "steps": ["Create a course", "Evaluate an occurrence before and after its end date"],
+    "expected": "Occurrences after the course end are not scheduled",
+    "automation": "jest",
+    "status": "PASS"
+  },
+  {
+    "id": "FUNC-003",
+    "category": "functional",
+    "platform": "both",
+    "severity": "high",
+    "title": "Prescription parsing and review",
+    "preconditions": ["Prescription text or fixture"],
+    "steps": ["Parse dosage, duration, and course dates", "Review before saving"],
+    "expected": "Parsed values are editable and persisted only after confirmation",
+    "automation": "jest",
+    "status": "PASS"
+  },
+  {
+    "id": "FUNC-004",
+    "category": "functional",
+    "platform": "both",
+    "severity": "medium",
+    "title": "Camera and gallery permission denial",
+    "preconditions": ["Camera or photo permission denied"],
+    "steps": ["Open prescription scan or medication photo", "Deny permission"],
+    "expected": "The user receives an actionable error and the app remains usable",
+    "automation": "manual",
+    "status": "REVIEW_REQUIRED"
+  },
+  {
+    "id": "SEC-001",
+    "category": "security",
+    "platform": "both",
+    "severity": "critical",
+    "title": "Release signing does not use debug credentials",
+    "preconditions": ["Configured production keystore in CI or local environment"],
+    "steps": ["Run the release build"],
+    "expected": "Release is signed with a production keystore and no debug fallback exists",
+    "automation": "policy",
+    "status": "FAIL"
+  },
+  {
+    "id": "PRIV-001",
+    "category": "privacy",
+    "platform": "both",
+    "severity": "high",
+    "title": "Permission purpose and disclosure review",
+    "preconditions": ["Store listing and privacy policy"],
+    "steps": ["Review camera, notifications, exact alarms, NFC, and medical-data disclosures"],
+    "expected": "Every permission has a user-facing purpose and matching store disclosure",
+    "automation": "manual",
+    "status": "REVIEW_REQUIRED"
+  },
+  {
+    "id": "REL-001",
+    "category": "release",
+    "platform": "android",
+    "severity": "high",
+    "title": "Android release artifact",
+    "preconditions": ["Android SDK, production keystore, and dependencies"],
+    "steps": ["Run assembleRelease"],
+    "expected": "A signed release artifact is produced without debug signing",
+    "automation": "gradle",
+    "status": "BLOCKED"
+  },
+  {
+    "id": "REL-002",
+    "category": "release",
+    "platform": "ios",
+    "severity": "high",
+    "title": "iOS archive and signing",
+    "preconditions": ["macOS, Xcode, Pods, and signing credentials"],
+    "steps": ["Build/archive the Release scheme"],
+    "expected": "A valid signed archive is produced",
+    "automation": "xcodebuild",
+    "status": "BLOCKED"
+  }
+]

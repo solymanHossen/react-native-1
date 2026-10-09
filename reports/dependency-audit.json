@@ -1,0 +1,13 @@
+{
+  "generatedAt": "2026-10-09T12:41:49.638Z",
+  "status": "FAIL",
+  "counts": {
+    "info": 0,
+    "low": 0,
+    "moderate": 12,
+    "high": 57,
+    "critical": 0,
+    "total": 69
+  },
+  "exitCode": 1
+}
