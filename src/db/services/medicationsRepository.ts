@@ -13,6 +13,7 @@ function toMedication(row: Record<string, unknown>): Medication {
     expiry_date: row.expiry_date === null ? null : String(row.expiry_date),
     instructions: row.instructions === null ? null : String(row.instructions),
     nfc_tag_uid: row.nfc_tag_uid === null ? null : String(row.nfc_tag_uid),
+    is_archived: Number(row.is_archived ?? 0) === 1,
   };
 }
 
@@ -86,7 +87,7 @@ export class MedicationsRepository {
   }
 
   async list(): Promise<Medication[]> {
-    const { rows } = await this.db.execute('SELECT * FROM medications ORDER BY name;');
+    const { rows } = await this.db.execute('SELECT * FROM medications WHERE is_archived = 0 ORDER BY name;');
     return rows.map(toMedication);
   }
 
@@ -95,7 +96,9 @@ export class MedicationsRepository {
   }
 
   async listLowStock(): Promise<Medication[]> {
-    const { rows } = await this.db.execute('SELECT * FROM medications WHERE current_stock <= refill_threshold ORDER BY current_stock;');
+    const { rows } = await this.db.execute(
+      'SELECT * FROM medications WHERE is_archived = 0 AND current_stock <= refill_threshold ORDER BY current_stock;',
+    );
     return rows.map(toMedication);
   }
 
@@ -105,7 +108,15 @@ export class MedicationsRepository {
     return rows[0] ? toMedication(rows[0]) : null;
   }
 
-  async delete(id: number): Promise<void> {
-    await this.db.execute('DELETE FROM medications WHERE id = ?;', [id]);
+  /**
+   * Removes a medication from the active list without deleting its schedules
+   * or intake history. Schedules are deactivated in the same transaction so
+   * removing a medication can never leave an active alarm pointing at it.
+   */
+  async archive(id: number): Promise<void> {
+    await this.db.transaction(async (tx) => {
+      await tx.execute('UPDATE medications SET is_archived = 1 WHERE id = ?;', [id]);
+      await tx.execute('UPDATE schedules SET is_active = 0 WHERE medication_id = ?;', [id]);
+    });
   }
 }

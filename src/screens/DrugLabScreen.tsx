@@ -201,6 +201,7 @@ export default function DrugLabScreen() {
   const [addedConflicts, setAddedConflicts] = useState<DrugConflict[] | null>(null);
   const [duplicateName, setDuplicateName] = useState<string | null>(null);
   const [manualAddedName, setManualAddedName] = useState<string | null>(null);
+  const [removeError, setRemoveError] = useState<string | null>(null);
   const manualSheetRef = useRef<ManualMedicationSheetRef>(null);
 
   const refreshMedications = useCallback(async (database: MediusDatabase) => {
@@ -325,8 +326,15 @@ export default function DrugLabScreen() {
           style: 'destructive',
           onPress: async () => {
             if (!mediusDb) return;
-            await mediusDb.medications.delete(medication.id);
-            await refreshMedications(mediusDb);
+            setRemoveError(null);
+            try {
+              await mediusDb.medications.archive(medication.id);
+              await refreshMedications(mediusDb);
+              triggerHaptic('notificationSuccess');
+            } catch (error) {
+              setRemoveError(t('medications.removeFailed', { error: error instanceof Error ? error.message : String(error) }));
+              triggerHaptic('notificationError');
+            }
           },
         },
       ]);
@@ -375,6 +383,11 @@ export default function DrugLabScreen() {
                 ))
               )}
             </View>
+            {removeError ? (
+              <Text className="text-body-lg" style={{ color: theme.statusText('missed') }}>
+                {removeError}
+              </Text>
+            ) : null}
 
             <View className="gap-4 border-t pt-6" style={{ borderColor: theme.colors.hairline }}>
               <Text className="text-caption uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>

@@ -216,6 +216,7 @@ export const en = {
     remove: 'Remove',
     removeConfirmTitle: 'Remove {{name}}?',
     removeConfirmBody: 'This only removes it from your medication list — it does not delete any past dose history.',
+    removeFailed: 'Could not remove this medication: {{error}}',
     searchMedications: 'Add a Medication',
     searchPlaceholder: 'Try "Napx" or "Napro"',
     noResultsFound: 'No medications found for "{{query}}".',

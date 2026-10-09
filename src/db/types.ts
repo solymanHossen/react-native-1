@@ -44,9 +44,10 @@ export interface Medication {
   expiry_date: string | null;
   instructions: string | null;
   nfc_tag_uid: string | null;
+  is_archived: boolean;
 }
 
-export type NewMedication = Omit<Medication, 'id'>;
+export type NewMedication = Omit<Medication, 'id' | 'is_archived'>;
 
 export interface Schedule {
   id: number;

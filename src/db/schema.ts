@@ -113,5 +113,10 @@ export async function runMigrations(db: DB): Promise<void> {
     for (const statement of CREATE_INDEXES) {
       await tx.execute(statement);
     }
+
+    const { rows } = await tx.execute('PRAGMA table_info(medications);');
+    if (!rows.some((row) => row.name === 'is_archived')) {
+      await tx.execute('ALTER TABLE medications ADD COLUMN is_archived INTEGER NOT NULL DEFAULT 0;');
+    }
   });
 }

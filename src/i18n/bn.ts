@@ -213,6 +213,7 @@ export const bn: typeof en = {
     remove: 'সরান',
     removeConfirmTitle: '{{name}} সরাবেন?',
     removeConfirmBody: 'এটি শুধু আপনার ওষুধের তালিকা থেকে সরানো হবে — এটি অতীতের কোনো ডোজের তথ্য মুছে দেয় না।',
+    removeFailed: 'এই ওষুধটি সরানো যায়নি: {{error}}',
     searchMedications: 'ওষুধ যোগ করুন',
     searchPlaceholder: '"Napx" বা "Napro" চেষ্টা করুন',
     noResultsFound: '"{{query}}" এর জন্য কোনো ওষুধ পাওয়া যায়নি।',
