@@ -1,6 +1,7 @@
-import { Droplet, Pill, Plus, Syringe, TriangleAlert, X } from 'lucide-react-native';
+import { ChevronRight, Droplet, Pill, Plus, Syringe, TriangleAlert, X } from 'lucide-react-native';
 import { useCallback, useEffect, useRef, useState, type ComponentType } from 'react';
 import { ActivityIndicator, Alert, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ManualMedicationSheet, type ManualMedicationInput, type ManualMedicationSheetRef } from '../components/medications/ManualMedicationSheet';
 import { StatusPill } from '../components/ui';
@@ -116,6 +117,59 @@ function SearchResultRow({
         </Pressable>
       )}
     </View>
+  );
+}
+
+function ManualMedicationButton({ onPress }: { onPress: () => void }) {
+  const theme = useTheme();
+  const { t } = useTranslation();
+  const scale = useSharedValue(1);
+  const pressStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+
+  return (
+    <Animated.View style={pressStyle}>
+      <Pressable
+        onPressIn={() => {
+          scale.value = withSpring(0.98, { damping: 16, stiffness: 220, mass: 0.5 });
+        }}
+        onPressOut={() => {
+          scale.value = withSpring(1, { damping: 16, stiffness: 220, mass: 0.5 });
+        }}
+        onPress={() => {
+          triggerHaptic('impactLight');
+          onPress();
+        }}
+        accessibilityRole="button"
+        accessibilityLabel={t('medications.addManually')}
+        accessibilityHint={t('medications.addManuallyHint')}
+        className="min-h-hit flex-row items-center gap-4 rounded-3xl border p-4"
+        style={{
+          backgroundColor: theme.colors.elevated,
+          borderColor: theme.colors.hairline,
+          shadowColor: theme.action.base,
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.1,
+          shadowRadius: 10,
+          elevation: 2,
+        }}
+      >
+        <View
+          className="items-center justify-center rounded-2xl"
+          style={{ width: 48, height: 48, backgroundColor: `${theme.action.base}18` }}
+        >
+          <Plus color={theme.action.base} size={24} strokeWidth={2.5} />
+        </View>
+        <View className="flex-1 gap-0.5">
+          <Text className="text-body-lg" numberOfLines={2} style={{ color: theme.colors.ink, fontWeight: '700' }}>
+            {t('medications.addManually')}
+          </Text>
+          <Text className="text-caption" numberOfLines={2} style={{ color: theme.colors.inkSecondary }}>
+            {t('medications.addManuallyHint')}
+          </Text>
+        </View>
+        <ChevronRight color={theme.colors.inkMuted} size={22} strokeWidth={2.25} />
+      </Pressable>
+    </Animated.View>
   );
 }
 
@@ -353,15 +407,7 @@ export default function DrugLabScreen() {
                   {t('medications.alreadyAdded', { name: duplicateName })}
                 </Text>
               ) : null}
-              <Pressable
-                onPress={() => manualSheetRef.current?.present(query.trim())}
-                accessibilityRole="button"
-                className="min-h-hit items-start justify-center"
-              >
-                <Text className="text-body-lg" style={{ color: theme.action.base, fontWeight: '600' }}>
-                  {t('medications.addManually')}
-                </Text>
-              </Pressable>
+              <ManualMedicationButton onPress={() => manualSheetRef.current?.present(query.trim())} />
             </View>
 
             {manualAddedName ? (

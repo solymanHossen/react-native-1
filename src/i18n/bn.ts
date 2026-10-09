@@ -222,6 +222,7 @@ export const bn: typeof en = {
     addedManually: '{{name}} যোগ করা হয়েছে। নিজে থেকে যোগ করা ওষুধের জন্য মিথস্ক্রিয়া পরীক্ষা করা যায় না।',
     alreadyAdded: '{{name}} আপনার ওষুধের তালিকায় ইতিমধ্যে আছে।',
     addManually: 'খুঁজে পাচ্ছেন না? নিজে থেকে একটি ওষুধ যোগ করুন',
+    addManuallyHint: 'নাম, শক্তি এবং ধরন নিজে লিখে যোগ করুন।',
     openingDatabase: 'আপনার ওষুধ লোড হচ্ছে…',
     databaseFailed: 'আপনার ওষুধ লোড করতে সমস্যা হয়েছে: {{error}}',
     forms: {

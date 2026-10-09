@@ -225,6 +225,7 @@ export const en = {
     addedManually: 'Added {{name}}. Interaction checks aren’t available for manually-added medications.',
     alreadyAdded: '{{name}} is already in your medications.',
     addManually: 'Can’t find it? Add a medication manually',
+    addManuallyHint: 'Enter the name, strength, and form yourself.',
     openingDatabase: 'Loading your medications…',
     databaseFailed: 'Something went wrong loading your medications: {{error}}',
     forms: {
