@@ -1,4 +1,4 @@
-import { ChevronRight, FileText, HeartPulse, Moon, RefreshCw, Settings, Sun, SunMoon } from 'lucide-react-native';
+import { ChevronRight, FileText, HeartPulse, RefreshCw, Settings } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -20,24 +20,8 @@ import { generateClinicalReportPdf, shareClinicalReportPdf } from '../reports/pd
 import { useIntakeQueueStore, useSentinelStore, useVitalsStore, type IntakeQueueStatus } from '../store';
 import type { VitalType } from '../db/types';
 import type { StatusKey } from '../theme/tokens';
-import { useTheme, useThemePreference, useSetThemePreference, type ThemePreference } from '../theme/useTheme';
+import { useTheme } from '../theme/useTheme';
 import { classifyBloodPressure, type BloodPressureStage } from '../vitals/bpClassification';
-
-const NEXT_PREFERENCE: Record<ThemePreference, ThemePreference> = {
-  system: 'light',
-  light: 'dark',
-  dark: 'system',
-};
-
-// Real vector icons, not a Unicode glyph: a glyph rendered through a
-// symbol-fallback font with unpredictable line-height once made the toggle
-// button grow into a pill instead of staying a circle (see LargeTextButton's
-// git history / the earlier fixed-size workaround this replaces).
-const THEME_ICON: Record<ThemePreference, typeof Sun> = {
-  system: SunMoon,
-  light: Sun,
-  dark: Moon,
-};
 
 const STATUS_TO_KEY: Record<IntakeQueueStatus, StatusKey> = {
   TAKEN: 'taken',
@@ -110,79 +94,6 @@ function RevealOnMount({ delay, children }: { delay: number; children: ReactNode
   return <Animated.View style={style}>{children}</Animated.View>;
 }
 
-/**
- * The only remaining un-animated Pressable in the header — gets the same
- * press-scale LargeTextButton uses elsewhere, so every tappable thing on
- * this screen responds the same way. The flat tinted-circle-with-a-border
- * version of this read as a generic icon chip, not a considered control, so
- * two things changed: the hard border is gone in favor of a soft
- * color-matched shadow (a bordered flat tint reads dated; a softly-lifted
- * tint reads like a native modern control), and the icon itself now pops
- * into place — scaling and rotating in from its resting state — every time
- * the preference changes, instead of silently swapping with no transition
- * at all.
- */
-function ThemeToggleButton({ preference, onPress }: { preference: ThemePreference; onPress: () => void }) {
-  const theme = useTheme();
-  const scale = useSharedValue(1);
-  const iconEntrance = useSharedValue(1);
-  const ThemeIcon = THEME_ICON[preference];
-
-  useEffect(() => {
-    iconEntrance.value = 0;
-    iconEntrance.value = withSpring(1, { damping: 12, stiffness: 180 });
-  }, [preference, iconEntrance]);
-
-  const pressStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
-  const iconStyle = useAnimatedStyle(() => ({
-    opacity: iconEntrance.value,
-    transform: [
-      { scale: interpolate(iconEntrance.value, [0, 1], [0.4, 1], Extrapolation.CLAMP) },
-      { rotate: `${interpolate(iconEntrance.value, [0, 1], [-50, 0], Extrapolation.CLAMP)}deg` },
-    ],
-  }));
-
-  return (
-    <Animated.View style={pressStyle}>
-      <Pressable
-        onPressIn={() => {
-          scale.value = withSpring(0.92, PRESS_SPRING);
-        }}
-        onPressOut={() => {
-          scale.value = withSpring(1, PRESS_SPRING);
-        }}
-        onPress={() => {
-          triggerHaptic('selection');
-          onPress();
-        }}
-        accessibilityRole="button"
-        accessibilityLabel={`Theme: ${preference}. Tap to change.`}
-        // Visually smaller than the app's 56dp MIN_HITBOX floor, but not a
-        // smaller *touch target* — `hitSlop` pads the invisible tappable
-        // area back out to 56dp on every side so the geriatric/low-vision
-        // accessibility floor every other interactive control on this
-        // screen gets still applies here, it just isn't drawn that large.
-        hitSlop={6}
-        className="items-center justify-center rounded-full"
-        style={{
-          width: 44,
-          height: 44,
-          backgroundColor: `${theme.action.base}14`,
-          shadowColor: theme.action.base,
-          shadowOffset: { width: 0, height: 3 },
-          shadowOpacity: 0.22,
-          shadowRadius: 8,
-          elevation: 3,
-        }}
-      >
-        <Animated.View style={iconStyle}>
-          <ThemeIcon color={theme.action.base} size={20} strokeWidth={2.25} />
-        </Animated.View>
-      </Pressable>
-    </Animated.View>
-  );
-}
-
 export interface HomeScreenProps {
   /** Opens the Vitals tab — wired from App.tsx's tab state, since this screen has no navigator of its own to ask for it. */
   onNavigateToVitals?: (focus?: VitalType) => void;
@@ -192,8 +103,6 @@ export interface HomeScreenProps {
 export default function HomeScreen({ onNavigateToVitals, onOpenSettings }: HomeScreenProps) {
   const theme = useTheme();
   const { t } = useTranslation();
-  const preference = useThemePreference();
-  const setPreference = useSetThemePreference();
   const healthRecordsRef = useRef<HealthRecordsSheetRef>(null);
   const [syncing, setSyncing] = useState(false);
   const [syncStatus, setSyncStatus] = useState<string | null>(null);
@@ -332,21 +241,21 @@ export default function HomeScreen({ onNavigateToVitals, onOpenSettings }: HomeS
       >
         <Animated.View style={[{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }, compactTitleStyle]}>
           <AppLogo size={30} />
-          <Text className="text-title-lg" style={{ color: theme.colors.ink }} numberOfLines={1}>
+          <Text className="text-title-lg" style={{ color: theme.colors.ink, fontSize: 22, lineHeight: 28 }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
             {t('home.brand')}
           </Text>
         </Animated.View>
-        <View className="flex-row items-center gap-2">
+        <View className="flex-row items-center">
           <Pressable
             onPress={onOpenSettings}
             accessibilityRole="button"
             accessibilityLabel={t('home.settings')}
-            className="min-h-hit min-w-hit items-center justify-center rounded-full"
-            style={{ backgroundColor: `${theme.action.base}14` }}
+            hitSlop={6}
+            className="items-center justify-center rounded-full"
+            style={{ width: 40, height: 40, backgroundColor: `${theme.action.base}14` }}
           >
             <Settings color={theme.action.base} size={21} strokeWidth={2.25} />
           </Pressable>
-          <ThemeToggleButton preference={preference} onPress={() => setPreference(NEXT_PREFERENCE[preference])} />
         </View>
       </Animated.View>
       <Animated.View style={[{ height: 1, backgroundColor: theme.colors.hairline }, headerHairlineStyle]} />
@@ -373,7 +282,7 @@ export default function HomeScreen({ onNavigateToVitals, onOpenSettings }: HomeS
             <Text className="text-caption" style={{ color: theme.colors.inkSecondary }}>
               {greeting}
             </Text>
-            <Text className="text-display-lg" numberOfLines={1} style={{ color: theme.colors.ink }}>
+            <Text className="text-display-lg" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.78} style={{ color: theme.colors.ink, fontSize: 36, lineHeight: 42 }}>
               {t('home.brand')}
             </Text>
           </View>
