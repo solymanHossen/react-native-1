@@ -1,6 +1,6 @@
 import { FlashList } from '@shopify/flash-list';
 import { BottomSheetModal, BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
-import { Camera, Check, Clock, Moon, Nfc, Phone, ShieldAlert, Sun, Sunrise, Sunset, Trash2 } from 'lucide-react-native';
+import { Camera, Check, ChevronDown, Clock, Moon, Nfc, Phone, ShieldAlert, Sun, Sunrise, Sunset, Trash2 } from 'lucide-react-native';
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, type ComponentType } from 'react';
 import { Pressable, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -197,6 +197,8 @@ export default function AlarmsScreen() {
   const [schedules, setSchedules] = useState<ScheduleWithMedication[]>([]);
   const [medications, setMedications] = useState<Medication[]>([]);
   const [selectedMedicationId, setSelectedMedicationId] = useState<number | null>(null);
+  const [selectedTimeNode, setSelectedTimeNode] = useState<TimeNode>('BREAKFAST');
+  const [timeMenuOpen, setTimeMenuOpen] = useState(false);
   const [selectedMealRelation, setSelectedMealRelation] = useState<MealRelation>('WITH');
   const [savedCaregiverPhone, setSavedCaregiverPhone] = useState(() => getCaregiverPhone());
   const [status, setStatus] = useState<string | null>(null);
@@ -222,14 +224,16 @@ export default function AlarmsScreen() {
     () => medications.find((medication) => medication.id === selectedMedicationId) ?? null,
     [medications, selectedMedicationId],
   );
+  const selectedTimeSlot = TIME_SLOTS.find((slot) => slot.node === selectedTimeNode) ?? TIME_SLOTS[0];
+  const SelectedTimeIcon = selectedTimeSlot.icon;
 
   const handleAddReminder = useCallback(
-    async (slot: TimeSlot) => {
+    async () => {
       if (!mediusDb || !selectedMedication) return;
       await mediusDb.schedules.create({
         medication_id: selectedMedication.id,
-        time_utc: slot.timeUtc,
-        time_node: slot.node,
+        time_utc: selectedTimeSlot.timeUtc,
+        time_node: selectedTimeSlot.node,
         meal_relation: selectedMealRelation,
         dose_quantity: 1,
         days_of_week_mask: 127,
@@ -239,9 +243,10 @@ export default function AlarmsScreen() {
       await rescheduleAllActiveAlarms();
       triggerHaptic('notificationSuccess');
       setSelectedMedicationId(null);
+      setTimeMenuOpen(false);
       setStatus(t('alarms.reminderAdded', { name: selectedMedication.name }));
     },
-    [mediusDb, refresh, selectedMealRelation, selectedMedication, t],
+    [mediusDb, refresh, selectedMealRelation, selectedMedication, selectedTimeSlot, t],
   );
 
   const handleToggleActive = useCallback(
@@ -417,6 +422,58 @@ export default function AlarmsScreen() {
                       <Text className="text-caption" style={{ color: theme.colors.inkMuted }}>
                         {t('alarms.pickTime')}
                       </Text>
+                      <Pressable
+                        onPress={() => setTimeMenuOpen((open) => !open)}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('alarms.timeSelectorAccessibility')}
+                        accessibilityState={{ expanded: timeMenuOpen }}
+                        className="min-h-hit flex-row items-center gap-3 rounded-2xl border px-4"
+                        style={{ backgroundColor: theme.colors.surface, borderColor: timeMenuOpen ? theme.action.base : theme.colors.hairline }}
+                      >
+                        <View className="items-center justify-center rounded-xl" style={{ width: 40, height: 40, backgroundColor: `${theme.action.base}14` }}>
+                          <SelectedTimeIcon color={theme.action.base} size={21} strokeWidth={2.25} />
+                        </View>
+                        <View className="flex-1">
+                          <Text className="text-body-lg" style={{ color: theme.colors.ink, fontWeight: '700' }}>
+                            {t(selectedTimeSlot.labelKey)}
+                          </Text>
+                          <Text className="text-caption" style={{ color: theme.colors.inkSecondary }}>
+                            {formatTimeLabel(selectedTimeSlot.timeUtc)}
+                          </Text>
+                        </View>
+                        <ChevronDown color={theme.colors.inkMuted} size={21} style={{ transform: [{ rotate: timeMenuOpen ? '180deg' : '0deg' }] }} />
+                      </Pressable>
+                      {timeMenuOpen ? (
+                        <View className="overflow-hidden rounded-2xl border" style={{ backgroundColor: theme.colors.surface, borderColor: theme.colors.hairline }}>
+                          {TIME_SLOTS.map((slot) => {
+                            const SlotIcon = slot.icon;
+                            const selected = selectedTimeNode === slot.node;
+                            return (
+                              <Pressable
+                                key={slot.node}
+                                onPress={() => {
+                                  setSelectedTimeNode(slot.node);
+                                  setTimeMenuOpen(false);
+                                  triggerHaptic('selection');
+                                }}
+                                accessibilityRole="button"
+                                accessibilityState={{ selected }}
+                                className="min-h-hit flex-row items-center gap-3 px-4"
+                                style={{ backgroundColor: selected ? `${theme.action.base}10` : theme.colors.surface }}
+                              >
+                                <SlotIcon color={selected ? theme.action.base : theme.colors.inkMuted} size={19} />
+                                <Text className="flex-1 text-body" style={{ color: theme.colors.ink, fontWeight: selected ? '700' : '500' }}>
+                                  {t(slot.labelKey)}
+                                </Text>
+                                <Text className="text-body" style={{ color: theme.colors.inkSecondary }}>
+                                  {formatTimeLabel(slot.timeUtc)}
+                                </Text>
+                                {selected ? <Check color={theme.action.base} size={18} strokeWidth={2.5} /> : null}
+                              </Pressable>
+                            );
+                          })}
+                        </View>
+                      ) : null}
                       <Text className="text-caption" style={{ color: theme.colors.inkSecondary }}>
                         {t('alarms.mealRelationLabel')}
                       </Text>
@@ -445,33 +502,17 @@ export default function AlarmsScreen() {
                       <Text className="text-caption" style={{ color: theme.colors.inkMuted }}>
                         {t('alarms.mealRelationHint')}
                       </Text>
-                      <View className="gap-2.5">
-                        {TIME_SLOTS.map((slot) => {
-                          const SlotIcon = slot.icon;
-                          return (
-                            <Pressable
-                              key={slot.node}
-                              onPress={() => handleAddReminder(slot)}
-                              accessibilityRole="button"
-                              className="min-h-hit flex-row items-center gap-3 rounded-2xl px-5 py-4"
-                              style={{ backgroundColor: slot.color }}
-                            >
-                              <View
-                                className="items-center justify-center rounded-full"
-                                style={{ width: 40, height: 40, backgroundColor: 'rgba(255,255,255,0.2)' }}
-                              >
-                                <SlotIcon color="#FFFFFF" size={20} strokeWidth={2.25} />
-                              </View>
-                              <Text className="flex-1 text-body-lg" style={{ color: '#FFFFFF', fontWeight: '700' }}>
-                                {t(slot.labelKey)}
-                              </Text>
-                              <Text className="text-body-lg" style={{ color: 'rgba(255,255,255,0.85)' }}>
-                                {formatTimeLabel(slot.timeUtc)}
-                              </Text>
-                            </Pressable>
-                          );
-                        })}
-                      </View>
+                      <Pressable
+                        onPress={handleAddReminder}
+                        accessibilityRole="button"
+                        className="min-h-hit flex-row items-center justify-center gap-2 rounded-2xl px-5 py-4"
+                        style={{ backgroundColor: theme.action.base }}
+                      >
+                        <Clock color={theme.action.ink} size={20} strokeWidth={2.25} />
+                        <Text className="text-body-lg" style={{ color: theme.action.ink, fontWeight: '700' }}>
+                          {t('alarms.addReminder')}
+                        </Text>
+                      </Pressable>
                     </View>
                   ) : null}
                 </>

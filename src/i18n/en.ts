@@ -142,6 +142,7 @@ export const en = {
     noMedicationsYet: "You haven't added any medications yet. Add one from the Meds tab, then come back here to set a reminder time.",
     pickMedication: 'Choose a medication',
     pickTime: 'Choose a time',
+    timeSelectorAccessibility: 'Choose reminder time',
     mealRelationLabel: 'When should you take it?',
     mealBefore: 'Before food',
     mealWith: 'With food',

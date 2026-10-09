@@ -139,6 +139,7 @@ export const bn: typeof en = {
     noMedicationsYet: 'আপনি এখনো কোনো ওষুধ যোগ করেননি। প্রথমে ওষুধ ট্যাব থেকে একটি যোগ করুন, তারপর এখানে এসে রিমাইন্ডারের সময় নির্ধারণ করুন।',
     pickMedication: 'একটি ওষুধ বেছে নিন',
     pickTime: 'একটি সময় বেছে নিন',
+    timeSelectorAccessibility: 'রিমাইন্ডারের সময় বেছে নিন',
     mealRelationLabel: 'কখন ওষুধ খাবেন?',
     mealBefore: 'খাবারের আগে',
     mealWith: 'খাবারের সাথে',
