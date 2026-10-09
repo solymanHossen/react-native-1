@@ -28,4 +28,5 @@ module.exports = {
   AndroidCategory: { ALARM: 'alarm', CALL: 'call', MESSAGE: 'msg' },
   AlarmType: { SET: 0, SET_AND_ALLOW_WHILE_IDLE: 1, SET_EXACT: 2, SET_EXACT_AND_ALLOW_WHILE_IDLE: 3, SET_ALARM_CLOCK: 4 },
   TriggerType: { TIMESTAMP: 0, INTERVAL: 1 },
+  RepeatFrequency: { HOURLY: 0, DAILY: 1, WEEKLY: 2 },
 };
