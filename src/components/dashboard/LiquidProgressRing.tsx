@@ -82,7 +82,7 @@ export function LiquidProgressRing({ ratio, size = 180, label }: LiquidProgressR
   return (
     <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
       <Canvas style={{ width: size, height: size }}>
-        <Circle cx={radius} cy={radius} r={radius} color={theme.colors.elevated} />
+        <Circle cx={radius} cy={radius} r={radius} color={theme.colors.surface} />
         <Group clip={clipPath}>
           <Group transform={liquidTransform}>
             <Group transform={waveBTransform}>
@@ -103,7 +103,7 @@ export function LiquidProgressRing({ ratio, size = 180, label }: LiquidProgressR
           paddingHorizontal: 10,
           paddingVertical: 4,
           borderRadius: 16,
-          backgroundColor: theme.colors.elevated,
+          backgroundColor: theme.colors.surface,
           borderWidth: 1,
           borderColor: theme.colors.hairline,
         }}
