@@ -4,6 +4,7 @@ import { ActivityIndicator, Alert, Pressable, ScrollView, Text, TextInput, View 
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ManualMedicationSheet, type ManualMedicationInput, type ManualMedicationSheetRef } from '../components/medications/ManualMedicationSheet';
+import { MedicationDetailsSheet, type MedicationDetailsSheetRef } from '../components/medications/MedicationDetailsSheet';
 import { MedicationHistorySheet, type MedicationHistorySheetRef } from '../components/medications/MedicationHistorySheet';
 import { ActionRow, ActionRowGroup, StatusPill } from '../components/ui';
 import { DuplicateMedicationError, initializeDatabase, type DrugConflict, type DrugSearchResult, type Medication, type MediusDatabase } from '../db';
@@ -39,14 +40,17 @@ function worstConflictSeverity(conflicts: DrugConflict[]): DrugConflict['severit
   return SEVERITY_RANK.find((level) => conflicts.some((c) => c.severity === level)) ?? 'moderate';
 }
 
-function MedicationRow({ medication, onRemove }: { medication: Medication; onRemove: () => void }) {
+function MedicationRow({ medication, onRemove, onOpen }: { medication: Medication; onRemove: () => void; onOpen: () => void }) {
   const theme = useTheme();
   const { t } = useTranslation();
   const FormIcon = FORM_ICON[medication.form];
   const isLowStock = medication.current_stock <= medication.refill_threshold;
 
   return (
-    <View
+    <Pressable
+      onPress={onOpen}
+      accessibilityRole="button"
+      accessibilityLabel={t('medications.detailsAccessibility', { name: medication.name })}
       className="flex-row items-center gap-4 rounded-3xl border p-5"
       style={{ backgroundColor: theme.colors.elevated, borderColor: theme.colors.hairline }}
     >
@@ -73,14 +77,17 @@ function MedicationRow({ medication, onRemove }: { medication: Medication; onRem
         {isLowStock ? <StatusPill status="missed" label={t('medications.lowStock')} /> : null}
       </View>
       <Pressable
-        onPress={onRemove}
+        onPress={(event) => {
+          event.stopPropagation();
+          onRemove();
+        }}
         accessibilityRole="button"
         accessibilityLabel={t('medications.removeAccessibility', { name: medication.name })}
         className="min-h-hit min-w-hit items-center justify-center"
       >
         <X color={theme.colors.inkMuted} size={20} />
       </Pressable>
-    </View>
+    </Pressable>
   );
 }
 
@@ -209,6 +216,7 @@ export default function DrugLabScreen() {
   const [manualAddedName, setManualAddedName] = useState<string | null>(null);
   const [removeError, setRemoveError] = useState<string | null>(null);
   const manualSheetRef = useRef<ManualMedicationSheetRef>(null);
+  const detailsSheetRef = useRef<MedicationDetailsSheetRef>(null);
   const historySheetRef = useRef<MedicationHistorySheetRef>(null);
 
   const refreshMedications = useCallback(async (database: MediusDatabase) => {
@@ -390,7 +398,12 @@ export default function DrugLabScreen() {
                 </Text>
               ) : (
                 medications.map((medication) => (
-                  <MedicationRow key={medication.id} medication={medication} onRemove={() => removeMedication(medication)} />
+                  <MedicationRow
+                    key={medication.id}
+                    medication={medication}
+                    onOpen={() => detailsSheetRef.current?.present(medication)}
+                    onRemove={() => removeMedication(medication)}
+                  />
                 ))
               )}
             </View>
@@ -497,6 +510,7 @@ export default function DrugLabScreen() {
 
       <ManualMedicationSheet ref={manualSheetRef} onSave={addManualMedication} />
       <MedicationHistorySheet ref={historySheetRef} />
+      <MedicationDetailsSheet ref={detailsSheetRef} />
     </SafeAreaView>
   );
 }
