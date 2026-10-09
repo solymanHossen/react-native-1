@@ -116,7 +116,6 @@ export {
   scheduleAlarm,
   scheduleSnoozeAlarm,
   setScheduleActive,
-  triggerAlarmNow,
 } from './alarmScheduler';
 export { isNfcAvailable, listenForTag } from './nfcVerification';
 export { scanPackForMedication, VISION_CONFIDENCE_THRESHOLD } from './visionVerification';

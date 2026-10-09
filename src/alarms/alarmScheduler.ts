@@ -146,9 +146,3 @@ export async function rescheduleAllActiveAlarms(): Promise<void> {
     await scheduleAlarm(schedule);
   }
 }
-
-/** Fires the full-screen alarm immediately — the demo screen's "Trigger Now" test affordance, bypassing the wait for its real scheduled time. */
-export async function triggerAlarmNow(schedule: ScheduleWithMedication): Promise<void> {
-  const notification = await buildAlarmNotification(schedule, Date.now());
-  await notifee.displayNotification(notification);
-}
