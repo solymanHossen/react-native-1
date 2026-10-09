@@ -32,6 +32,8 @@ function makeWavePath(width: number, height: number, amplitude: number, waveleng
  */
 export function LiquidProgressRing({ ratio, size = 180, label }: LiquidProgressRingProps) {
   const theme = useTheme();
+  const adherenceStatus = ratio >= 0.8 ? 'taken' : ratio >= 0.5 ? 'pending' : 'missed';
+  const liquidColor = theme.statusText(adherenceStatus);
   const radius = size / 2;
   const amplitude = size * 0.045;
   const wavelength = size * 0.9;
@@ -84,29 +86,38 @@ export function LiquidProgressRing({ ratio, size = 180, label }: LiquidProgressR
         <Group clip={clipPath}>
           <Group transform={liquidTransform}>
             <Group transform={waveBTransform}>
-              <Path path={wavePath} color={theme.action.base} opacity={0.35} />
+              <Path path={wavePath} color={liquidColor} opacity={0.35} />
             </Group>
             <Group transform={waveATransform}>
-              <Path path={wavePath} color={theme.action.base} opacity={0.85} />
+              <Path path={wavePath} color={liquidColor} opacity={0.85} />
             </Group>
           </Group>
         </Group>
         <Circle cx={radius} cy={radius} r={radius - 2} style="stroke" strokeWidth={3} color={theme.colors.hairline} />
       </Canvas>
-      <View pointerEvents="none" style={{ position: 'absolute', alignItems: 'center' }}>
+      <View
+        pointerEvents="none"
+        style={{
+          position: 'absolute',
+          alignItems: 'center',
+          paddingHorizontal: 10,
+          paddingVertical: 4,
+          borderRadius: 16,
+          backgroundColor: theme.colors.elevated,
+          borderWidth: 1,
+          borderColor: theme.colors.hairline,
+        }}
+      >
         <Text
           className="text-title-lg"
           style={{
-            color: displayPercent >= 35 ? theme.action.ink : theme.colors.ink,
-            textShadowColor: displayPercent >= 35 ? 'rgba(0, 0, 0, 0.18)' : 'transparent',
-            textShadowOffset: { width: 0, height: 1 },
-            textShadowRadius: 2,
+            color: theme.colors.ink,
           }}
         >
           {displayPercent}%
         </Text>
         {label ? (
-          <Text className="text-caption" style={{ color: displayPercent >= 35 ? theme.action.ink : theme.colors.inkSecondary }}>
+          <Text className="text-caption" style={{ color: theme.colors.inkSecondary }}>
             {label}
           </Text>
         ) : null}
