@@ -32,7 +32,10 @@ export async function confirmIntake(payload: ScheduledAlarmPayload, method: Excl
        VALUES (?, ?, ?, 'TAKEN', ?, 0);`,
       [payload.scheduleId, scheduledTime, takenTime, method],
     );
-    await tx.execute('UPDATE medications SET current_stock = current_stock - ? WHERE id = ?;', [payload.doseQuantity, payload.medicationId]);
+    await tx.execute(
+      'UPDATE medications SET current_stock = MAX(0, current_stock - ?) WHERE id = ? AND is_archived = 0;',
+      [payload.doseQuantity, payload.medicationId],
+    );
   });
 
   // Outside the transaction on purpose: a notification is a side effect, not

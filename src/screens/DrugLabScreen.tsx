@@ -44,7 +44,8 @@ function MedicationRow({ medication, onRemove, onOpen }: { medication: Medicatio
   const theme = useTheme();
   const { t } = useTranslation();
   const FormIcon = FORM_ICON[medication.form];
-  const isLowStock = medication.current_stock <= medication.refill_threshold;
+  const isOutOfStock = medication.current_stock <= 0;
+  const isLowStock = !isOutOfStock && medication.current_stock <= medication.refill_threshold;
 
   return (
     <Pressable
@@ -79,7 +80,7 @@ function MedicationRow({ medication, onRemove, onOpen }: { medication: Medicatio
         {/* Only shown when it needs attention — a pill on every row saying
             "24 left" is noise; a patient only needs to notice this one when
             it's running out. */}
-        {isLowStock ? <StatusPill status="missed" label={t('medications.lowStock')} /> : null}
+        {isOutOfStock ? <StatusPill status="missed" label={t('medications.outOfStock')} /> : isLowStock ? <StatusPill status="pending" label={t('medications.lowStock')} /> : null}
       </View>
       <Pressable
         onPress={(event) => {

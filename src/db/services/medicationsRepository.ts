@@ -98,7 +98,19 @@ export class MedicationsRepository {
   }
 
   async adjustStock(id: number, deltaUnits: number): Promise<void> {
-    await this.db.execute('UPDATE medications SET current_stock = current_stock + ? WHERE id = ?;', [deltaUnits, id]);
+    if (!Number.isFinite(deltaUnits)) throw new Error('Stock adjustment must be a finite number.');
+    await this.db.execute(
+      'UPDATE medications SET current_stock = MAX(0, current_stock + ?) WHERE id = ? AND is_archived = 0;',
+      [deltaUnits, id],
+    );
+  }
+
+  async setStock(id: number, units: number): Promise<Medication> {
+    if (!Number.isFinite(units) || units < 0) throw new Error('Stock must be zero or greater.');
+    await this.db.execute('UPDATE medications SET current_stock = ? WHERE id = ? AND is_archived = 0;', [units, id]);
+    const updated = await this.getById(id);
+    if (!updated) throw new Error('Medication disappeared while saving its stock.');
+    return updated;
   }
 
   async updatePhoto(id: number, photoUri: string | null): Promise<Medication> {

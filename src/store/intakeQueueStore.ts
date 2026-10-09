@@ -105,7 +105,10 @@ async function writeIntakeLog(item: IntakeQueueItem, status: 'TAKEN' | 'SKIPPED'
       [item.scheduleId, now, status === 'TAKEN' ? now : null, status],
     );
     if (status === 'TAKEN') {
-      await tx.execute('UPDATE medications SET current_stock = current_stock - ? WHERE id = ?;', [item.doseQuantity, item.medicationId]);
+      await tx.execute(
+        'UPDATE medications SET current_stock = MAX(0, current_stock - ?) WHERE id = ? AND is_archived = 0;',
+        [item.doseQuantity, item.medicationId],
+      );
     }
   });
 }
