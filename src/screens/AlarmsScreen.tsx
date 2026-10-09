@@ -1,6 +1,6 @@
 import { FlashList } from '@shopify/flash-list';
 import { BottomSheetModal, BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
-import { Camera, Check, ChevronDown, Clock, Moon, Nfc, Phone, ShieldAlert, Sun, Sunrise, Sunset, Trash2 } from 'lucide-react-native';
+import { Camera, Check, ChevronDown, Clock, Droplet, Moon, Nfc, Package, Phone, Pill, ShieldAlert, Sun, Sunrise, Sunset, Trash2 } from 'lucide-react-native';
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, type ComponentType } from 'react';
 import { Pressable, ScrollView, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -129,6 +129,10 @@ function formatTimeLabel(timeUtc: string): string {
   const period = hours >= 12 ? 'PM' : 'AM';
   const displayHour = hours % 12 === 0 ? 12 : hours % 12;
   return `${displayHour}:${minutes.toString().padStart(2, '0')} ${period}`;
+}
+
+function medicationFormIcon(form: Medication['form']) {
+  return form === 'tablet' || form === 'capsule' ? Pill : form === 'syrup' || form === 'drop' ? Droplet : Package;
 }
 
 interface TimeSlot {
@@ -389,33 +393,68 @@ export default function AlarmsScreen() {
                   <Text className="text-caption" style={{ color: theme.colors.inkMuted }}>
                     {t('alarms.pickMedication')}
                   </Text>
-                  <View className="flex-row flex-wrap gap-2.5">
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    snapToInterval={220}
+                    snapToAlignment="start"
+                    decelerationRate="fast"
+                    contentContainerStyle={{ gap: 12, paddingRight: 12 }}
+                    accessibilityLabel={t('alarms.pickMedication')}
+                  >
                     {medications.map((medication) => {
                       const selected = medication.id === selectedMedicationId;
+                      const FormIcon = medicationFormIcon(medication.form);
+                      const outOfStock = medication.current_stock <= 0;
+                      const lowStock = !outOfStock && medication.current_stock <= medication.refill_threshold;
                       return (
                         <Pressable
                           key={medication.id}
-                          onPress={() => setSelectedMedicationId(selected ? null : medication.id)}
+                          onPress={() => {
+                            setSelectedMedicationId(selected ? null : medication.id);
+                            setTimeMenuOpen(false);
+                            triggerHaptic('selection');
+                          }}
                           accessibilityRole="button"
+                          accessibilityLabel={medication.name}
                           accessibilityState={{ selected }}
-                          className="min-h-hit flex-row items-center gap-1.5 rounded-full border px-4 py-2"
+                          className="min-h-hit justify-between rounded-3xl border p-4"
                           style={{
-                            backgroundColor: selected ? theme.action.base : theme.colors.surface,
+                            width: 208,
+                            minHeight: 132,
+                            backgroundColor: selected ? `${theme.action.base}12` : theme.colors.surface,
                             borderColor: selected ? theme.action.base : theme.colors.hairline,
+                            borderWidth: selected ? 2 : 1,
                           }}
                         >
-                          {selected ? <Check color={theme.action.ink} size={15} strokeWidth={2.5} /> : null}
-                          <Text
-                            className="text-caption"
-                            numberOfLines={1}
-                            style={{ color: selected ? theme.action.ink : theme.colors.ink, fontWeight: '600' }}
-                          >
-                            {medication.name}
+                          <View className="flex-row items-center justify-between">
+                            <View className="items-center justify-center rounded-2xl" style={{ width: 42, height: 42, backgroundColor: selected ? theme.action.base : `${theme.action.base}14` }}>
+                              <FormIcon color={selected ? theme.action.ink : theme.action.base} size={21} strokeWidth={2.25} />
+                            </View>
+                            {selected ? <Check color={theme.action.base} size={20} strokeWidth={2.5} /> : null}
+                          </View>
+                          <View className="mt-3">
+                            <Text className="text-body" numberOfLines={1} style={{ color: theme.colors.ink, fontWeight: '700' }}>
+                              {medication.name}
+                            </Text>
+                            <Text className="text-caption" numberOfLines={1} style={{ color: theme.colors.inkSecondary }}>
+                              {[medication.strength, t(`medications.forms.${medication.form}` as never)].filter(Boolean).join(' · ')}
+                            </Text>
+                          </View>
+                          <Text className="mt-2 text-caption" style={{ color: outOfStock ? theme.statusText('missed') : lowStock ? theme.statusText('pending') : theme.colors.inkMuted }}>
+                            {outOfStock
+                              ? t('medications.outOfStock')
+                              : lowStock
+                                ? t('medications.lowStock')
+                                : t('medications.detailsStockUnits', {
+                                    count: Math.max(0, medication.current_stock),
+                                    unit: medication.current_stock === 1 ? t('medications.detailsStockUnit') : t('medications.detailsStockUnitsPlural'),
+                                  })}
                           </Text>
                         </Pressable>
                       );
                     })}
-                  </View>
+                  </ScrollView>
 
                   {selectedMedication ? (
                     <View className="gap-2.5 border-t pt-4" style={{ borderColor: theme.colors.hairline }}>
