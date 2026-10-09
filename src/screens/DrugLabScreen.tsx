@@ -6,6 +6,7 @@ import { StatusPill } from '../components/ui';
 import { initializeDatabase, type DrugConflict, type DrugSearchResult, type Medication, type MediusDatabase } from '../db';
 import { useTranslation } from '../i18n';
 import { triggerHaptic } from '../lib/haptics';
+import type { SeverityKey } from '../theme/tokens';
 import { useTheme } from '../theme/useTheme';
 
 const FORM_ICON: Record<Medication['form'], ComponentType<{ size?: number; color?: string; strokeWidth?: number }>> = {
@@ -16,7 +17,24 @@ const FORM_ICON: Record<Medication['form'], ComponentType<{ size?: number; color
   injection: Syringe,
 };
 
-const SEVERITY_STATUS = { moderate: 'pending', severe: 'missed', contraindicated: 'missed' } as const;
+/**
+ * Maps the drug directory's 3-level interaction severity onto the 5-step red
+ * scale by name where they align; `contraindicated` (the hard-block tier, per
+ * ConflictService's doc comment) gets the scale's most intense step so it
+ * reads as strictly worse than `severe`, which the old 2-color mapping (both
+ * rendered as plain `status.missed`) couldn't distinguish.
+ */
+const CONFLICT_SEVERITY: Record<DrugConflict['severity'], SeverityKey> = {
+  moderate: 'moderate',
+  severe: 'severe',
+  contraindicated: 'critical',
+};
+
+const SEVERITY_RANK: DrugConflict['severity'][] = ['contraindicated', 'severe', 'moderate'];
+
+function worstConflictSeverity(conflicts: DrugConflict[]): DrugConflict['severity'] {
+  return SEVERITY_RANK.find((level) => conflicts.some((c) => c.severity === level)) ?? 'moderate';
+}
 
 function MedicationRow({ medication, onRemove }: { medication: Medication; onRemove: () => void }) {
   const theme = useTheme();
@@ -281,7 +299,9 @@ export default function DrugLabScreen() {
               <View
                 className="gap-3 rounded-3xl border p-5"
                 style={{
-                  backgroundColor: theme.statusTint(addedConflicts?.length ? 'missed' : 'taken'),
+                  backgroundColor: addedConflicts?.length
+                    ? theme.severityTint(CONFLICT_SEVERITY[worstConflictSeverity(addedConflicts)])
+                    : theme.statusTint('taken'),
                   borderColor: theme.colors.hairline,
                 }}
               >
@@ -292,9 +312,16 @@ export default function DrugLabScreen() {
                 </Text>
                 {addedConflicts?.map((conflict) => (
                   <View key={conflict.medicationId} className="flex-row items-start gap-2">
-                    <TriangleAlert color={theme.statusText(SEVERITY_STATUS[conflict.severity])} size={18} style={{ marginTop: 2 }} />
+                    <TriangleAlert
+                      color={theme.severityText(CONFLICT_SEVERITY[conflict.severity])}
+                      size={18}
+                      style={{ marginTop: 2 }}
+                    />
                     <View className="flex-1">
-                      <Text className="text-body-lg" style={{ color: theme.statusText(SEVERITY_STATUS[conflict.severity]), fontWeight: '600' }}>
+                      <Text
+                        className="text-body-lg"
+                        style={{ color: theme.severityText(CONFLICT_SEVERITY[conflict.severity]), fontWeight: '600' }}
+                      >
                         {conflict.medicationName}
                       </Text>
                       <Text className="text-caption" style={{ color: theme.colors.inkSecondary }}>

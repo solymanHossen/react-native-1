@@ -25,10 +25,18 @@ import {
   type ActiveAlarm,
 } from '../alarms';
 import { useTranslation } from '../i18n';
+import { action as brandAction, palette, status } from '../theme/tokens';
 import { useTheme } from '../theme/useTheme';
 import { triggerHapticCascade, triggerHaptic } from '../lib/haptics';
 
 const VISION_CAPTURE_INTERVAL_MS = 2500;
+
+/**
+ * This screen deliberately ignores the user's light/dark preference (see the
+ * component doc comment) and always renders as a fixed dark surface, so its
+ * colors come straight from `palette.dark`/`status` rather than `useTheme()`.
+ */
+const SCHEDULED_ACCENT = status.scheduled.onDark ?? status.scheduled.base;
 
 type VerificationMode = 'nfc' | 'vision';
 type Resolution = 'pending' | 'verified' | 'overridden' | 'escalated';
@@ -207,23 +215,23 @@ export default function AlarmScreen({ alarm }: AlarmScreenProps) {
   }
 
   return (
-    <SafeAreaView className="flex-1" style={{ backgroundColor: '#010113' }}>
+    <SafeAreaView className="flex-1" style={{ backgroundColor: palette.dark.canvas }}>
       <View className="flex-1 items-center justify-center gap-5 px-8">
-        <Text className="text-caption uppercase tracking-wider" style={{ color: '#3BBAFF' }}>
+        <Text className="text-caption uppercase tracking-wider" style={{ color: palette.dark.inkMuted }}>
           {t('alarmRinging.title')}
         </Text>
         <Text className="text-center text-display-lg" style={{ color: '#FFFFFF' }}>
           {payload.medicationName}
         </Text>
-        <Text className="text-center text-body-lg" style={{ color: '#D2F3F9' }}>
+        <Text className="text-center text-body-lg" style={{ color: palette.dark.inkSecondary }}>
           {payload.dosageLabel}
         </Text>
 
         {mode === 'nfc' ? (
           <View className="items-center gap-4">
             <Animated.View style={pulseStyle}>
-              <View className="items-center justify-center rounded-full" style={{ width: 140, height: 140, backgroundColor: 'rgba(0,119,182,0.18)' }}>
-                <Nfc color="#7CD1FF" size={64} strokeWidth={1.5} />
+              <View className="items-center justify-center rounded-full" style={{ width: 140, height: 140, backgroundColor: `${brandAction.base}2E` }}>
+                <Nfc color={SCHEDULED_ACCENT} size={64} strokeWidth={1.5} />
               </View>
             </Animated.View>
             <Text className="text-center text-body-lg" style={{ color: '#FFFFFF' }}>
@@ -237,7 +245,7 @@ export default function AlarmScreen({ alarm }: AlarmScreenProps) {
                 <Camera ref={cameraRef} style={{ width: 240, height: 320 }} device={device} isActive photo />
               ) : (
                 <View className="flex-1 items-center justify-center">
-                  <CameraIcon color="#3BBAFF" size={40} />
+                  <CameraIcon color={palette.dark.inkMuted} size={40} />
                 </View>
               )}
             </View>
@@ -246,7 +254,7 @@ export default function AlarmScreen({ alarm }: AlarmScreenProps) {
             </Text>
             {scanning ? <ActivityIndicator color="#FFFFFF" /> : null}
             {lastConfidence !== null ? (
-              <Text className="text-caption" style={{ color: '#D2F3F9' }}>
+              <Text className="text-caption" style={{ color: palette.dark.inkSecondary }}>
                 {t('alarmRinging.lastReadMatch', { confidence: lastConfidence, threshold: VISION_CONFIDENCE_THRESHOLD })}
               </Text>
             ) : null}
@@ -263,12 +271,12 @@ export default function AlarmScreen({ alarm }: AlarmScreenProps) {
         ) : null}
 
         <Pressable onPress={() => setMode(mode === 'nfc' ? 'vision' : 'nfc')} accessibilityRole="button">
-          <Text className="text-body-lg underline" style={{ color: '#7CD1FF' }}>
+          <Text className="text-body-lg underline" style={{ color: SCHEDULED_ACCENT }}>
             {mode === 'nfc' ? t('alarmRinging.useCameraInstead') : t('alarmRinging.useNfcInstead')}
           </Text>
         </Pressable>
 
-        <Text className="text-caption" style={{ color: '#3BBAFF' }}>
+        <Text className="text-caption" style={{ color: palette.dark.inkMuted }}>
           {t('alarmRinging.autoEscalates', { time: formatCountdown(remainingMs) })}
         </Text>
       </View>
@@ -281,8 +289,8 @@ export default function AlarmScreen({ alarm }: AlarmScreenProps) {
             onPress={handleSnooze}
           />
         ) : (
-          <View className="min-h-hit items-center justify-center rounded-full border px-8 py-5" style={{ borderColor: '#003049' }}>
-            <Text className="text-body-lg" style={{ color: '#3BBAFF' }}>
+          <View className="min-h-hit items-center justify-center rounded-full border px-8 py-5" style={{ borderColor: palette.dark.hairline }}>
+            <Text className="text-body-lg" style={{ color: palette.dark.inkMuted }}>
               {t('alarmRinging.noSnoozesLeft')}
             </Text>
           </View>

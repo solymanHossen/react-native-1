@@ -21,43 +21,43 @@ export type ThemeMode = 'light' | 'dark';
 export const MIN_HITBOX = 56;
 
 /**
- * Ocean palette — deep_twilight (near-black navy) through light_cyan
- * (near-white cyan), five steps shading into each other. Replaces the
- * earlier neutral gray-blue scale so canvas/surface/ink and the primary
- * action color all read as one deliberately-designed family instead of a
- * generic blue plus gray neutrals.
+ * Ember palette — warm near-black through warm near-white, hue-matched to
+ * the brand red below, five steps shading into each other. Replaces the
+ * earlier cyan-leaning "ocean" scale so canvas/surface/ink and the primary
+ * action color read as one deliberately-designed warm family instead of a
+ * cool neutral paired with a warm accent.
  */
 export const palette = {
   light: {
-    canvas: '#F4FCFE',
+    canvas: '#FFF8F7',
     surface: '#FFFFFF',
-    elevated: '#E9F9FC',
-    hairline: '#D2F3F9',
-    /** Primary reading text (deep_twilight 100). ~19.9–20.7:1 against canvas/surface/elevated. */
-    ink: '#010113',
-    /** Secondary text (captions, meta) (deep_twilight 400). ~18:1 against canvas — clears AAA body. */
-    inkSecondary: '#02044B',
-    /** Decorative/non-essential text only (disabled labels, watermarks) (bright_teal_blue 400). ~6.6:1 — below AAA body, do not use for readable content. */
-    inkMuted: '#005F93',
+    elevated: '#FFF1EF',
+    hairline: '#FBDAD5',
+    /** Primary reading text. ~17.8–19.6:1 against canvas/surface/elevated. */
+    ink: '#1A0605',
+    /** Secondary text (captions, meta). ~13.6–14.9:1 against canvas/surface/elevated — clears AAA body. */
+    inkSecondary: '#4A1512',
+    /** Decorative/non-essential text only (disabled labels, watermarks) — the brand hue itself. ~5.2:1 — below AAA body, do not use for readable content. */
+    inkMuted: '#C0392B',
   },
   dark: {
-    canvas: '#010113',
-    surface: '#010226',
-    elevated: '#020338',
-    hairline: '#003049',
-    /** Primary reading text (light_cyan 900). ~19.9:1 against canvas. */
-    ink: '#F4FCFE',
-    /** Secondary text (captions, meta) (frosted_blue 800). ~17.7:1 against canvas — clears AAA body. */
-    inkSecondary: '#D2F3F9',
-    /** Tertiary/muted text (bright_teal_blue 700). ~9.5:1 against canvas — exceeds AAA numerically (every light-enough hue in this cyan-leaning palette does), kept visually dimmer than ink/inkSecondary to preserve the hierarchy; not a "below AAA" token the way its light-mode counterpart is. */
-    inkMuted: '#3BBAFF',
+    canvas: '#170605',
+    surface: '#200807',
+    elevated: '#2B0C0A',
+    hairline: '#4A1512',
+    /** Primary reading text. ~16.7–18.2:1 against canvas/surface/elevated. */
+    ink: '#FFF3F1',
+    /** Secondary text (captions, meta). ~13.6–14.8:1 against canvas/surface/elevated — clears AAA body. */
+    inkSecondary: '#F7D8D3',
+    /** Tertiary/muted text. ~7.7:1 against canvas — exceeds AAA numerically, kept visually dimmer than ink/inkSecondary to preserve the hierarchy; not a "below AAA" token the way its light-mode counterpart is. */
+    inkMuted: '#FF7A68',
   },
 } as const;
 
-/** Bright Teal Blue — primary action color, same value in both themes. */
+/** Pomegranate — primary action color, same value in both themes. */
 export const action = {
-  base: '#0077B6',
-  /** White-on-teal: ~4.87:1, clears the 4.5:1 interactive-state bar. */
+  base: '#C0392B',
+  /** White-on-pomegranate: ~5.44:1, clears the 4.5:1 interactive-state bar. */
   ink: '#FFFFFF',
 } as const;
 
@@ -68,31 +68,33 @@ interface StatusToken {
   base: string;
   /** Darkened variant used as text/icon color in light mode, where the raw base hue fails contrast on a near-white tint. */
   onLight: string;
-  /** Brightened variant used as text/icon color in dark mode, only set when `base` itself fails contrast on a dark tint (Bright Teal Blue is too dark to read against its own translucent chip). */
+  /** Brightened variant used as text/icon color in dark mode, only set when `base` itself fails contrast on a dark tint. */
   onDark?: string;
   label: string;
 }
 
 /**
  * Five clinical states. Fasting/Taken/Pending/Missed map directly to the
- * spec's four semantic status codes; Scheduled reuses Bright Teal Blue as the
- * fifth, neutral/informational state for the StatusPill component.
+ * spec's four semantic status codes; Scheduled reuses the brand action color
+ * as the fifth, neutral/informational state for the StatusPill component.
  *
  * Taken/Pending/Missed keep their original green/orange/red hues rather than
- * being pulled from the new ocean palette: those are medical-safety signal
+ * being pulled from the brand palette: those are medical-safety signal
  * colors (safe/caution/danger) a caregiver relies on at a glance, and
  * restyling them to fit a brand palette would be a correctness risk, not a
  * cosmetic choice. Fasting and Scheduled, which were already brand-adjacent
- * (cyan and indigo respectively, not safety colors), are updated to the new
- * palette so they read as part of one coherent design instead of leftover
- * neon hues beside it.
+ * (not safety colors), track the current brand family so they read as part
+ * of one coherent design instead of leftover hues beside it — Scheduled is
+ * literally `action.base`/pomegranate (same values as `severity.severe`,
+ * since both represent "the brand red"); Fasting keeps its own independent
+ * cyan, since it isn't tied to brand identity.
  */
 export const status: Record<StatusKey, StatusToken> = {
   fasting: { base: '#00B4D8', onLight: '#006B81', label: 'Fasting' },
   taken: { base: '#2ECC71', onLight: '#1A7541', label: 'Taken' },
   pending: { base: '#FFA502', onLight: '#8E5C00', label: 'Pending' },
   missed: { base: '#FF6B6B', onLight: '#CD0000', label: 'Missed' },
-  scheduled: { base: '#0077B6', onLight: '#00486E', onDark: '#7CD1FF', label: 'Scheduled' },
+  scheduled: { base: '#C0392B', onLight: '#C62918', onDark: '#D55144', label: 'Scheduled' },
 };
 
 /**
@@ -110,6 +112,52 @@ export function statusTint(key: StatusKey): string {
 
 export function statusText(key: StatusKey, mode: ThemeMode): string {
   const token = status[key];
+  return mode === 'light' ? token.onLight : (token.onDark ?? token.base);
+}
+
+export type SeverityKey = 'low' | 'moderate' | 'high' | 'severe' | 'critical';
+
+interface SeverityToken {
+  /** Vivid hue — chip dot/glow, and dark-mode text/icon color (unless onDark is set). Same value in both themes. */
+  base: string;
+  /** Darkened variant used as text/icon color in light mode. */
+  onLight: string;
+  /** Brightened variant used as text/icon color in dark mode, only set when `base` itself fails contrast against the near-black dark canvas. */
+  onDark?: string;
+}
+
+/**
+ * Five-step sequential red ramp for *ordered* alert/severity states (e.g. a
+ * drug interaction's moderate/severe/contraindicated rating). Distinct from
+ * `status` above: `status` is categorical (safe/caution/danger dose states
+ * that must never be reassigned), this is ordinal — lightness decreases
+ * monotonically with severity so a chip set reads as a scale at a glance.
+ *
+ * Contrast was verified the same way as `status` (WCAG, >= 4.5:1 for
+ * interactive/status elements): `low`/`moderate`/`high` fail AA directly
+ * against a near-white surface (2.25/2.97/3.82:1) and all three darken, at
+ * the same hue/saturation, to effectively the same text color (~5.6:1) —
+ * they share one hue family, so independently darkening each to the
+ * contrast floor converges on one value. `severe`/`critical` pass in light
+ * mode (5.44/8.01:1) but are too dark for the dark-mode canvas (3.80/2.58:1),
+ * so those two get a brightened `onDark` instead (5.03/5.00:1).
+ */
+export const severity: Record<SeverityKey, SeverityToken> = {
+  low: { base: '#F1948A', onLight: '#C62918' },
+  moderate: { base: '#EC7063', onLight: '#C62918' },
+  high: { base: '#E74C3C', onLight: '#C62918' },
+  severe: { base: '#C0392B', onLight: '#C62918', onDark: '#D55144' },
+  critical: { base: '#A50021', onLight: '#A50021', onDark: '#F90032' },
+};
+
+const SEVERITY_TINT_ALPHA_HEX = '14';
+
+export function severityTint(key: SeverityKey): string {
+  return `${severity[key].base}${SEVERITY_TINT_ALPHA_HEX}`;
+}
+
+export function severityText(key: SeverityKey, mode: ThemeMode): string {
+  const token = severity[key];
   return mode === 'light' ? token.onLight : (token.onDark ?? token.base);
 }
 

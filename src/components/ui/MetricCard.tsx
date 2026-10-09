@@ -1,8 +1,13 @@
 import type { ReactNode } from 'react';
 import { Pressable, Text, View, type GestureResponderEvent } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useTheme } from '../../theme/useTheme';
 import { status as statusTokens, type StatusKey } from '../../theme/tokens';
 import { StatusPill } from './StatusPill';
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+/** Same spring used by LargeTextButton/ActionRow — one consistent press feel across every tappable surface. */
+const PRESS_SPRING = { damping: 16, stiffness: 220, mass: 0.5 };
 
 export interface MetricCardProps {
   /** Eyebrow label, e.g. "Blood Glucose". */
@@ -33,7 +38,9 @@ export interface MetricCardProps {
  */
 export function MetricCard({ label, value, unit, caption, status, icon, onPress, testID, compact = false }: MetricCardProps) {
   const theme = useTheme();
-  const Container = onPress ? Pressable : View;
+  const isInteractive = Boolean(onPress);
+  const scale = useSharedValue(1);
+  const pressStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
 
   // The container is a single `accessible` node, so VoiceOver/TalkBack never
   // sees the caption or StatusPill as separate elements — everything a
@@ -47,14 +54,21 @@ export function MetricCard({ label, value, unit, caption, status, icon, onPress,
     .join('. ');
 
   return (
-    <Container
+    <AnimatedPressable
       testID={testID}
       onPress={onPress}
+      onPressIn={() => {
+        if (isInteractive) scale.value = withSpring(0.98, PRESS_SPRING);
+      }}
+      onPressOut={() => {
+        scale.value = withSpring(1, PRESS_SPRING);
+      }}
+      disabled={!isInteractive}
       accessible
-      accessibilityRole={onPress ? 'button' : undefined}
+      accessibilityRole={isInteractive ? 'button' : undefined}
       accessibilityLabel={accessibilityLabel}
       className={`min-h-hit rounded-3xl border shadow-md ${compact ? 'p-4' : 'p-6'}`}
-      style={{ backgroundColor: theme.colors.elevated, borderColor: theme.colors.hairline }}
+      style={[{ backgroundColor: theme.colors.elevated, borderColor: theme.colors.hairline }, pressStyle]}
     >
       <View className="flex-row items-start justify-between">
         <Text
@@ -103,6 +117,6 @@ export function MetricCard({ label, value, unit, caption, status, icon, onPress,
           <StatusPill status={status} />
         </View>
       ) : null}
-    </Container>
+    </AnimatedPressable>
   );
 }

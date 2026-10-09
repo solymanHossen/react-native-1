@@ -3,7 +3,19 @@ import { Appearance } from 'react-native';
 import { colorScheme as nativeWindColorScheme } from 'nativewind';
 import { create } from 'zustand';
 import { storage } from '../lib/storage';
-import { action, palette, status, statusText, statusTint, type StatusKey, type ThemeMode } from './tokens';
+import {
+  action,
+  palette,
+  severity,
+  severityText,
+  severityTint,
+  status,
+  statusText,
+  statusTint,
+  type SeverityKey,
+  type StatusKey,
+  type ThemeMode,
+} from './tokens';
 
 export type ThemePreference = ThemeMode | 'system';
 
@@ -83,6 +95,9 @@ export interface ResolvedTheme {
   status: typeof status;
   statusTint: (key: StatusKey) => string;
   statusText: (key: StatusKey) => string;
+  severity: typeof severity;
+  severityTint: (key: SeverityKey) => string;
+  severityText: (key: SeverityKey) => string;
 }
 
 /**
@@ -102,6 +117,9 @@ export function useTheme(): ResolvedTheme {
       status,
       statusTint,
       statusText: (key: StatusKey) => statusText(key, mode),
+      severity,
+      severityTint,
+      severityText: (key: SeverityKey) => severityText(key, mode),
     }),
     [mode],
   );

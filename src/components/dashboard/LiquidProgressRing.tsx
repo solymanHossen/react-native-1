@@ -1,7 +1,7 @@
 import { Canvas, Circle, Group, Path, Skia, type SkPath } from '@shopify/react-native-skia';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Text, View } from 'react-native';
-import { Easing, useDerivedValue, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
+import { Easing, runOnJS, useAnimatedReaction, useDerivedValue, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 import { triggerHapticCascade } from '../../lib/haptics';
 import { useTheme } from '../../theme/useTheme';
 
@@ -66,6 +66,17 @@ export function LiquidProgressRing({ ratio, size = 180, label }: LiquidProgressR
   const waveATransform = useDerivedValue(() => [{ translateX: phaseA.value }]);
   const waveBTransform = useDerivedValue(() => [{ translateX: phaseB.value }]);
 
+  // Counts up/down in lockstep with the liquid fill (both driven by the same
+  // `fillLevel` tween) instead of the percentage digits jumping straight to
+  // their final value while only the visual fill animates underneath them.
+  const [displayPercent, setDisplayPercent] = useState(() => Math.round(ratio * 100));
+  useAnimatedReaction(
+    () => Math.round(fillLevel.value * 100),
+    (current, previous) => {
+      if (current !== previous) runOnJS(setDisplayPercent)(current);
+    },
+  );
+
   return (
     <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
       <Canvas style={{ width: size, height: size }}>
@@ -84,7 +95,7 @@ export function LiquidProgressRing({ ratio, size = 180, label }: LiquidProgressR
       </Canvas>
       <View pointerEvents="none" style={{ position: 'absolute', alignItems: 'center' }}>
         <Text className="text-title-lg" style={{ color: theme.colors.ink }}>
-          {Math.round(ratio * 100)}%
+          {displayPercent}%
         </Text>
         {label ? (
           <Text className="text-caption" style={{ color: theme.colors.inkSecondary }}>

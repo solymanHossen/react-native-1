@@ -303,6 +303,9 @@ export default function HomeScreen({ onNavigateToVitals }: HomeScreenProps) {
     transform: [{ translateY: interpolate(scrollY.value, [0, 50], [0, -8], Extrapolation.CLAMP) }],
   }));
 
+  const seeAllScale = useSharedValue(1);
+  const seeAllPressStyle = useAnimatedStyle(() => ({ transform: [{ scale: seeAllScale.value }] }));
+
   return (
     <SafeAreaView className="flex-1" edges={['top', 'left', 'right']} style={{ backgroundColor: theme.colors.canvas }}>
       {/* Persistent bar: always on screen, same spot a real iOS nav bar's
@@ -476,17 +479,25 @@ export default function HomeScreen({ onNavigateToVitals }: HomeScreenProps) {
                 {t('home.todaysVitals')}
               </Text>
               {onNavigateToVitals ? (
-                <Pressable
-                  onPress={onNavigateToVitals}
-                  accessibilityRole="button"
-                  className="min-h-hit flex-row items-center gap-0.5"
-                  hitSlop={8}
-                >
-                  <Text className="text-caption" style={{ color: theme.action.base, fontWeight: '600' }}>
-                    {t('common.seeAll')}
-                  </Text>
-                  <ChevronRight color={theme.action.base} size={16} strokeWidth={2.5} />
-                </Pressable>
+                <Animated.View style={seeAllPressStyle}>
+                  <Pressable
+                    onPress={onNavigateToVitals}
+                    onPressIn={() => {
+                      seeAllScale.value = withSpring(0.92, PRESS_SPRING);
+                    }}
+                    onPressOut={() => {
+                      seeAllScale.value = withSpring(1, PRESS_SPRING);
+                    }}
+                    accessibilityRole="button"
+                    className="min-h-hit flex-row items-center gap-0.5"
+                    hitSlop={8}
+                  >
+                    <Text className="text-caption" style={{ color: theme.action.base, fontWeight: '600' }}>
+                      {t('common.seeAll')}
+                    </Text>
+                    <ChevronRight color={theme.action.base} size={16} strokeWidth={2.5} />
+                  </Pressable>
+                </Animated.View>
               ) : null}
             </View>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}>

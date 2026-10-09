@@ -23,8 +23,8 @@ module.exports = {
                 // consumed via useTheme() + an inline `style`, never via a
                 // `dark:` className. These tokens are therefore the
                 // theme-agnostic ones only.
-                // Bright Teal Blue — primary action, same value in both themes
-                action: "#0077B6",
+                // Pomegranate — primary action, same value in both themes
+                action: "#C0392B",
                 "action-ink": "#FFFFFF",
                 // Semantic status codes (vivid/base hue — see tokens.ts for
                 // the per-theme text/tint variants StatusPill resolves at runtime)
@@ -32,6 +32,15 @@ module.exports = {
                 taken: "#2ECC71",
                 pending: "#FFA502",
                 missed: "#FF6B6B",
+                // Five-step sequential red ramp for ordered severity states
+                // (e.g. drug interaction risk) — see tokens.ts `severity`.
+                severity: {
+                    low: "#F1948A",
+                    moderate: "#EC7063",
+                    high: "#E74C3C",
+                    severe: "#C0392B",
+                    critical: "#A50021",
+                },
             },
             // Geriatric/low-vision type scale — mirrors src/theme/tokens.ts `typography`.
             fontSize: {

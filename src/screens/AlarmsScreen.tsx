@@ -24,21 +24,21 @@ interface TimeSlot {
   mealRelation: MealRelation;
   labelKey: TranslationKey;
   icon: ComponentType<{ size?: number; color?: string; strokeWidth?: number }>;
-  /** Each slot gets its own shade from the app's ocean palette (not a repeat
-   * of the single teal action color) — a light-to-dark progression that
-   * actually tracks the time of day, so the four chips read as genuinely
-   * different choices at a glance instead of four identical pills. White
-   * text/icon on every one is intentional: each shade was picked to clear
-   * 4.5:1 contrast with white, the same bar every other status/action color
-   * in this app's token file is held to. */
+  /** Each slot gets its own shade from the app's brand (pomegranate) family
+   * (not a repeat of the single action color) — a light-to-dark progression
+   * that actually tracks the time of day, so the four chips read as
+   * genuinely different choices at a glance instead of four identical
+   * pills. White text/icon on every one is intentional: each shade was
+   * picked to clear 4.5:1 contrast with white, the same bar every other
+   * status/action color in this app's token file is held to. */
   color: string;
 }
 
 const TIME_SLOTS: TimeSlot[] = [
-  { node: 'BREAKFAST', timeUtc: '08:00', mealRelation: 'WITH', labelKey: 'alarms.timeMorning', icon: Sunrise, color: '#005F93' },
-  { node: 'LUNCH', timeUtc: '13:00', mealRelation: 'WITH', labelKey: 'alarms.timeAfternoon', icon: Sun, color: '#006B81' },
-  { node: 'DINNER', timeUtc: '20:00', mealRelation: 'WITH', labelKey: 'alarms.timeEvening', icon: Sunset, color: '#00486E' },
-  { node: 'BEDTIME', timeUtc: '22:00', mealRelation: 'WITH', labelKey: 'alarms.timeBedtime', icon: Moon, color: '#020338' },
+  { node: 'BREAKFAST', timeUtc: '08:00', mealRelation: 'WITH', labelKey: 'alarms.timeMorning', icon: Sunrise, color: '#B62616' },
+  { node: 'LUNCH', timeUtc: '13:00', mealRelation: 'WITH', labelKey: 'alarms.timeAfternoon', icon: Sun, color: '#962013' },
+  { node: 'DINNER', timeUtc: '20:00', mealRelation: 'WITH', labelKey: 'alarms.timeEvening', icon: Sunset, color: '#6D170D' },
+  { node: 'BEDTIME', timeUtc: '22:00', mealRelation: 'WITH', labelKey: 'alarms.timeBedtime', icon: Moon, color: '#240804' },
 ];
 
 /**
@@ -52,11 +52,11 @@ const TIME_SLOTS: TimeSlot[] = [
  * on a missing lookup.
  */
 const TIME_NODE_STYLE: Record<TimeNode, { icon: ComponentType<{ size?: number; color?: string; strokeWidth?: number }>; color: string }> = {
-  BREAKFAST: { icon: Sunrise, color: '#005F93' },
-  LUNCH: { icon: Sun, color: '#006B81' },
-  DINNER: { icon: Sunset, color: '#00486E' },
-  BEDTIME: { icon: Moon, color: '#020338' },
-  FASTING: { icon: Clock, color: '#137586' },
+  BREAKFAST: { icon: Sunrise, color: '#B62616' },
+  LUNCH: { icon: Sun, color: '#962013' },
+  DINNER: { icon: Sunset, color: '#6D170D' },
+  BEDTIME: { icon: Moon, color: '#240804' },
+  FASTING: { icon: Clock, color: '#BC2F4B' },
 };
 
 /**
