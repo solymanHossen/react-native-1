@@ -281,6 +281,7 @@ export const bn: typeof en = {
       save: 'ওষুধ যোগ করুন',
     },
     detailsAccessibility: '{{name}}-এর বিস্তারিত খুলুন',
+    detailsLongPressHint: 'বিস্তারিত দেখতে ট্যাপ করুন বা চেপে ধরে রাখুন।',
     detailsClose: 'ওষুধের বিস্তারিত বন্ধ করুন',
     detailsStock: 'মজুদ',
     detailsSchedules: 'রিমাইন্ডার',

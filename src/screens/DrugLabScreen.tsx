@@ -49,8 +49,13 @@ function MedicationRow({ medication, onRemove, onOpen }: { medication: Medicatio
   return (
     <Pressable
       onPress={onOpen}
+      onLongPress={() => {
+        triggerHaptic('impactMedium');
+        onOpen();
+      }}
       accessibilityRole="button"
       accessibilityLabel={t('medications.detailsAccessibility', { name: medication.name })}
+      accessibilityHint={t('medications.detailsLongPressHint')}
       className="flex-row items-center gap-4 rounded-3xl border p-5"
       style={{ backgroundColor: theme.colors.elevated, borderColor: theme.colors.hairline }}
     >

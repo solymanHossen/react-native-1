@@ -284,6 +284,7 @@ export const en = {
       save: 'Add Medication',
     },
     detailsAccessibility: 'Open details for {{name}}',
+    detailsLongPressHint: 'Tap or press and hold to view medication details.',
     detailsClose: 'Close medication details',
     detailsStock: 'In stock',
     detailsSchedules: 'Reminders',
