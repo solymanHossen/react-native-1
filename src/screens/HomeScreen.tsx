@@ -13,7 +13,6 @@ import Animated, {
 } from 'react-native-reanimated';
 import { HealthRecordsSheet, type HealthRecordsSheetRef } from '../components/records/HealthRecordsSheet';
 import { LiquidProgressRing } from '../components/dashboard/LiquidProgressRing';
-import { SettingsSheet, type SettingsSheetRef } from '../components/settings/SettingsSheet';
 import { ActionRow, ActionRowGroup, AppLogo, LargeTextButton, MetricCard, StatusPill } from '../components/ui';
 import { useTranslation, type TranslationKey } from '../i18n';
 import { triggerHaptic } from '../lib/haptics';
@@ -187,15 +186,15 @@ function ThemeToggleButton({ preference, onPress }: { preference: ThemePreferenc
 export interface HomeScreenProps {
   /** Opens the Vitals tab — wired from App.tsx's tab state, since this screen has no navigator of its own to ask for it. */
   onNavigateToVitals?: (focus?: VitalType) => void;
+  onOpenSettings?: () => void;
 }
 
-export default function HomeScreen({ onNavigateToVitals }: HomeScreenProps) {
+export default function HomeScreen({ onNavigateToVitals, onOpenSettings }: HomeScreenProps) {
   const theme = useTheme();
   const { t } = useTranslation();
   const preference = useThemePreference();
   const setPreference = useSetThemePreference();
   const healthRecordsRef = useRef<HealthRecordsSheetRef>(null);
-  const settingsRef = useRef<SettingsSheetRef>(null);
   const [syncing, setSyncing] = useState(false);
   const [syncStatus, setSyncStatus] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -630,14 +629,13 @@ export default function HomeScreen({ onNavigateToVitals }: HomeScreenProps) {
                 caption={t('home.healthRecordsCaption')}
                 onPress={() => healthRecordsRef.current?.present()}
               />
-              <ActionRow icon={Settings} label={t('home.settings')} onPress={() => settingsRef.current?.present()} />
+              <ActionRow icon={Settings} label={t('home.settings')} onPress={onOpenSettings} />
             </ActionRowGroup>
           </View>
         </RevealOnMount>
       </Animated.ScrollView>
 
       <HealthRecordsSheet ref={healthRecordsRef} />
-      <SettingsSheet ref={settingsRef} />
     </SafeAreaView>
   );
 }

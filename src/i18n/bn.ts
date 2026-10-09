@@ -8,6 +8,7 @@ import type { en } from './en';
  */
 export const bn: typeof en = {
   common: {
+    back: 'ফিরে যান',
     save: 'সংরক্ষণ করুন',
     cancel: 'বাতিল',
     close: 'বন্ধ করুন',
