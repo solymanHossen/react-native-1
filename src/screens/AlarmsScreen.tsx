@@ -1,7 +1,8 @@
 import { FlashList } from '@shopify/flash-list';
+import { BottomSheetModal, BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
 import { Camera, Check, Clock, Moon, Nfc, Phone, ShieldAlert, Sun, Sunrise, Sunset, Trash2 } from 'lucide-react-native';
-import { useCallback, useEffect, useMemo, useState, type ComponentType } from 'react';
-import { Pressable, Switch, Text, TextInput, View } from 'react-native';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, type ComponentType } from 'react';
+import { Pressable, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LargeTextButton } from '../components/ui';
 import {
@@ -17,6 +18,111 @@ import type { MealRelation, ScheduleWithMedication, TimeNode } from '../db/types
 import { useTranslation, type TranslationKey } from '../i18n';
 import { triggerHaptic } from '../lib/haptics';
 import { useTheme } from '../theme/useTheme';
+
+interface CaregiverContactSheetRef {
+  present: (phone: string | null) => void;
+}
+
+function maskPhone(phone: string): string {
+  return `${phone.slice(0, Math.max(0, phone.length - 4)).replace(/\d(?=\d)/g, '•')} ${phone.slice(-4)}`;
+}
+
+const CaregiverContactSheet = forwardRef<CaregiverContactSheetRef, {
+  onSave: (phone: string) => void;
+  onClear: () => void;
+}>(function CaregiverContactSheetImpl({ onSave, onClear }, ref) {
+  const theme = useTheme();
+  const { t } = useTranslation();
+  const modalRef = useRef<BottomSheetModal>(null);
+  const [phone, setPhone] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const snapPoints = useMemo(() => ['58%'], []);
+
+  useImperativeHandle(ref, () => ({
+    present: (savedPhone) => {
+      setPhone(savedPhone ?? '');
+      setError(null);
+      modalRef.current?.present();
+    },
+  }), []);
+
+  const handleSave = useCallback(() => {
+    const normalized = normalizeCaregiverPhone(phone);
+    if (!normalized || !isValidCaregiverPhone(normalized)) {
+      setError(t('alarms.caregiverInvalid'));
+      return;
+    }
+    onSave(normalized);
+    modalRef.current?.dismiss();
+  }, [onSave, phone, t]);
+
+  const handleClear = useCallback(() => {
+    onClear();
+    modalRef.current?.dismiss();
+  }, [onClear]);
+
+  return (
+    <BottomSheetModal
+      ref={modalRef}
+      snapPoints={snapPoints}
+      backgroundStyle={{ backgroundColor: theme.colors.surface }}
+      handleIndicatorStyle={{ backgroundColor: theme.colors.hairline }}
+    >
+      <BottomSheetView className="flex-1 gap-5 px-6 pt-2">
+        <View className="flex-row items-center gap-3">
+          <View className="items-center justify-center rounded-2xl" style={{ width: 48, height: 48, backgroundColor: `${theme.action.base}18` }}>
+            <Phone color={theme.action.base} size={24} strokeWidth={2.25} />
+          </View>
+          <View className="flex-1">
+            <Text className="text-title-lg" style={{ color: theme.colors.ink }}>
+              {t('alarms.caregiverModalTitle')}
+            </Text>
+            <Text className="text-caption" style={{ color: theme.colors.inkSecondary }}>
+              {t('alarms.caregiverModalDescription')}
+            </Text>
+          </View>
+        </View>
+
+        <View className="gap-2">
+          <Text className="text-caption uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
+            {t('alarms.caregiverPhoneLabel')}
+          </Text>
+          <BottomSheetTextInput
+            value={phone}
+            onChangeText={(value) => {
+              setPhone(value);
+              setError(null);
+            }}
+            placeholder={t('alarms.caregiverPlaceholder')}
+            placeholderTextColor={theme.colors.inkMuted}
+            keyboardType="phone-pad"
+            autoFocus
+            className="min-h-hit rounded-2xl border px-5 text-body-lg"
+            style={{ backgroundColor: theme.colors.elevated, borderColor: error ? theme.statusText('missed') : theme.colors.hairline, color: theme.colors.ink }}
+          />
+          <Text className="text-caption" style={{ color: error ? theme.statusText('missed') : theme.colors.inkMuted }}>
+            {error ?? t('alarms.caregiverInputHint')}
+          </Text>
+        </View>
+
+        <LargeTextButton label={t('alarms.saveCaregiverNumber')} onPress={handleSave} />
+        {phone ? (
+          <Pressable
+            onPress={handleClear}
+            accessibilityRole="button"
+            accessibilityLabel={t('alarms.clearCaregiverAccessibility')}
+            className="min-h-hit flex-row items-center justify-center gap-2"
+          >
+            <Trash2 color={theme.statusText('missed')} size={18} />
+            <Text className="text-body-lg" style={{ color: theme.statusText('missed'), fontWeight: '600' }}>
+              {t('alarms.removeCaregiver')}
+            </Text>
+          </Pressable>
+        ) : null}
+      </BottomSheetView>
+    </BottomSheetModal>
+  );
+});
 
 function formatTimeLabel(timeUtc: string): string {
   const [hours, minutes] = timeUtc.split(':').map(Number);
@@ -86,9 +192,9 @@ export default function AlarmsScreen() {
   const [schedules, setSchedules] = useState<ScheduleWithMedication[]>([]);
   const [medications, setMedications] = useState<Medication[]>([]);
   const [selectedMedicationId, setSelectedMedicationId] = useState<number | null>(null);
-  const [caregiverPhone, setCaregiverPhoneInput] = useState(() => getCaregiverPhone() ?? '');
+  const [savedCaregiverPhone, setSavedCaregiverPhone] = useState(() => getCaregiverPhone());
   const [status, setStatus] = useState<string | null>(null);
-  const [caregiverError, setCaregiverError] = useState<string | null>(null);
+  const caregiverSheetRef = useRef<CaregiverContactSheetRef>(null);
 
   const refresh = useCallback(async (database: MediusDatabase) => {
     const [scheduleRows, medicationRows] = await Promise.all([
@@ -149,31 +255,22 @@ export default function AlarmsScreen() {
     [t],
   );
 
-  const handleSaveCaregiverPhone = useCallback(() => {
-    const normalized = normalizeCaregiverPhone(caregiverPhone);
-    setCaregiverError(null);
-    if (normalized && !isValidCaregiverPhone(normalized)) {
-      setCaregiverError(t('alarms.caregiverInvalid'));
-      return;
-    }
+  const handleSaveCaregiverPhone = useCallback((phone: string) => {
+    const normalized = normalizeCaregiverPhone(phone);
     setCaregiverPhone(normalized);
-    setCaregiverPhoneInput(normalized);
+    setSavedCaregiverPhone(normalized);
     setStatus(normalized ? t('alarms.caregiverSaved') : t('alarms.caregiverCleared'));
     triggerHaptic('notificationSuccess');
-  }, [caregiverPhone, t]);
+  }, [t]);
 
   const handleClearCaregiverPhone = useCallback(() => {
     setCaregiverPhone('');
-    setCaregiverPhoneInput('');
-    setCaregiverError(null);
+    setSavedCaregiverPhone(null);
     setStatus(t('alarms.caregiverCleared'));
     triggerHaptic('selection');
   }, [t]);
 
-  const savedCaregiverPhone = getCaregiverPhone();
-  const maskedCaregiverPhone = savedCaregiverPhone
-    ? `${savedCaregiverPhone.slice(0, Math.max(0, savedCaregiverPhone.length - 4)).replace(/\d(?=\d)/g, '•')} ${savedCaregiverPhone.slice(-4)}`
-    : null;
+  const maskedCaregiverPhone = savedCaregiverPhone ? maskPhone(savedCaregiverPhone) : null;
 
   return (
     <SafeAreaView className="flex-1" edges={['top', 'left', 'right']} style={{ backgroundColor: theme.colors.canvas }}>
@@ -223,20 +320,6 @@ export default function AlarmsScreen() {
               <Text className="text-caption" style={{ color: theme.colors.inkMuted }}>
                 {t('alarms.caregiverDescription')}
               </Text>
-              <TextInput
-                value={caregiverPhone}
-                onChangeText={setCaregiverPhoneInput}
-                placeholder={t('alarms.caregiverPlaceholder')}
-                placeholderTextColor={theme.colors.inkMuted}
-                keyboardType="phone-pad"
-                className="min-h-hit rounded-full border px-6 text-body-lg"
-                style={{ backgroundColor: theme.colors.surface, borderColor: theme.colors.hairline, color: theme.colors.ink }}
-              />
-              {caregiverError ? (
-                <Text className="text-caption" style={{ color: theme.statusText('missed') }}>
-                  {caregiverError}
-                </Text>
-              ) : null}
               {maskedCaregiverPhone ? (
                 <View className="flex-row items-center gap-3 rounded-2xl border px-4 py-3" style={{ borderColor: theme.colors.hairline }}>
                   <Phone color={theme.statusText('taken')} size={18} strokeWidth={2.25} />
@@ -257,8 +340,26 @@ export default function AlarmsScreen() {
                     <Trash2 color={theme.colors.inkMuted} size={19} />
                   </Pressable>
                 </View>
-              ) : null}
-              <LargeTextButton label={t('alarms.saveCaregiverNumber')} variant="secondary" onPress={handleSaveCaregiverPhone} />
+              ) : (
+                <View className="flex-row items-center gap-3 rounded-2xl border px-4 py-3" style={{ borderColor: theme.colors.hairline }}>
+                  <ShieldAlert color={theme.colors.inkMuted} size={18} />
+                  <Text className="flex-1 text-caption" style={{ color: theme.colors.inkSecondary }}>
+                    {t('alarms.caregiverNotConfigured')}
+                  </Text>
+                </View>
+              )}
+              <Pressable
+                onPress={() => caregiverSheetRef.current?.present(savedCaregiverPhone)}
+                accessibilityRole="button"
+                accessibilityLabel={savedCaregiverPhone ? t('alarms.editCaregiverAccessibility') : t('alarms.addCaregiverAccessibility')}
+                className="min-h-hit flex-row items-center justify-center gap-2 rounded-2xl px-5 py-4"
+                style={{ backgroundColor: theme.action.base }}
+              >
+                <Phone color={theme.action.ink} size={20} strokeWidth={2.25} />
+                <Text className="text-body-lg" style={{ color: theme.action.ink, fontWeight: '700' }}>
+                  {savedCaregiverPhone ? t('alarms.editCaregiver') : t('alarms.addCaregiver')}
+                </Text>
+              </Pressable>
             </View>
 
             <View
@@ -425,6 +526,7 @@ export default function AlarmsScreen() {
           );
         }}
       />
+      <CaregiverContactSheet ref={caregiverSheetRef} onSave={handleSaveCaregiverPhone} onClear={handleClearCaregiverPhone} />
     </SafeAreaView>
   );
 }
