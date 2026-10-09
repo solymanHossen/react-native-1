@@ -19,6 +19,7 @@ import { useTranslation, type TranslationKey } from '../i18n';
 import { triggerHaptic } from '../lib/haptics';
 import { generateClinicalReportPdf, shareClinicalReportPdf } from '../reports/pdfService';
 import { useIntakeQueueStore, useSentinelStore, useVitalsStore, type IntakeQueueStatus } from '../store';
+import type { VitalType } from '../db/types';
 import type { StatusKey } from '../theme/tokens';
 import { useTheme, useThemePreference, useSetThemePreference, type ThemePreference } from '../theme/useTheme';
 import { classifyBloodPressure, type BloodPressureStage } from '../vitals/bpClassification';
@@ -185,7 +186,7 @@ function ThemeToggleButton({ preference, onPress }: { preference: ThemePreferenc
 
 export interface HomeScreenProps {
   /** Opens the Vitals tab — wired from App.tsx's tab state, since this screen has no navigator of its own to ask for it. */
-  onNavigateToVitals?: () => void;
+  onNavigateToVitals?: (focus?: VitalType) => void;
 }
 
 export default function HomeScreen({ onNavigateToVitals }: HomeScreenProps) {
@@ -481,7 +482,7 @@ export default function HomeScreen({ onNavigateToVitals }: HomeScreenProps) {
               {onNavigateToVitals ? (
                 <Animated.View style={seeAllPressStyle}>
                   <Pressable
-                    onPress={onNavigateToVitals}
+                    onPress={() => onNavigateToVitals?.()}
                     onPressIn={() => {
                       seeAllScale.value = withSpring(0.92, PRESS_SPRING);
                     }}
@@ -505,21 +506,21 @@ export default function HomeScreen({ onNavigateToVitals }: HomeScreenProps) {
                 {latestVitals.systolic && latestVitals.diastolic && bloodPressureStage ? (
                   <MetricCard
                     compact
-                    onPress={onNavigateToVitals}
+                    onPress={() => onNavigateToVitals?.('BP_SYS')}
                     label={t('home.bloodPressure')}
                     value={`${latestVitals.systolic.value}/${latestVitals.diastolic.value}`}
                     unit="mmHg"
                     caption={t(BP_STAGE_KEY[bloodPressureStage.stage])}
                   />
                 ) : (
-                  <MetricCard compact onPress={onNavigateToVitals} label={t('home.bloodPressure')} value="—" caption={t('home.noReadingYet')} />
+                  <MetricCard compact onPress={() => onNavigateToVitals?.('BP_SYS')} label={t('home.bloodPressure')} value="—" caption={t('home.noReadingYet')} />
                 )}
               </View>
               <View style={{ width: 182 }}>
                 {latestVitals.bloodGlucose ? (
                   <MetricCard
                     compact
-                    onPress={onNavigateToVitals}
+                    onPress={() => onNavigateToVitals?.('BLOOD_SUGAR')}
                     label={t('home.bloodGlucose')}
                     value={String(latestVitals.bloodGlucose.value)}
                     unit={latestVitals.bloodGlucose.unit}
@@ -527,21 +528,21 @@ export default function HomeScreen({ onNavigateToVitals }: HomeScreenProps) {
                     status={latestVitals.bloodGlucose.notes === 'Fasting' ? 'fasting' : undefined}
                   />
                 ) : (
-                  <MetricCard compact onPress={onNavigateToVitals} label={t('home.bloodGlucose')} value="—" caption={t('home.noReadingYet')} />
+                  <MetricCard compact onPress={() => onNavigateToVitals?.('BLOOD_SUGAR')} label={t('home.bloodGlucose')} value="—" caption={t('home.tapToLog')} />
                 )}
               </View>
               <View style={{ width: 182 }}>
                 {latestVitals.weight ? (
                   <MetricCard
                     compact
-                    onPress={onNavigateToVitals}
+                    onPress={() => onNavigateToVitals?.('WEIGHT')}
                     label={t('home.weight')}
                     value={String(latestVitals.weight.value)}
                     unit={latestVitals.weight.unit}
                     caption={hoursAgoLabel(latestVitals.weight.timestamp, t)}
                   />
                 ) : (
-                  <MetricCard compact onPress={onNavigateToVitals} label={t('home.weight')} value="—" caption={t('home.noReadingYet')} />
+                  <MetricCard compact onPress={() => onNavigateToVitals?.('WEIGHT')} label={t('home.weight')} value="—" caption={t('home.tapToLog')} />
                 )}
               </View>
             </ScrollView>

@@ -62,6 +62,7 @@ export const en = {
     bloodGlucose: 'Blood Sugar',
     weight: 'Weight',
     noReadingYet: 'No reading yet',
+    tapToLog: 'Tap to log a reading',
     lastReadingJustNow: 'Last reading just now',
     lastReadingHoursAgo: 'Last reading {{hours}}h ago',
     refillAndExpiry: 'Refill & Expiry',

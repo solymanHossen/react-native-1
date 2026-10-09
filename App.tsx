@@ -22,6 +22,7 @@ import DrugLabScreen from './src/screens/DrugLabScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import PrescriptionScanScreen from './src/screens/PrescriptionScanScreen';
 import { refreshAllStores, useActiveAlarmStore } from './src/store';
+import type { VitalType } from './src/db/types';
 import VitalsScreen from './src/screens/VitalsScreen';
 import { useTheme, useThemeMode } from './src/theme/useTheme';
 import './global.css';
@@ -157,7 +158,7 @@ function BottomTabBar({ tab, onChange }: { tab: Tab; onChange: (tab: Tab) => voi
 }
 
 /** A quick fade on the incoming screen, not an abrupt cut — the tab content swap is the other half of "smooth," the pill sliding over an instantly-replaced screen would look like two unrelated animations. */
-function FadingScreen({ tab, onNavigate }: { tab: Tab; onNavigate: (tab: Tab) => void }) {
+function FadingScreen({ tab, onNavigate, vitalsFocus }: { tab: Tab; onNavigate: (tab: Tab, focus?: VitalType) => void; vitalsFocus: VitalType | null }) {
   const opacity = useSharedValue(1);
 
   useEffect(() => {
@@ -169,15 +170,23 @@ function FadingScreen({ tab, onNavigate }: { tab: Tab; onNavigate: (tab: Tab) =>
 
   return (
     <Animated.View style={[{ flex: 1 }, style]}>
-      <ActiveScreen tab={tab} onNavigate={onNavigate} />
+      <ActiveScreen tab={tab} onNavigate={onNavigate} vitalsFocus={vitalsFocus} />
     </Animated.View>
   );
 }
 
-function ActiveScreen({ tab, onNavigate }: { tab: Tab; onNavigate: (tab: Tab) => void }) {
+function ActiveScreen({
+  tab,
+  onNavigate,
+  vitalsFocus,
+}: {
+  tab: Tab;
+  onNavigate: (tab: Tab, focus?: VitalType) => void;
+  vitalsFocus: VitalType | null;
+}) {
   switch (tab) {
     case 'home':
-      return <HomeScreen onNavigateToVitals={() => onNavigate('vitals')} />;
+      return <HomeScreen onNavigateToVitals={(focus) => onNavigate('vitals', focus)} />;
     case 'drugLab':
       return <DrugLabScreen />;
     case 'scanRx':
@@ -187,7 +196,7 @@ function ActiveScreen({ tab, onNavigate }: { tab: Tab; onNavigate: (tab: Tab) =>
     case 'alarms':
       return <AlarmsScreen />;
     case 'vitals':
-      return <VitalsScreen />;
+      return <VitalsScreen focusVital={vitalsFocus} />;
   }
 }
 
@@ -198,7 +207,13 @@ function App() {
   // NativeWind actually resolved to.
   const mode = useThemeMode();
   const [tab, setTab] = useState<Tab>('home');
+  const [vitalsFocus, setVitalsFocus] = useState<VitalType | null>(null);
   const activeAlarm = useActiveAlarmStore((state) => state.activeAlarm);
+
+  const handleNavigate = (nextTab: Tab, focus?: VitalType) => {
+    setVitalsFocus(nextTab === 'vitals' ? (focus ?? null) : null);
+    setTab(nextTab);
+  };
 
   useEffect(() => {
     initializeAlarmSystem().catch((error: unknown) => {
@@ -228,8 +243,8 @@ function App() {
           ) : (
             <>
               <StatusBar barStyle={mode === 'dark' ? 'light-content' : 'dark-content'} />
-              <FadingScreen tab={tab} onNavigate={setTab} />
-              <BottomTabBar tab={tab} onChange={setTab} />
+              <FadingScreen tab={tab} onNavigate={handleNavigate} vitalsFocus={vitalsFocus} />
+              <BottomTabBar tab={tab} onChange={(nextTab) => handleNavigate(nextTab)} />
             </>
           )}
         </BottomSheetModalProvider>

@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState, type ElementRef } from 'react';
+import { Pressable, ScrollView, Text, View, type LayoutChangeEvent } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BloodPressureCard } from '../components/vitals/BloodPressureCard';
 import { Sparkline } from '../components/vitals/Sparkline';
@@ -15,6 +15,10 @@ import { useTheme } from '../theme/useTheme';
 
 type GlucoseContext = 'Fasting' | 'Post-prandial';
 type TrendRange = 7 | 30;
+
+export interface VitalsScreenProps {
+  focusVital?: VitalType | null;
+}
 
 const SPARKLINE_OPTIONS: Array<{ type: VitalType; labelKey: TranslationKey; unit: string; color: string }> = [
   { type: 'BP_SYS', labelKey: 'vitals.systolicShort', unit: 'mmHg', color: '#0077B6' },
@@ -39,10 +43,12 @@ function isoDaysAgo(days: number): string {
  * log blood pressure now and weight later, so each card saves on its own
  * rather than one combined "save everything" action.
  */
-export default function VitalsScreen() {
+export default function VitalsScreen({ focusVital = null }: VitalsScreenProps) {
   const theme = useTheme();
   const { t } = useTranslation();
   const symptomSheetRef = useRef<SymptomLogSheetRef>(null);
+  const scrollRef = useRef<ElementRef<typeof ScrollView>>(null);
+  const sectionOffsets = useRef<Partial<Record<VitalType, number>>>({});
   const refreshLatestVitals = useVitalsStore((state) => state.refresh);
 
   const [systolic, setSystolic] = useState(120);
@@ -57,6 +63,19 @@ export default function VitalsScreen() {
   const [trendRange, setTrendRange] = useState<TrendRange>(7);
   const [trendPoints, setTrendPoints] = useState<Vital[]>([]);
   const [canvasWidth, setCanvasWidth] = useState(0);
+
+  const scrollToVital = useCallback((type: VitalType) => {
+    const offset = sectionOffsets.current[type];
+    if (offset !== undefined) {
+      scrollRef.current?.scrollTo({ y: Math.max(0, offset - 24), animated: true });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!focusVital) return;
+    const timer = setTimeout(() => scrollToVital(focusVital), 150);
+    return () => clearTimeout(timer);
+  }, [focusVital, scrollToVital]);
 
   const refreshTrend = useCallback(async (type: VitalType, range: TrendRange) => {
     const database = await initializeDatabase();
@@ -113,11 +132,17 @@ export default function VitalsScreen() {
         ) : null}
       </View>
 
-      <ScrollView className="flex-1" contentContainerClassName="gap-7 px-6 py-7" showsVerticalScrollIndicator={false}>
+      <ScrollView ref={scrollRef} className="flex-1" contentContainerClassName="gap-7 px-6 py-7" showsVerticalScrollIndicator={false}>
         <BloodPressureCard systolic={systolic} diastolic={diastolic} onChangeSystolic={setSystolic} onChangeDiastolic={setDiastolic} />
         <LargeTextButton label={t('vitals.saveBloodPressure')} variant="secondary" onPress={handleSaveBloodPressure} />
 
-        <View className="gap-3">
+        <View
+          className="gap-3"
+          onLayout={(event: LayoutChangeEvent) => {
+            sectionOffsets.current.BLOOD_SUGAR = event.nativeEvent.layout.y;
+            if (focusVital === 'BLOOD_SUGAR') scrollToVital('BLOOD_SUGAR');
+          }}
+        >
           <View className="flex-row gap-3">
             {(['Fasting', 'Post-prandial'] as const).map((option) => {
               const isActive = glucoseContext === option;
@@ -145,7 +170,13 @@ export default function VitalsScreen() {
           />
         </View>
 
-        <View className="gap-3">
+        <View
+          className="gap-3"
+          onLayout={(event: LayoutChangeEvent) => {
+            sectionOffsets.current.WEIGHT = event.nativeEvent.layout.y;
+            if (focusVital === 'WEIGHT') scrollToVital('WEIGHT');
+          }}
+        >
           <VitalStepperCard label={t('vitals.bodyWeight')} value={weight} unit="kg" step={0.1} min={2} max={300} decimals={1} onChange={setWeight} />
           <LargeTextButton
             label={t('vitals.saveWeight')}

@@ -59,6 +59,7 @@ export const bn: typeof en = {
     bloodGlucose: 'রক্তে গ্লুকোজ',
     weight: 'ওজন',
     noReadingYet: 'এখনো কোনো রিডিং নেই',
+    tapToLog: 'রিডিং যোগ করতে ট্যাপ করুন',
     lastReadingJustNow: 'সর্বশেষ রিডিং এইমাত্র',
     lastReadingHoursAgo: 'সর্বশেষ রিডিং {{hours}} ঘণ্টা আগে',
     refillAndExpiry: 'রিফিল ও মেয়াদোত্তীর্ণ',
