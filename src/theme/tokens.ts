@@ -91,8 +91,8 @@ export const designPalette = {
 export const palette = {
   light: {
     canvas: designPalette.lightCyan[900],
-    surface: designPalette.lightCyan[800],
-    elevated: designPalette.lightBlue[800],
+    surface: '#FFFFFF',
+    elevated: designPalette.lightCyan.DEFAULT,
     hairline: designPalette.lightBlue[600],
     ink: designPalette.jetBlack[500],
     inkSecondary: designPalette.blueSlate[300],
@@ -109,10 +109,10 @@ export const palette = {
   },
 } as const;
 
-/** Cyan action color paired with jet-black text for reliable contrast. */
+/** Jet-black primary action paired with white text for reliable contrast. */
 export const action = {
-  base: designPalette.lightCyan[200],
-  ink: designPalette.jetBlack[100],
+  base: designPalette.jetBlack.DEFAULT,
+  ink: '#FFFFFF',
 } as const;
 
 export type StatusKey = 'fasting' | 'taken' | 'pending' | 'missed' | 'scheduled';

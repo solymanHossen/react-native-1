@@ -23,9 +23,9 @@ module.exports = {
                 // consumed via useTheme() + an inline `style`, never via a
                 // `dark:` className. These tokens are therefore the
                 // theme-agnostic ones only.
-                // Cyan action color and jet-black action text — mirrors tokens.ts.
-                action: "#11a7ad",
-                "action-ink": "#070a0b",
+                // Jet-black primary action and white action text — mirrors tokens.ts.
+                action: "#253237",
+                "action-ink": "#FFFFFF",
                 // Semantic status codes (vivid/base hue — see tokens.ts for
                 // the per-theme text/tint variants StatusPill resolves at runtime)
                 fasting: "#11a7ad",
