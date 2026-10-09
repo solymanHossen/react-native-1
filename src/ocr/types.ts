@@ -39,6 +39,9 @@ export interface ParsedPrescriptionItem {
   doseQuantity: DoseQuantity | null;
   mealRelation: MealRelation | null;
   duration: RegimenDuration | null;
+  /** Optional human-reviewed calendar dates for this medication course. */
+  courseStartDate?: string | null;
+  courseEndDate?: string | null;
   /** Best FTS5/fuzzy candidate from the local drug_directory, regardless of confidence — null only if the search found nothing at all. */
   matchedDrug: DrugSearchResult | null;
   /** 0-100, how closely matchedDrug's name matches drugNameRaw (edit-distance based, not the search engine's own ranking score). */

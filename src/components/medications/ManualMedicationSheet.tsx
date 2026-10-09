@@ -5,6 +5,7 @@ import type { Medication } from '../../db/types';
 import { useTranslation, type TranslationKey } from '../../i18n';
 import { useTheme } from '../../theme/useTheme';
 import { LargeTextButton } from '../ui';
+import { CourseDateFields } from './CourseDateFields';
 
 const FORMS: Medication['form'][] = ['tablet', 'capsule', 'syrup', 'drop', 'injection'];
 
@@ -20,6 +21,8 @@ export interface ManualMedicationInput {
   name: string;
   strength: string | null;
   form: Medication['form'];
+  courseStartDate: string | null;
+  courseEndDate: string | null;
 }
 
 export interface ManualMedicationSheetRef {
@@ -48,10 +51,13 @@ export const ManualMedicationSheet = forwardRef<ManualMedicationSheetRef, Manual
     const theme = useTheme();
     const { t } = useTranslation();
     const modalRef = useRef<BottomSheetModal>(null);
-    const snapPoints = useMemo(() => ['60%'], []);
+    const snapPoints = useMemo(() => ['75%'], []);
     const [name, setName] = useState('');
     const [strength, setStrength] = useState('');
     const [form, setForm] = useState<Medication['form']>('tablet');
+    const [courseStartDate, setCourseStartDate] = useState('');
+    const [courseEndDate, setCourseEndDate] = useState('');
+    const [dateError, setDateError] = useState(false);
 
     useImperativeHandle(
       ref,
@@ -60,6 +66,9 @@ export const ManualMedicationSheet = forwardRef<ManualMedicationSheetRef, Manual
           setName(prefillName ?? '');
           setStrength('');
           setForm('tablet');
+          setCourseStartDate('');
+          setCourseEndDate('');
+          setDateError(false);
           modalRef.current?.present();
         },
       }),
@@ -69,9 +78,25 @@ export const ManualMedicationSheet = forwardRef<ManualMedicationSheetRef, Manual
     const handleSave = useCallback(() => {
       const trimmedName = name.trim();
       if (!trimmedName) return;
-      onSave({ name: trimmedName, strength: strength.trim() || null, form });
+      const start = courseStartDate.trim();
+      const end = courseEndDate.trim();
+      const hasValidDates =
+        (!start && !end) ||
+        (!!start && !!end && /^\d{4}-\d{2}-\d{2}$/.test(start) && /^\d{4}-\d{2}-\d{2}$/.test(end) && start <= end);
+      if (!hasValidDates) {
+        setDateError(true);
+        return;
+      }
+      setDateError(false);
+      onSave({
+        name: trimmedName,
+        strength: strength.trim() || null,
+        form,
+        courseStartDate: start || null,
+        courseEndDate: end || null,
+      });
       modalRef.current?.dismiss();
-    }, [name, strength, form, onSave]);
+    }, [courseEndDate, courseStartDate, form, name, onSave, strength]);
 
     return (
       <BottomSheetModal
@@ -135,6 +160,24 @@ export const ManualMedicationSheet = forwardRef<ManualMedicationSheetRef, Manual
                 })}
               </View>
             </View>
+
+            <CourseDateFields
+              label={t('medications.manualSheet.courseDatesLabel')}
+              startDate={courseStartDate || null}
+              endDate={courseEndDate || null}
+              startPlaceholder={t('medications.manualSheet.startDatePlaceholder')}
+              endPlaceholder={t('medications.manualSheet.endDatePlaceholder')}
+              startAccessibility={t('medications.manualSheet.startDateAccessibility')}
+              endAccessibility={t('medications.manualSheet.endDateAccessibility')}
+              clearAccessibility={(dateLabel) => t('medications.manualSheet.clearDateAccessibility', { date: dateLabel })}
+              hint={t('medications.manualSheet.courseDatesHint')}
+              error={dateError ? t('medications.manualSheet.invalidDates') : undefined}
+              onChange={(dates) => {
+                if (dates.startDate !== undefined) setCourseStartDate(dates.startDate ?? '');
+                if (dates.endDate !== undefined) setCourseEndDate(dates.endDate ?? '');
+                setDateError(false);
+              }}
+            />
 
             <LargeTextButton label={t('medications.manualSheet.save')} onPress={handleSave} disabled={!name.trim()} />
           </View>

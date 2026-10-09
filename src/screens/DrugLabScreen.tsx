@@ -308,8 +308,8 @@ export default function DrugLabScreen() {
           expiry_date: null,
           instructions: null,
           nfc_tag_uid: null,
-          course_start_date: null,
-          course_end_date: null,
+          course_start_date: input.courseStartDate,
+          course_end_date: input.courseEndDate,
         });
         triggerHaptic('notificationSuccess');
         setManualAddedName(input.name);

@@ -115,7 +115,9 @@ export default function PrescriptionScanScreen() {
     let duplicateCount = 0;
 
     for (const item of items) {
-      const dates = courseDates(item.duration);
+      const dates = item.courseStartDate !== undefined
+        ? { start: item.courseStartDate, end: item.courseEndDate ?? null }
+        : courseDates(item.duration);
       let medication;
       try {
         medication = await database.medications.create({

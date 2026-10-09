@@ -23,6 +23,7 @@ import { useTranslation } from '../../i18n';
 import type { StatusKey } from '../../theme/tokens';
 import { useTheme } from '../../theme/useTheme';
 import { LargeTextButton } from '../ui';
+import { CourseDateFields } from '../medications/CourseDateFields';
 
 export interface PrescriptionReviewSheetRef {
   present: (items: ParsedPrescriptionItem[]) => void;
@@ -44,12 +45,15 @@ interface ReviewableItem {
   autoMapped: boolean;
   suggestedGeneric: string | null;
   original: ParsedPrescriptionItem;
+  courseStartDate: string | null;
+  courseEndDate: string | null;
 }
 
 let nextReviewId = 0;
 
 function toReviewable(item: ParsedPrescriptionItem): ReviewableItem {
   nextReviewId += 1;
+  const dates = initialCourseDates(item.duration);
   return {
     id: `review-${nextReviewId}`,
     drugName: item.matchedDrug?.brand_name ?? item.drugNameRaw,
@@ -59,7 +63,24 @@ function toReviewable(item: ParsedPrescriptionItem): ReviewableItem {
     autoMapped: item.autoMapped,
     suggestedGeneric: !item.autoMapped ? (item.matchedDrug?.generic_name ?? null) : null,
     original: item,
+    courseStartDate: item.courseStartDate ?? dates.start,
+    courseEndDate: item.courseEndDate ?? dates.end,
   };
+}
+
+function dateForInput(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function initialCourseDates(duration: ParsedPrescriptionItem['duration']): { start: string | null; end: string | null } {
+  if (!duration || duration.isOngoing || !duration.days || duration.days < 1) return { start: null, end: null };
+  const start = new Date();
+  const end = new Date(start);
+  end.setDate(end.getDate() + duration.days - 1);
+  return { start: dateForInput(start), end: dateForInput(end) };
 }
 
 /** Folds the human's edits back into a ParsedPrescriptionItem by re-running the same deterministic parser the summary text came from. */
@@ -72,6 +93,8 @@ function toConfirmedItem(reviewable: ReviewableItem): ParsedPrescriptionItem {
     doseQuantity: parseDoseQuantity(normalized),
     mealRelation: parseMealRelation(normalized),
     duration: parseDuration(normalized),
+    courseStartDate: reviewable.courseStartDate,
+    courseEndDate: reviewable.courseEndDate,
   };
 }
 
@@ -92,7 +115,7 @@ function ConfidenceBadge({ tier, confidence }: { tier: ConfidenceTier; confidenc
 
 interface ReviewCardProps {
   item: ReviewableItem;
-  onChange: (patch: Partial<Pick<ReviewableItem, 'drugName' | 'summary'>>) => void;
+  onChange: (patch: Partial<Pick<ReviewableItem, 'drugName' | 'summary' | 'courseStartDate' | 'courseEndDate'>>) => void;
   onRemove: () => void;
 }
 
@@ -120,6 +143,23 @@ function ReviewCard({ item, onChange, onRemove }: ReviewCardProps) {
         placeholderTextColor={theme.colors.inkMuted}
         className="min-h-hit rounded-2xl border px-4 text-body-lg"
         style={{ backgroundColor: theme.colors.surface, borderColor: theme.colors.hairline, color: theme.colors.ink }}
+      />
+      <CourseDateFields
+        label={t('scanRx.reviewSheet.courseDatesLabel')}
+        startDate={item.courseStartDate}
+        endDate={item.courseEndDate}
+        startPlaceholder={t('scanRx.reviewSheet.startDatePlaceholder')}
+        endPlaceholder={t('scanRx.reviewSheet.endDatePlaceholder')}
+        startAccessibility={t('scanRx.reviewSheet.startDateAccessibility')}
+        endAccessibility={t('scanRx.reviewSheet.endDateAccessibility')}
+        clearAccessibility={(dateLabel) => t('scanRx.reviewSheet.clearDateAccessibility', { date: dateLabel })}
+        hint={t('scanRx.reviewSheet.courseDatesHint')}
+        onChange={(dates) =>
+          onChange({
+            ...(dates.startDate !== undefined ? { courseStartDate: dates.startDate } : {}),
+            ...(dates.endDate !== undefined ? { courseEndDate: dates.endDate } : {}),
+          })
+        }
       />
       <BottomSheetTextInput
         value={item.summary}
@@ -156,6 +196,7 @@ export const PrescriptionReviewSheet = forwardRef<PrescriptionReviewSheetRef, Pr
   const { t } = useTranslation();
   const modalRef = useRef<BottomSheetModal>(null);
   const [reviewItems, setReviewItems] = useState<ReviewableItem[]>([]);
+  const [dateError, setDateError] = useState(false);
   // Measured, not guessed: the footer's rendered height depends on the
   // Confirm button's label length (translations and item counts both make
   // it wrap to a second line sometimes), so a hardcoded padding constant
@@ -173,6 +214,7 @@ export const PrescriptionReviewSheet = forwardRef<PrescriptionReviewSheetRef, Pr
     () => ({
       present: (items: ParsedPrescriptionItem[]) => {
         setReviewItems(items.map(toReviewable));
+        setDateError(false);
         modalRef.current?.present();
       },
       dismiss: () => modalRef.current?.dismiss(),
@@ -180,8 +222,21 @@ export const PrescriptionReviewSheet = forwardRef<PrescriptionReviewSheetRef, Pr
     [],
   );
 
-  const updateItem = useCallback((id: string, patch: Partial<Pick<ReviewableItem, 'drugName' | 'summary'>>) => {
-    setReviewItems((prev) => prev.map((item) => (item.id === id ? { ...item, ...patch } : item)));
+  const updateItem = useCallback((id: string, patch: Partial<Pick<ReviewableItem, 'drugName' | 'summary' | 'courseStartDate' | 'courseEndDate'>>) => {
+    setReviewItems((prev) =>
+      prev.map((item) => {
+        if (item.id !== id) return item;
+        const next = { ...item, ...patch };
+        if (patch.summary !== undefined) {
+          const dates = initialCourseDates(parseDuration(normalizeBengaliDigits(patch.summary)));
+          if (item.courseStartDate === null && item.courseEndDate === null) {
+            next.courseStartDate = dates.start;
+            next.courseEndDate = dates.end;
+          }
+        }
+        return next;
+      }),
+    );
   }, []);
 
   const removeItem = useCallback((id: string) => {
@@ -189,6 +244,18 @@ export const PrescriptionReviewSheet = forwardRef<PrescriptionReviewSheetRef, Pr
   }, []);
 
   const handleConfirm = useCallback(() => {
+    const invalidDates = reviewItems.some((item) => {
+      const start = item.courseStartDate;
+      const end = item.courseEndDate;
+      if (start === null && end === null) return false;
+      if (!start || !end || !/^\d{4}-\d{2}-\d{2}$/.test(start) || !/^\d{4}-\d{2}-\d{2}$/.test(end)) return true;
+      return start > end;
+    });
+    if (invalidDates) {
+      setDateError(true);
+      return;
+    }
+    setDateError(false);
     onConfirm(reviewItems.map(toConfirmedItem));
     modalRef.current?.dismiss();
   }, [onConfirm, reviewItems]);
@@ -246,6 +313,11 @@ export const PrescriptionReviewSheet = forwardRef<PrescriptionReviewSheetRef, Pr
           </Text>
         </View>
 
+        {dateError ? (
+          <Text className="px-6 pb-2 text-caption" style={{ color: theme.statusText('missed') }}>
+            {t('scanRx.reviewSheet.invalidDates')}
+          </Text>
+        ) : null}
         <BottomSheetScrollView
           style={{ flex: 1 }}
           contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: footerHeight + 24, gap: 16 }}
