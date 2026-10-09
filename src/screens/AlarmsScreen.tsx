@@ -2,7 +2,7 @@ import { FlashList } from '@shopify/flash-list';
 import { BottomSheetModal, BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
 import { Camera, Check, ChevronDown, Clock, Moon, Nfc, Phone, ShieldAlert, Sun, Sunrise, Sunset, Trash2 } from 'lucide-react-native';
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, type ComponentType } from 'react';
-import { Pressable, Switch, Text, View } from 'react-native';
+import { Pressable, ScrollView, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LargeTextButton } from '../components/ui';
 import {
@@ -477,28 +477,52 @@ export default function AlarmsScreen() {
                       <Text className="text-caption" style={{ color: theme.colors.inkSecondary }}>
                         {t('alarms.mealRelationLabel')}
                       </Text>
-                      <View className="flex-row flex-wrap gap-2">
+                      <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        snapToInterval={180}
+                        snapToAlignment="start"
+                        decelerationRate="fast"
+                        contentContainerStyle={{ gap: 12, paddingRight: 12 }}
+                        accessibilityLabel={t('alarms.mealRelationLabel')}
+                      >
                         {MEAL_RELATIONS.map((relation) => {
                           const selectedRelation = selectedMealRelation === relation.value;
+                          const RelationIcon = relation.value === 'BEFORE' ? Sunrise : relation.value === 'AFTER' ? Sunset : Check;
                           return (
                             <Pressable
                               key={relation.value}
-                              onPress={() => setSelectedMealRelation(relation.value)}
+                              onPress={() => {
+                                setSelectedMealRelation(relation.value);
+                                triggerHaptic('selection');
+                              }}
                               accessibilityRole="button"
+                              accessibilityLabel={t(relation.labelKey)}
                               accessibilityState={{ selected: selectedRelation }}
-                              className="min-h-hit rounded-full border px-4 py-2 justify-center"
+                              className="min-h-hit justify-between rounded-2xl border p-4"
                               style={{
-                                backgroundColor: selectedRelation ? theme.action.base : theme.colors.surface,
+                                width: 168,
+                                backgroundColor: selectedRelation ? `${theme.action.base}12` : theme.colors.surface,
                                 borderColor: selectedRelation ? theme.action.base : theme.colors.hairline,
+                                borderWidth: selectedRelation ? 2 : 1,
                               }}
                             >
-                              <Text className="text-body" style={{ color: selectedRelation ? theme.action.ink : theme.colors.ink, fontWeight: '600' }}>
+                              <View className="flex-row items-center justify-between">
+                                <View
+                                  className="items-center justify-center rounded-xl"
+                                  style={{ width: 36, height: 36, backgroundColor: selectedRelation ? theme.action.base : `${theme.action.base}14` }}
+                                >
+                                  <RelationIcon color={selectedRelation ? theme.action.ink : theme.action.base} size={19} strokeWidth={2.25} />
+                                </View>
+                                {selectedRelation ? <Check color={theme.action.base} size={19} strokeWidth={2.5} /> : null}
+                              </View>
+                              <Text className="mt-3 text-body" numberOfLines={2} style={{ color: theme.colors.ink, fontWeight: '700' }}>
                                 {t(relation.labelKey)}
                               </Text>
                             </Pressable>
                           );
                         })}
-                      </View>
+                      </ScrollView>
                       <Text className="text-caption" style={{ color: theme.colors.inkMuted }}>
                         {t('alarms.mealRelationHint')}
                       </Text>
