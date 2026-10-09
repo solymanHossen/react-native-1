@@ -1,7 +1,8 @@
 import { Droplet, Pill, Plus, Syringe, TriangleAlert, X } from 'lucide-react-native';
-import { useCallback, useEffect, useState, type ComponentType } from 'react';
+import { useCallback, useEffect, useRef, useState, type ComponentType } from 'react';
 import { ActivityIndicator, Alert, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { ManualMedicationSheet, type ManualMedicationInput, type ManualMedicationSheetRef } from '../components/medications/ManualMedicationSheet';
 import { StatusPill } from '../components/ui';
 import { DuplicateMedicationError, initializeDatabase, type DrugConflict, type DrugSearchResult, type Medication, type MediusDatabase } from '../db';
 import { useTranslation } from '../i18n';
@@ -145,6 +146,8 @@ export default function DrugLabScreen() {
   const [addedName, setAddedName] = useState<string | null>(null);
   const [addedConflicts, setAddedConflicts] = useState<DrugConflict[] | null>(null);
   const [duplicateName, setDuplicateName] = useState<string | null>(null);
+  const [manualAddedName, setManualAddedName] = useState<string | null>(null);
+  const manualSheetRef = useRef<ManualMedicationSheetRef>(null);
 
   const refreshMedications = useCallback(async (database: MediusDatabase) => {
     setMedications(await database.medications.list());
@@ -183,6 +186,7 @@ export default function DrugLabScreen() {
       setAddedName(null);
       setAddedConflicts(null);
       setDuplicateName(null);
+      setManualAddedName(null);
       try {
         await mediusDb.medications.create({
           name: result.brand_name,
@@ -211,6 +215,48 @@ export default function DrugLabScreen() {
         throw error;
       } finally {
         setAddingRowid(null);
+      }
+    },
+    [mediusDb, refreshMedications],
+  );
+
+  // No `generic_id` to check interactions against here — a manually-typed
+  // name isn't resolved to a drug-directory entry, so `checkDrugConflicts`
+  // (keyed on generic name) can't run meaningfully. Claiming "no
+  // interactions found" when no check actually ran would be a false
+  // reassurance in a medical app, so this path gets its own honest
+  // confirmation message instead of reusing the search-add conflict panel.
+  const addManualMedication = useCallback(
+    async (input: ManualMedicationInput) => {
+      if (!mediusDb) return;
+      setAddedName(null);
+      setAddedConflicts(null);
+      setDuplicateName(null);
+      setManualAddedName(null);
+      try {
+        await mediusDb.medications.create({
+          name: input.name,
+          generic_id: null,
+          strength: input.strength,
+          form: input.form,
+          current_stock: 30,
+          refill_threshold: 5,
+          expiry_date: null,
+          instructions: null,
+          nfc_tag_uid: null,
+        });
+        triggerHaptic('notificationSuccess');
+        setManualAddedName(input.name);
+        setQuery('');
+        setResults([]);
+        await refreshMedications(mediusDb);
+      } catch (error) {
+        if (error instanceof DuplicateMedicationError) {
+          triggerHaptic('notificationWarning');
+          setDuplicateName(input.name);
+          return;
+        }
+        throw error;
       }
     },
     [mediusDb, refreshMedications],
@@ -307,7 +353,27 @@ export default function DrugLabScreen() {
                   {t('medications.alreadyAdded', { name: duplicateName })}
                 </Text>
               ) : null}
+              <Pressable
+                onPress={() => manualSheetRef.current?.present(query.trim())}
+                accessibilityRole="button"
+                className="min-h-hit items-start justify-center"
+              >
+                <Text className="text-body-lg" style={{ color: theme.action.base, fontWeight: '600' }}>
+                  {t('medications.addManually')}
+                </Text>
+              </Pressable>
             </View>
+
+            {manualAddedName ? (
+              <View
+                className="gap-1 rounded-3xl border p-5"
+                style={{ backgroundColor: theme.colors.elevated, borderColor: theme.colors.hairline }}
+              >
+                <Text className="text-body-lg" style={{ color: theme.colors.ink, fontWeight: '600' }}>
+                  {t('medications.addedManually', { name: manualAddedName })}
+                </Text>
+              </View>
+            ) : null}
 
             {addedName ? (
               <View
@@ -349,6 +415,8 @@ export default function DrugLabScreen() {
           </>
         )}
       </ScrollView>
+
+      <ManualMedicationSheet ref={manualSheetRef} onSave={addManualMedication} />
     </SafeAreaView>
   );
 }
