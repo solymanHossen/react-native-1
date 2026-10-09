@@ -36,6 +36,7 @@ const CREATE_MEDICATIONS = `
     expiry_date TEXT,
     instructions TEXT,
     nfc_tag_uid TEXT,
+    photo_uri TEXT,
     course_start_date TEXT,
     course_end_date TEXT
   );
@@ -126,6 +127,9 @@ export async function runMigrations(db: DB): Promise<void> {
     }
     if (!medicationColumns.some((row) => row.name === 'course_end_date')) {
       await tx.execute('ALTER TABLE medications ADD COLUMN course_end_date TEXT;');
+    }
+    if (!medicationColumns.some((row) => row.name === 'photo_uri')) {
+      await tx.execute('ALTER TABLE medications ADD COLUMN photo_uri TEXT;');
     }
   });
 }

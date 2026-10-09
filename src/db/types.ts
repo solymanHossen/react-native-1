@@ -44,6 +44,7 @@ export interface Medication {
   expiry_date: string | null;
   instructions: string | null;
   nfc_tag_uid: string | null;
+  photo_uri: string | null;
   course_start_date: string | null;
   course_end_date: string | null;
   is_archived: boolean;

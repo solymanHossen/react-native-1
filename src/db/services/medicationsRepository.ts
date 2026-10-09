@@ -13,6 +13,7 @@ function toMedication(row: Record<string, unknown>): Medication {
     expiry_date: row.expiry_date === null ? null : String(row.expiry_date),
     instructions: row.instructions === null ? null : String(row.instructions),
     nfc_tag_uid: row.nfc_tag_uid === null ? null : String(row.nfc_tag_uid),
+    photo_uri: row.photo_uri === null ? null : String(row.photo_uri),
     course_start_date: row.course_start_date === null ? null : String(row.course_start_date),
     course_end_date: row.course_end_date === null ? null : String(row.course_end_date),
     is_archived: Number(row.is_archived ?? 0) === 1,
@@ -64,8 +65,8 @@ export class MedicationsRepository {
     if (duplicate) throw new DuplicateMedicationError(duplicate);
 
     const { insertId } = await this.db.execute(
-      `INSERT INTO medications (name, generic_id, strength, form, current_stock, refill_threshold, expiry_date, instructions, nfc_tag_uid, course_start_date, course_end_date)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+      `INSERT INTO medications (name, generic_id, strength, form, current_stock, refill_threshold, expiry_date, instructions, nfc_tag_uid, photo_uri, course_start_date, course_end_date)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
       [
         medication.name,
         medication.generic_id,
@@ -76,6 +77,7 @@ export class MedicationsRepository {
         medication.expiry_date,
         medication.instructions,
         medication.nfc_tag_uid,
+        medication.photo_uri ?? null,
         medication.course_start_date ?? null,
         medication.course_end_date ?? null,
       ],
@@ -97,6 +99,13 @@ export class MedicationsRepository {
 
   async adjustStock(id: number, deltaUnits: number): Promise<void> {
     await this.db.execute('UPDATE medications SET current_stock = current_stock + ? WHERE id = ?;', [deltaUnits, id]);
+  }
+
+  async updatePhoto(id: number, photoUri: string | null): Promise<Medication> {
+    await this.db.execute('UPDATE medications SET photo_uri = ? WHERE id = ?;', [photoUri, id]);
+    const updated = await this.getById(id);
+    if (!updated) throw new Error('Medication disappeared while saving its photo.');
+    return updated;
   }
 
   async listLowStock(): Promise<Medication[]> {

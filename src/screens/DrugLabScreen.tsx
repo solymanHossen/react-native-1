@@ -273,6 +273,7 @@ export default function DrugLabScreen() {
           expiry_date: null,
           instructions: null,
           nfc_tag_uid: null,
+          photo_uri: null,
           course_start_date: null,
           course_end_date: null,
         });
@@ -321,6 +322,7 @@ export default function DrugLabScreen() {
           expiry_date: null,
           instructions: null,
           nfc_tag_uid: null,
+          photo_uri: null,
           course_start_date: input.courseStartDate,
           course_end_date: input.courseEndDate,
         });
@@ -515,7 +517,12 @@ export default function DrugLabScreen() {
 
       <ManualMedicationSheet ref={manualSheetRef} onSave={addManualMedication} />
       <MedicationHistorySheet ref={historySheetRef} />
-      <MedicationDetailsSheet ref={detailsSheetRef} />
+      <MedicationDetailsSheet
+        ref={detailsSheetRef}
+        onMedicationUpdated={(updated) => {
+          setMedications((current) => current.map((item) => (item.id === updated.id ? updated : item)));
+        }}
+      />
     </SafeAreaView>
   );
 }

@@ -293,6 +293,12 @@ export const bn: typeof en = {
     detailsActive: 'চালু',
     detailsPaused: 'বিরতি',
     detailsHistoryHint: 'নেওয়া ও মিস হওয়া ডোজ দেখতে Medication History খুলুন।',
+    photoEmpty: 'কোনো ওষুধের ছবি যোগ করা হয়নি',
+    photoPreview: 'ওষুধের ছবি',
+    takePhoto: 'ছবি তুলুন',
+    choosePhoto: 'ছবি বাছাই করুন',
+    removePhoto: 'ছবি মুছে দিন',
+    photoError: 'ছবিটি সংরক্ষণ করা যায়নি। আবার চেষ্টা করুন।',
   },
   scanRx: {
     title: 'প্রেসক্রিপশন স্ক্যান করুন',

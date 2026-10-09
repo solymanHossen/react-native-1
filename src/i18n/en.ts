@@ -296,6 +296,12 @@ export const en = {
     detailsActive: 'Active',
     detailsPaused: 'Paused',
     detailsHistoryHint: 'Open Medication History to review taken and missed doses.',
+    photoEmpty: 'No medication photo added',
+    photoPreview: 'Medication photo',
+    takePhoto: 'Take photo',
+    choosePhoto: 'Choose photo',
+    removePhoto: 'Remove photo',
+    photoError: 'The photo could not be saved. Please try again.',
   },
   scanRx: {
     title: 'Scan Prescription',

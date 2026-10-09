@@ -130,6 +130,7 @@ export default function PrescriptionScanScreen() {
           expiry_date: null,
           instructions: summarizeDosage(item),
           nfc_tag_uid: null,
+          photo_uri: null,
           course_start_date: dates.start,
           course_end_date: dates.end,
         });
