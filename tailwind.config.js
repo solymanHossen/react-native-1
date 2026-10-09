@@ -23,12 +23,12 @@ module.exports = {
                 // consumed via useTheme() + an inline `style`, never via a
                 // `dark:` className. These tokens are therefore the
                 // theme-agnostic ones only.
-                // Pomegranate — primary action, same value in both themes
-                action: "#C0392B",
-                "action-ink": "#FFFFFF",
+                // Cyan action color and jet-black action text — mirrors tokens.ts.
+                action: "#11a7ad",
+                "action-ink": "#070a0b",
                 // Semantic status codes (vivid/base hue — see tokens.ts for
                 // the per-theme text/tint variants StatusPill resolves at runtime)
-                fasting: "#00B4D8",
+                fasting: "#11a7ad",
                 taken: "#2ECC71",
                 pending: "#FFA502",
                 missed: "#FF6B6B",

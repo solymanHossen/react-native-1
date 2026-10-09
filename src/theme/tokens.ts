@@ -21,44 +21,98 @@ export type ThemeMode = 'light' | 'dark';
 export const MIN_HITBOX = 56;
 
 /**
- * Ember palette — warm near-black through warm near-white, hue-matched to
- * the brand red below, five steps shading into each other. Replaces the
- * earlier cyan-leaning "ocean" scale so canvas/surface/ink and the primary
- * action color read as one deliberately-designed warm family instead of a
- * cool neutral paired with a warm accent.
+ * Ocean/steel palette. The named scales mirror the product design palette so
+ * every screen can use one consistent cyan, blue-slate, steel, and near-black
+ * visual language in both light and dark mode.
  */
-export const palette = {
-  light: {
-    canvas: '#FFF8F7',
-    surface: '#FFFFFF',
-    elevated: '#FFF1EF',
-    hairline: '#FBDAD5',
-    /** Primary reading text. ~17.8–19.6:1 against canvas/surface/elevated. */
-    ink: '#1A0605',
-    /** Secondary text (captions, meta). ~13.6–14.9:1 against canvas/surface/elevated — clears AAA body. */
-    inkSecondary: '#4A1512',
-    /** Decorative/non-essential text only (disabled labels, watermarks) — the brand hue itself. ~5.2:1 — below AAA body, do not use for readable content. */
-    inkMuted: '#C0392B',
+export const designPalette = {
+  lightCyan: {
+    DEFAULT: '#e0fbfc',
+    100: '#095456',
+    200: '#11a7ad',
+    300: '#32e5eb',
+    400: '#88f0f3',
+    500: '#e0fbfc',
+    600: '#e5fcfc',
+    700: '#ecfcfd',
+    800: '#f2fdfe',
+    900: '#f9fefe',
   },
-  dark: {
-    canvas: '#170605',
-    surface: '#200807',
-    elevated: '#2B0C0A',
-    hairline: '#4A1512',
-    /** Primary reading text. ~16.7–18.2:1 against canvas/surface/elevated. */
-    ink: '#FFF3F1',
-    /** Secondary text (captions, meta). ~13.6–14.8:1 against canvas/surface/elevated — clears AAA body. */
-    inkSecondary: '#F7D8D3',
-    /** Tertiary/muted text. ~7.7:1 against canvas — exceeds AAA numerically, kept visually dimmer than ink/inkSecondary to preserve the hierarchy; not a "below AAA" token the way its light-mode counterpart is. */
-    inkMuted: '#FF7A68',
+  lightBlue: {
+    DEFAULT: '#c2dfe3',
+    100: '#1b363a',
+    200: '#356d74',
+    300: '#50a3ae',
+    400: '#8ac2c9',
+    500: '#c2dfe3',
+    600: '#cfe6e9',
+    700: '#dbecef',
+    800: '#e7f3f4',
+    900: '#f3f9fa',
+  },
+  coolSteel: {
+    DEFAULT: '#9db4c0',
+    100: '#1b252a',
+    200: '#364a55',
+    300: '#516f7f',
+    400: '#7192a4',
+    500: '#9db4c0',
+    600: '#afc2cc',
+    700: '#c3d1d9',
+    800: '#d7e1e6',
+    900: '#ebf0f2',
+  },
+  blueSlate: {
+    DEFAULT: '#5c6b73',
+    100: '#131617',
+    200: '#252b2e',
+    300: '#384146',
+    400: '#4a565d',
+    500: '#5c6b73',
+    600: '#798b94',
+    700: '#9ba8af',
+    800: '#bcc5c9',
+    900: '#dee2e4',
+  },
+  jetBlack: {
+    DEFAULT: '#253237',
+    100: '#070a0b',
+    200: '#0f1416',
+    300: '#161e21',
+    400: '#1d282c',
+    500: '#253237',
+    600: '#465f69',
+    700: '#688c9b',
+    800: '#9bb3bc',
+    900: '#cdd9de',
   },
 } as const;
 
-/** Pomegranate — primary action color, same value in both themes. */
+export const palette = {
+  light: {
+    canvas: designPalette.lightCyan[900],
+    surface: designPalette.lightCyan[800],
+    elevated: designPalette.lightBlue[800],
+    hairline: designPalette.lightBlue[600],
+    ink: designPalette.jetBlack[500],
+    inkSecondary: designPalette.blueSlate[300],
+    inkMuted: designPalette.coolSteel[300],
+  },
+  dark: {
+    canvas: designPalette.jetBlack[100],
+    surface: designPalette.jetBlack[200],
+    elevated: designPalette.blueSlate[200],
+    hairline: designPalette.blueSlate[300],
+    ink: designPalette.lightCyan[800],
+    inkSecondary: designPalette.lightBlue[600],
+    inkMuted: designPalette.coolSteel[600],
+  },
+} as const;
+
+/** Cyan action color paired with jet-black text for reliable contrast. */
 export const action = {
-  base: '#C0392B',
-  /** White-on-pomegranate: ~5.44:1, clears the 4.5:1 interactive-state bar. */
-  ink: '#FFFFFF',
+  base: designPalette.lightCyan[200],
+  ink: designPalette.jetBlack[100],
 } as const;
 
 export type StatusKey = 'fasting' | 'taken' | 'pending' | 'missed' | 'scheduled';
@@ -90,11 +144,11 @@ interface StatusToken {
  * cyan, since it isn't tied to brand identity.
  */
 export const status: Record<StatusKey, StatusToken> = {
-  fasting: { base: '#00B4D8', onLight: '#006B81', label: 'Fasting' },
+  fasting: { base: designPalette.lightCyan[200], onLight: designPalette.lightCyan[100], label: 'Fasting' },
   taken: { base: '#2ECC71', onLight: '#1A7541', label: 'Taken' },
   pending: { base: '#FFA502', onLight: '#8E5C00', label: 'Pending' },
   missed: { base: '#FF6B6B', onLight: '#CD0000', label: 'Missed' },
-  scheduled: { base: '#C0392B', onLight: '#C62918', onDark: '#D55144', label: 'Scheduled' },
+  scheduled: { base: action.base, onLight: designPalette.lightCyan[100], onDark: designPalette.lightCyan[300], label: 'Scheduled' },
 };
 
 /**
