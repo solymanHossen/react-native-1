@@ -106,7 +106,13 @@ export async function initializeAlarmSystem(): Promise<void> {
 
 export { useActiveAlarmStore } from './activeAlarmStore';
 export { ensureExactAlarmPermission } from './alarmChannel';
-export { getCaregiverPhone, setCaregiverPhone, escalateToCaregiver } from './caregiverEscalation';
+export {
+  getCaregiverPhone,
+  isValidCaregiverPhone,
+  normalizeCaregiverPhone,
+  setCaregiverPhone,
+  escalateToCaregiver,
+} from './caregiverEscalation';
 export { confirmIntake, logManualOverride } from './intakeConfirmation';
 export * from './alarmPolicy';
 export {

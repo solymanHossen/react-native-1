@@ -1,10 +1,17 @@
 import { FlashList } from '@shopify/flash-list';
-import { Camera, Check, Clock, Moon, Nfc, ShieldAlert, Sun, Sunrise, Sunset } from 'lucide-react-native';
+import { Camera, Check, Clock, Moon, Nfc, Phone, ShieldAlert, Sun, Sunrise, Sunset, Trash2 } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useState, type ComponentType } from 'react';
 import { Pressable, Switch, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LargeTextButton } from '../components/ui';
-import { getCaregiverPhone, rescheduleAllActiveAlarms, setCaregiverPhone, setScheduleActive } from '../alarms';
+import {
+  getCaregiverPhone,
+  isValidCaregiverPhone,
+  normalizeCaregiverPhone,
+  rescheduleAllActiveAlarms,
+  setCaregiverPhone,
+  setScheduleActive,
+} from '../alarms';
 import { initializeDatabase, type Medication, type MediusDatabase } from '../db';
 import type { MealRelation, ScheduleWithMedication, TimeNode } from '../db/types';
 import { useTranslation, type TranslationKey } from '../i18n';
@@ -81,6 +88,7 @@ export default function AlarmsScreen() {
   const [selectedMedicationId, setSelectedMedicationId] = useState<number | null>(null);
   const [caregiverPhone, setCaregiverPhoneInput] = useState(() => getCaregiverPhone() ?? '');
   const [status, setStatus] = useState<string | null>(null);
+  const [caregiverError, setCaregiverError] = useState<string | null>(null);
 
   const refresh = useCallback(async (database: MediusDatabase) => {
     const [scheduleRows, medicationRows] = await Promise.all([
@@ -142,9 +150,30 @@ export default function AlarmsScreen() {
   );
 
   const handleSaveCaregiverPhone = useCallback(() => {
-    setCaregiverPhone(caregiverPhone);
-    setStatus(caregiverPhone.trim() ? t('alarms.caregiverSaved') : t('alarms.caregiverCleared'));
+    const normalized = normalizeCaregiverPhone(caregiverPhone);
+    setCaregiverError(null);
+    if (normalized && !isValidCaregiverPhone(normalized)) {
+      setCaregiverError(t('alarms.caregiverInvalid'));
+      return;
+    }
+    setCaregiverPhone(normalized);
+    setCaregiverPhoneInput(normalized);
+    setStatus(normalized ? t('alarms.caregiverSaved') : t('alarms.caregiverCleared'));
+    triggerHaptic('notificationSuccess');
   }, [caregiverPhone, t]);
+
+  const handleClearCaregiverPhone = useCallback(() => {
+    setCaregiverPhone('');
+    setCaregiverPhoneInput('');
+    setCaregiverError(null);
+    setStatus(t('alarms.caregiverCleared'));
+    triggerHaptic('selection');
+  }, [t]);
+
+  const savedCaregiverPhone = getCaregiverPhone();
+  const maskedCaregiverPhone = savedCaregiverPhone
+    ? `${savedCaregiverPhone.slice(0, Math.max(0, savedCaregiverPhone.length - 4)).replace(/\d(?=\d)/g, '•')} ${savedCaregiverPhone.slice(-4)}`
+    : null;
 
   return (
     <SafeAreaView className="flex-1" edges={['top', 'left', 'right']} style={{ backgroundColor: theme.colors.canvas }}>
@@ -182,9 +211,14 @@ export default function AlarmsScreen() {
                 >
                   <ShieldAlert color={theme.action.base} size={20} strokeWidth={2.25} />
                 </View>
-                <Text className="text-caption uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
-                  {t('alarms.caregiverSection')}
-                </Text>
+                <View className="flex-1">
+                  <Text className="text-caption uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
+                    {t('alarms.caregiverSection')}
+                  </Text>
+                  <Text className="mt-1 text-caption" style={{ color: savedCaregiverPhone ? theme.statusText('taken') : theme.colors.inkMuted }}>
+                    {savedCaregiverPhone ? t('alarms.caregiverReady') : t('alarms.caregiverNotConfigured')}
+                  </Text>
+                </View>
               </View>
               <Text className="text-caption" style={{ color: theme.colors.inkMuted }}>
                 {t('alarms.caregiverDescription')}
@@ -198,6 +232,32 @@ export default function AlarmsScreen() {
                 className="min-h-hit rounded-full border px-6 text-body-lg"
                 style={{ backgroundColor: theme.colors.surface, borderColor: theme.colors.hairline, color: theme.colors.ink }}
               />
+              {caregiverError ? (
+                <Text className="text-caption" style={{ color: theme.statusText('missed') }}>
+                  {caregiverError}
+                </Text>
+              ) : null}
+              {maskedCaregiverPhone ? (
+                <View className="flex-row items-center gap-3 rounded-2xl border px-4 py-3" style={{ borderColor: theme.colors.hairline }}>
+                  <Phone color={theme.statusText('taken')} size={18} strokeWidth={2.25} />
+                  <View className="flex-1">
+                    <Text className="text-caption" style={{ color: theme.colors.inkMuted }}>
+                      {t('alarms.caregiverSavedContact')}
+                    </Text>
+                    <Text className="text-body-lg" style={{ color: theme.colors.ink, fontWeight: '600' }}>
+                      {maskedCaregiverPhone}
+                    </Text>
+                  </View>
+                  <Pressable
+                    onPress={handleClearCaregiverPhone}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('alarms.clearCaregiverAccessibility')}
+                    className="min-h-hit min-w-hit items-center justify-center"
+                  >
+                    <Trash2 color={theme.colors.inkMuted} size={19} />
+                  </Pressable>
+                </View>
+              ) : null}
               <LargeTextButton label={t('alarms.saveCaregiverNumber')} variant="secondary" onPress={handleSaveCaregiverPhone} />
             </View>
 

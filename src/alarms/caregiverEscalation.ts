@@ -14,12 +14,30 @@ function sosMessageBn(patientName: string, medicationName: string): string {
 }
 
 export function getCaregiverPhone(): string | null {
-  return storage.getString(CAREGIVER_PHONE_KEY) ?? null;
+  const stored = storage.getString(CAREGIVER_PHONE_KEY);
+  if (!stored) return null;
+  const normalized = normalizeCaregiverPhone(stored);
+  if (normalized !== stored) storage.set(CAREGIVER_PHONE_KEY, normalized);
+  return normalized;
+}
+
+export function normalizeCaregiverPhone(value: string): string {
+  const trimmed = value.trim();
+  const hasPlus = trimmed.startsWith('+');
+  const digits = trimmed.replace(/\D/g, '');
+  return hasPlus ? `+${digits}` : digits;
+}
+
+export function isValidCaregiverPhone(value: string): boolean {
+  const normalized = normalizeCaregiverPhone(value);
+  const digits = normalized.replace(/\D/g, '');
+  return digits.length >= 7 && digits.length <= 15;
 }
 
 export function setCaregiverPhone(phone: string): void {
-  if (phone.trim()) {
-    storage.set(CAREGIVER_PHONE_KEY, phone.trim());
+  const normalized = normalizeCaregiverPhone(phone);
+  if (normalized) {
+    storage.set(CAREGIVER_PHONE_KEY, normalized);
   } else {
     storage.delete(CAREGIVER_PHONE_KEY);
   }
