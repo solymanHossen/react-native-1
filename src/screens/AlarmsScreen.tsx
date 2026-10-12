@@ -1,9 +1,15 @@
 import { FlashList } from '@shopify/flash-list';
-import { BottomSheetModal, BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
+import {
+  BottomSheetBackdrop,
+  type BottomSheetBackdropProps,
+  BottomSheetModal,
+  BottomSheetTextInput,
+  BottomSheetView,
+} from '@gorhom/bottom-sheet';
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { Camera, Check, Clock, Droplet, Moon, Nfc, Package, Pencil, Phone, Pill, Plus, ShieldAlert, ShieldCheck, Sun, Sunrise, Sunset, Trash2, X } from 'lucide-react-native';
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, type ComponentType } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Switch, Text, View } from 'react-native';
+import { ActivityIndicator, Keyboard, Pressable, ScrollView, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AlarmScheduleCard, AlarmsEmptyState, AlarmsHeroSummary } from '../components/alarms';
 import { LargeTextButton } from '../components/ui';
@@ -39,7 +45,6 @@ const CaregiverContactSheet = forwardRef<CaregiverContactSheetRef, {
   const modalRef = useRef<BottomSheetModal>(null);
   const [phone, setPhone] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const snapPoints = useMemo(() => ['58%'], []);
 
   useImperativeHandle(ref, () => ({
     present: (savedPhone) => {
@@ -55,23 +60,44 @@ const CaregiverContactSheet = forwardRef<CaregiverContactSheetRef, {
       setError(t('alarms.caregiverInvalid'));
       return;
     }
+    Keyboard.dismiss();
     onSave(normalized);
     modalRef.current?.dismiss();
   }, [onSave, phone, t]);
 
   const handleClear = useCallback(() => {
+    Keyboard.dismiss();
     onClear();
     modalRef.current?.dismiss();
   }, [onClear]);
 
+  const renderBackdrop = useCallback(
+    (props: BottomSheetBackdropProps) => (
+      <BottomSheetBackdrop
+        {...props}
+        disappearsOnIndex={-1}
+        appearsOnIndex={0}
+        opacity={0.5}
+        pressBehavior="close"
+      />
+    ),
+    [],
+  );
+
   return (
     <BottomSheetModal
       ref={modalRef}
-      snapPoints={snapPoints}
+      enableDynamicSizing
+      enablePanDownToClose
+      enableBlurKeyboardOnGesture
+      keyboardBehavior="interactive"
+      keyboardBlurBehavior="restore"
+      android_keyboardInputMode="adjustResize"
+      backdropComponent={renderBackdrop}
       backgroundStyle={{ backgroundColor: theme.colors.surface }}
       handleIndicatorStyle={{ backgroundColor: theme.colors.hairline }}
     >
-      <BottomSheetView className="flex-1 gap-5 px-6 pt-2">
+      <BottomSheetView className="gap-5 px-6 pb-8 pt-2">
         <View className="flex-row items-center gap-3">
           <View className="items-center justify-center rounded-2xl" style={{ width: 48, height: 48, backgroundColor: `${theme.action.base}18` }}>
             <Phone color={theme.action.base} size={24} strokeWidth={2.25} />
@@ -288,6 +314,7 @@ const ReminderSheet = forwardRef<ReminderSheetRef, {
     if (!medication || submitting) return;
     setSubmitting(true);
     setError(null);
+    Keyboard.dismiss();
     try {
       await onConfirm(medication, resolvedTime, mealRelation, customTitle.trim() || null);
       modalRef.current?.dismiss();
@@ -299,6 +326,19 @@ const ReminderSheet = forwardRef<ReminderSheetRef, {
     }
   }, [customTitle, mealRelation, medication, onConfirm, resolvedTime, submitting, t]);
 
+  const renderBackdrop = useCallback(
+    (props: BottomSheetBackdropProps) => (
+      <BottomSheetBackdrop
+        {...props}
+        disappearsOnIndex={-1}
+        appearsOnIndex={0}
+        opacity={0.5}
+        pressBehavior="close"
+      />
+    ),
+    [],
+  );
+
   if (!medication) return null;
   const FormIcon = medicationFormIcon(medication.form);
 
@@ -306,6 +346,12 @@ const ReminderSheet = forwardRef<ReminderSheetRef, {
     <BottomSheetModal
       ref={modalRef}
       snapPoints={snapPoints}
+      enablePanDownToClose
+      enableBlurKeyboardOnGesture
+      keyboardBehavior="interactive"
+      keyboardBlurBehavior="restore"
+      android_keyboardInputMode="adjustResize"
+      backdropComponent={renderBackdrop}
       backgroundStyle={{ backgroundColor: theme.colors.surface }}
       handleIndicatorStyle={{ backgroundColor: theme.colors.hairline }}
     >
@@ -323,7 +369,10 @@ const ReminderSheet = forwardRef<ReminderSheetRef, {
             </Text>
           </View>
           <Pressable
-            onPress={() => modalRef.current?.dismiss()}
+            onPress={() => {
+              Keyboard.dismiss();
+              modalRef.current?.dismiss();
+            }}
             accessibilityRole="button"
             accessibilityLabel={t('alarms.reminderSheetClose')}
             className="min-h-hit min-w-hit items-center justify-center"

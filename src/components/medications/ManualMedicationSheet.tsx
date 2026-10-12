@@ -1,6 +1,12 @@
-import { BottomSheetModal, BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
+import {
+  BottomSheetBackdrop,
+  type BottomSheetBackdropProps,
+  BottomSheetModal,
+  BottomSheetTextInput,
+  BottomSheetView,
+} from '@gorhom/bottom-sheet';
 import { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Keyboard, Pressable, Text, View } from 'react-native';
 import type { Medication } from '../../db/types';
 import { useTranslation, type TranslationKey } from '../../i18n';
 import { useTheme } from '../../theme/useTheme';
@@ -88,6 +94,7 @@ export const ManualMedicationSheet = forwardRef<ManualMedicationSheetRef, Manual
         return;
       }
       setDateError(false);
+      Keyboard.dismiss();
       onSave({
         name: trimmedName,
         strength: strength.trim() || null,
@@ -98,10 +105,29 @@ export const ManualMedicationSheet = forwardRef<ManualMedicationSheetRef, Manual
       modalRef.current?.dismiss();
     }, [courseEndDate, courseStartDate, form, name, onSave, strength]);
 
+    const renderBackdrop = useCallback(
+      (props: BottomSheetBackdropProps) => (
+        <BottomSheetBackdrop
+          {...props}
+          disappearsOnIndex={-1}
+          appearsOnIndex={0}
+          opacity={0.5}
+          pressBehavior="close"
+        />
+      ),
+      [],
+    );
+
     return (
       <BottomSheetModal
         ref={modalRef}
         snapPoints={snapPoints}
+        enablePanDownToClose
+        enableBlurKeyboardOnGesture
+        keyboardBehavior="interactive"
+        keyboardBlurBehavior="restore"
+        android_keyboardInputMode="adjustResize"
+        backdropComponent={renderBackdrop}
         backgroundStyle={{ backgroundColor: theme.colors.surface }}
         handleIndicatorStyle={{ backgroundColor: theme.colors.hairline }}
       >
