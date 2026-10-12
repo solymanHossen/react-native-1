@@ -34,6 +34,19 @@ import { speakReminder, stopSpeaking } from '../lib/tts';
 const VISION_CAPTURE_INTERVAL_MS = 2500;
 
 /**
+ * How often the voice announcement repeats while the alarm stays
+ * unresolved. A single announcement only reaches someone who happens to be
+ * listening at that exact moment — asleep, in another room, or mid-task, a
+ * one-shot utterance is as good as silent. 30s is short enough to still be
+ * useful well before the 15-minute `ESCALATION_TIMEOUT_MS` caregiver
+ * handoff, long enough that a ~4-6s spoken reminder ("Time to take your
+ * Naprosyn, 1 tablet, with food") never overlaps itself, and matches how the
+ * NFC/vision verification loops in this same screen already poll on a fixed
+ * interval rather than a one-shot check.
+ */
+const VOICE_REPEAT_INTERVAL_MS = 30 * 1000;
+
+/**
  * This screen deliberately ignores the user's light/dark preference (see the
  * component doc comment) and always renders as a fixed dark surface, so its
  * colors come straight from `palette.dark`/`status` rather than `useTheme()`.
@@ -75,27 +88,49 @@ export default function AlarmScreen({ alarm }: AlarmScreenProps) {
   const [remainingMs, setRemainingMs] = useState(() => msUntilEscalation(firedAtMs, Date.now()));
   const [overrideProgress, setOverrideProgress] = useState(0);
   const resolvedRef = useRef(false);
+  const voiceRepeatTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const pulse = usePulse();
 
   const pulseStyle = useAnimatedStyle(() => ({ transform: [{ scale: pulse.value }] }));
 
-  // Speaks the reminder once, the moment this specific alarm instance mounts
-  // (notifee's fullScreenAction already brought the app to the foreground to
-  // get here — this is "Path B" from the voice-announcement design: reading
-  // it aloud once the app is actually running, not attempting background TTS
-  // before the Activity exists, which no community RN TTS library can do
-  // reliably on a killed app). Keyed on notificationId, not payload/language,
-  // so it fires exactly once per alarm and never re-speaks on a re-render.
+  // Stops both the in-progress utterance and the repeat timer together —
+  // every resolution path (verify/snooze/override/escalate) needs both, and
+  // calling this instead of a bare `stopSpeaking()` is what makes the repeat
+  // stop the instant resolution begins rather than up to
+  // VOICE_REPEAT_INTERVAL_MS late (or, for the 1.1s "confirmed" celebration
+  // screen, firing one extra repeat during it).
+  const stopVoiceAnnouncements = useCallback(() => {
+    if (voiceRepeatTimer.current) {
+      clearInterval(voiceRepeatTimer.current);
+      voiceRepeatTimer.current = null;
+    }
+    stopSpeaking().catch(() => {});
+  }, []);
+
+  // Speaks the reminder the moment this specific alarm instance mounts, then
+  // keeps repeating it every VOICE_REPEAT_INTERVAL_MS until the alarm
+  // resolves — a single announcement only reaches someone already listening
+  // at that exact moment (notifee's fullScreenAction already brought the app
+  // to the foreground to get here — this is "Path B" from the
+  // voice-announcement design: reading it aloud once the app is actually
+  // running, not attempting background TTS before the Activity exists, which
+  // no community RN TTS library can do reliably on a killed app). Keyed on
+  // notificationId, not payload/language, so it (re)starts exactly once per
+  // alarm and never restarts on an unrelated re-render.
   useEffect(() => {
     if (!isVoiceAnnouncementsEnabled()) return;
     const message = buildMedicationReminderMessage(payload, language);
     speakReminder(message, language).catch(() => {});
+    voiceRepeatTimer.current = setInterval(() => {
+      speakReminder(message, language).catch(() => {});
+    }, VOICE_REPEAT_INTERVAL_MS);
     return () => {
+      if (voiceRepeatTimer.current) clearInterval(voiceRepeatTimer.current);
       stopSpeaking().catch(() => {});
     };
     // `payload` is stable for the lifetime of one alarm (incrementSnooze
     // spreads a new activeAlarm object but keeps the same payload reference),
-    // so this still only speaks once per real alarm instance even though
+    // so this still only (re)starts once per real alarm instance even though
     // `payload` is listed here for exhaustive-deps correctness.
   }, [alarm.notificationId, payload, language]);
 
@@ -103,7 +138,7 @@ export default function AlarmScreen({ alarm }: AlarmScreenProps) {
     async (next: Resolution, action: () => Promise<void>) => {
       if (resolvedRef.current) return;
       resolvedRef.current = true;
-      stopSpeaking().catch(() => {});
+      stopVoiceAnnouncements();
       try {
         await action();
       } catch (error) {
@@ -119,7 +154,7 @@ export default function AlarmScreen({ alarm }: AlarmScreenProps) {
       await notifee.cancelNotification(alarm.notificationId).catch(() => {});
       setTimeout(() => clearActiveAlarm(), next === 'verified' ? 1100 : 0);
     },
-    [alarm.notificationId, clearActiveAlarm, t],
+    [alarm.notificationId, clearActiveAlarm, stopVoiceAnnouncements, t],
   );
 
   // NFC: starts listening the moment the screen mounts (or the moment the
@@ -212,7 +247,7 @@ export default function AlarmScreen({ alarm }: AlarmScreenProps) {
     // without this guard both paths could run concurrently and double-write.
     if (!canSnooze(snoozeCount) || resolvedRef.current) return;
     resolvedRef.current = true;
-    stopSpeaking().catch(() => {});
+    stopVoiceAnnouncements();
     triggerHaptic('impactMedium');
     try {
       await scheduleSnoozeAlarm(alarm.notificationId, payload);
@@ -225,7 +260,7 @@ export default function AlarmScreen({ alarm }: AlarmScreenProps) {
     incrementSnooze();
     await notifee.cancelNotification(alarm.notificationId).catch(() => {});
     clearActiveAlarm();
-  }, [alarm.notificationId, clearActiveAlarm, incrementSnooze, payload, snoozeCount, t]);
+  }, [alarm.notificationId, clearActiveAlarm, incrementSnooze, payload, snoozeCount, stopVoiceAnnouncements, t]);
 
   // Hold-to-override: a sustained press for OVERRIDE_HOLD_MS silences the
   // alarm without verification — logged as a manual override, never as a
