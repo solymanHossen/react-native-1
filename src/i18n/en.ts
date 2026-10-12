@@ -418,5 +418,10 @@ export const en = {
     themeSystem: 'System',
     themeLight: 'Light',
     themeDark: 'Dark',
+    voiceAlarm: 'Voice Alarm',
+    voiceAlarmDescription: 'Speak the medicine name and dose aloud when an alarm rings, in your chosen language above.',
+    voiceAlarmAccessibility: 'Speak reminders aloud',
+    testVoice: 'Test Voice',
+    testVoiceMessage: 'This is a test of your medicine reminder voice.',
   },
 };

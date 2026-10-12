@@ -13,6 +13,8 @@ export interface ScheduledAlarmPayload {
   scheduleId: number;
   medicationId: number;
   medicationName: string;
+  /** Verified strength from the medication record (e.g. "500 mg") — null when never recorded. Never inferred from the name. */
+  medicationStrength: string | null;
   dosageLabel: string;
   doseQuantity: number;
   mealRelation: MealRelation;

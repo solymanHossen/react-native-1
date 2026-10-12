@@ -127,4 +127,6 @@ export { isNfcAvailable, listenForTag } from './nfcVerification';
 export { scanPackForMedication, VISION_CONFIDENCE_THRESHOLD } from './visionVerification';
 export { getActiveMedicationAlerts, runSentinelCheck, runSentinelCheckForMedication, scheduleDailySentinelCheck } from './sentinel';
 export type { MedicationAlert } from './sentinel';
+export { buildMedicationReminderMessage } from './voiceAnnouncement';
+export { isVoiceAnnouncementsEnabled, useVoicePreferenceStore } from './voicePreferences';
 export * from './types';

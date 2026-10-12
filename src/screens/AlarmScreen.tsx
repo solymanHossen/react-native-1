@@ -8,12 +8,14 @@ import Animated, { cancelAnimation, useAnimatedStyle, useSharedValue, withRepeat
 import { LargeTextButton } from '../components/ui';
 import {
   OVERRIDE_HOLD_MS,
+  buildMedicationReminderMessage,
   canSnooze,
   confirmIntake,
   escalateToCaregiver,
   formatCountdown,
   isNfcAvailable,
   isPastEscalationDeadline,
+  isVoiceAnnouncementsEnabled,
   listenForTag,
   logManualOverride,
   msUntilEscalation,
@@ -28,6 +30,7 @@ import { useTranslation } from '../i18n';
 import { action as brandAction, palette, status } from '../theme/tokens';
 import { useTheme } from '../theme/useTheme';
 import { triggerHapticCascade, triggerHaptic } from '../lib/haptics';
+import { speakReminder, stopSpeaking } from '../lib/tts';
 
 const VISION_CAPTURE_INTERVAL_MS = 2500;
 
@@ -62,7 +65,7 @@ interface AlarmScreenProps {
  */
 export default function AlarmScreen({ alarm }: AlarmScreenProps) {
   const theme = useTheme();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const { payload, firedAtMs, snoozeCount } = alarm;
   const clearActiveAlarm = useActiveAlarmStore((state) => state.clearActiveAlarm);
   const incrementSnooze = useActiveAlarmStore((state) => state.incrementSnooze);
@@ -78,10 +81,31 @@ export default function AlarmScreen({ alarm }: AlarmScreenProps) {
 
   const pulseStyle = useAnimatedStyle(() => ({ transform: [{ scale: pulse.value }] }));
 
+  // Speaks the reminder once, the moment this specific alarm instance mounts
+  // (notifee's fullScreenAction already brought the app to the foreground to
+  // get here — this is "Path B" from the voice-announcement design: reading
+  // it aloud once the app is actually running, not attempting background TTS
+  // before the Activity exists, which no community RN TTS library can do
+  // reliably on a killed app). Keyed on notificationId, not payload/language,
+  // so it fires exactly once per alarm and never re-speaks on a re-render.
+  useEffect(() => {
+    if (!isVoiceAnnouncementsEnabled()) return;
+    const message = buildMedicationReminderMessage(payload, language);
+    speakReminder(message, language).catch(() => {});
+    return () => {
+      stopSpeaking().catch(() => {});
+    };
+    // `payload` is stable for the lifetime of one alarm (incrementSnooze
+    // spreads a new activeAlarm object but keeps the same payload reference),
+    // so this still only speaks once per real alarm instance even though
+    // `payload` is listed here for exhaustive-deps correctness.
+  }, [alarm.notificationId, payload, language]);
+
   const resolveAndClose = useCallback(
     async (next: Resolution, action: () => Promise<void>) => {
       if (resolvedRef.current) return;
       resolvedRef.current = true;
+      stopSpeaking().catch(() => {});
       try {
         await action();
       } catch (error) {
@@ -190,6 +214,7 @@ export default function AlarmScreen({ alarm }: AlarmScreenProps) {
     // without this guard both paths could run concurrently and double-write.
     if (!canSnooze(snoozeCount) || resolvedRef.current) return;
     resolvedRef.current = true;
+    stopSpeaking().catch(() => {});
     triggerHaptic('impactMedium');
     try {
       await scheduleSnoozeAlarm(alarm.notificationId, payload);

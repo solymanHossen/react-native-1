@@ -45,6 +45,7 @@ function toPayload(schedule: ScheduleWithMedication, scheduledAtMs: number): Sch
     scheduleId: schedule.id,
     medicationId: schedule.medication_id,
     medicationName: schedule.medicationName,
+    medicationStrength: schedule.medicationStrength,
     dosageLabel: `${schedule.dose_quantity} ${schedule.medicationForm}${schedule.dose_quantity === 1 ? '' : 's'}`,
     doseQuantity: schedule.dose_quantity,
     mealRelation: schedule.meal_relation,

@@ -1,8 +1,10 @@
-import { ArrowLeft, Languages, Moon, Smartphone } from 'lucide-react-native';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { ArrowLeft, Languages, Moon, Smartphone, Volume2 } from 'lucide-react-native';
+import { Pressable, ScrollView, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useVoicePreferenceStore } from '../alarms';
 import { useLanguageStore, useTranslation, type LanguageCode } from '../i18n';
 import { triggerHaptic } from '../lib/haptics';
+import { speakReminder } from '../lib/tts';
 import { useSetThemePreference, useTheme, useThemePreference, type ThemePreference } from '../theme/useTheme';
 
 const LANGUAGE_OPTIONS: LanguageCode[] = ['en', 'bn'];
@@ -57,6 +59,21 @@ export default function SettingsScreen({ onBack }: SettingsScreenProps) {
   const setLanguage = useLanguageStore((state) => state.setLanguage);
   const themePreference = useThemePreference();
   const setThemePreference = useSetThemePreference();
+  const voiceEnabled = useVoicePreferenceStore((state) => state.voiceAnnouncementsEnabled);
+  const setVoiceEnabled = useVoicePreferenceStore((state) => state.setVoiceAnnouncementsEnabled);
+
+  const handleToggleVoice = (next: boolean) => {
+    triggerHaptic('selection');
+    setVoiceEnabled(next);
+  };
+
+  // Actually invokes the real TTS engine in the currently selected language —
+  // not a canned "success" message — so the user can confirm their device
+  // can actually speak before relying on it at 3am.
+  const handleTestVoice = () => {
+    triggerHaptic('selection');
+    speakReminder(t('settings.testVoiceMessage'), language).catch(() => {});
+  };
 
   const languageLabel = (code: LanguageCode) => (code === 'en' ? t('settings.english') : t('settings.bengali'));
   const themeLabel = (preference: ThemePreference) =>
@@ -111,6 +128,39 @@ export default function SettingsScreen({ onBack }: SettingsScreenProps) {
             </View>
           </View>
           <ChoiceRow options={THEME_OPTIONS} value={themePreference} onSelect={setThemePreference} labelFor={themeLabel} />
+        </View>
+
+        <View className="gap-4 rounded-3xl border p-5" style={{ backgroundColor: theme.colors.elevated, borderColor: theme.colors.hairline }}>
+          <View className="flex-row items-center gap-3">
+            <View className="items-center justify-center rounded-2xl" style={{ width: 44, height: 44, backgroundColor: `${theme.action.base}18` }}>
+              <Volume2 color={theme.action.base} size={22} />
+            </View>
+            <View className="flex-1">
+              <Text className="text-body-lg" style={{ color: theme.colors.ink, fontWeight: '700' }}>
+                {t('settings.voiceAlarm')}
+              </Text>
+              <Text className="text-caption" style={{ color: theme.colors.inkSecondary }}>
+                {t('settings.voiceAlarmDescription')}
+              </Text>
+            </View>
+            <Switch
+              value={voiceEnabled}
+              onValueChange={handleToggleVoice}
+              trackColor={{ false: theme.colors.hairline, true: theme.action.base }}
+              thumbColor="#FFFFFF"
+              accessibilityLabel={t('settings.voiceAlarmAccessibility')}
+            />
+          </View>
+          <Pressable
+            onPress={handleTestVoice}
+            accessibilityRole="button"
+            className="min-h-hit items-center justify-center rounded-2xl"
+            style={{ backgroundColor: theme.action.base }}
+          >
+            <Text className="text-body-lg" style={{ color: theme.action.ink, fontWeight: '700' }}>
+              {t('settings.testVoice')}
+            </Text>
+          </Pressable>
         </View>
       </ScrollView>
     </SafeAreaView>

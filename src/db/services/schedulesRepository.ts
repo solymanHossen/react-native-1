@@ -19,6 +19,7 @@ function toScheduleWithMedication(row: Record<string, unknown>): ScheduleWithMed
   return {
     ...toSchedule(row),
     medicationName: String(row.medication_name),
+    medicationStrength: row.medication_strength === null || row.medication_strength === undefined ? null : String(row.medication_strength),
     medicationForm: row.medication_form as ScheduleWithMedication['medicationForm'],
     nfcTagUid: row.nfc_tag_uid === null ? null : String(row.nfc_tag_uid),
     courseEndDate: row.course_end_date === null ? null : String(row.course_end_date),
@@ -69,10 +70,10 @@ export class SchedulesRepository {
     return rows.map(toSchedule);
   }
 
-  /** The alarm scheduler's one real query: every active dose with its medication's name/form/NFC tag already joined in, so it never has to zip two separate repository calls together itself. */
+  /** The alarm scheduler's one real query: every active dose with its medication's name/strength/form/NFC tag already joined in, so it never has to zip two separate repository calls together itself. `medication_strength` feeds the voice-announcement message generator (see alarms/voiceAnnouncement.ts), which — like the rest of this query's callers — only ever reads a verified, already-persisted medication record, never anything inferred at alarm time. */
   async listActiveWithMedication(): Promise<ScheduleWithMedication[]> {
     const { rows } = await this.db.execute(
-      `SELECT s.*, m.name AS medication_name, m.form AS medication_form, m.nfc_tag_uid AS nfc_tag_uid
+      `SELECT s.*, m.name AS medication_name, m.strength AS medication_strength, m.form AS medication_form, m.nfc_tag_uid AS nfc_tag_uid
        FROM schedules s
        JOIN medications m ON m.id = s.medication_id
        WHERE s.is_active = 1
@@ -85,7 +86,7 @@ export class SchedulesRepository {
   /** Same join as `listActiveWithMedication`, but including inactive ones too — the management screen needs these to show a toggle a user can turn back on, which an active-only query would make impossible once switched off. */
   async listAllWithMedication(): Promise<ScheduleWithMedication[]> {
     const { rows } = await this.db.execute(
-      `SELECT s.*, m.name AS medication_name, m.form AS medication_form, m.nfc_tag_uid AS nfc_tag_uid
+      `SELECT s.*, m.name AS medication_name, m.strength AS medication_strength, m.form AS medication_form, m.nfc_tag_uid AS nfc_tag_uid
        FROM schedules s
        JOIN medications m ON m.id = s.medication_id
        ORDER BY s.is_active DESC, s.time_utc;`,

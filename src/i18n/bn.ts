@@ -415,5 +415,10 @@ export const bn: typeof en = {
     themeSystem: 'সিস্টেম',
     themeLight: 'হালকা',
     themeDark: 'গাঢ়',
+    voiceAlarm: 'ভয়েস অ্যালার্ম',
+    voiceAlarmDescription: 'অ্যালার্ম বাজলে উপরে বেছে নেওয়া ভাষায় ওষুধের নাম ও মাত্রা জোরে পড়ে শোনাবে।',
+    voiceAlarmAccessibility: 'রিমাইন্ডার জোরে পড়ে শোনান',
+    testVoice: 'ভয়েস পরীক্ষণ করুন',
+    testVoiceMessage: 'এটি আপনার ওষুধ রিমাইন্ডারের কণ্ঠস্বরের একটি পরীক্ষা।',
   },
 };

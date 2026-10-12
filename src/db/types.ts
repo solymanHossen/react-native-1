@@ -72,6 +72,7 @@ export type NewSchedule = Omit<Schedule, 'id' | 'title'> & Partial<Pick<Schedule
 /** A Schedule joined with the fields of its medication the alarm engine needs — no repository returns a bare Schedule with these attached otherwise. */
 export interface ScheduleWithMedication extends Schedule {
   medicationName: string;
+  medicationStrength: string | null;
   medicationForm: DosageForm;
   nfcTagUid: string | null;
   courseEndDate: string | null;
