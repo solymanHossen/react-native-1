@@ -1,6 +1,12 @@
-import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
+import {
+  BottomSheetBackdrop,
+  type BottomSheetBackdropProps,
+  BottomSheetModal,
+  BottomSheetScrollView,
+} from '@gorhom/bottom-sheet';
 import { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { initializeDatabase } from '../../db';
 import type { RecentIntakeContext, SymptomSeverity } from '../../db/types';
 import { useTranslation, type TranslationKey } from '../../i18n';
@@ -40,8 +46,10 @@ export interface SymptomLogSheetRef {
 export const SymptomLogSheet = forwardRef<SymptomLogSheetRef, Record<string, unknown>>(function SymptomLogSheetImpl(_props, ref) {
   const theme = useTheme();
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const modalRef = useRef<BottomSheetModal>(null);
-  const snapPoints = useMemo(() => ['70%'], []);
+  const snapPoints = useMemo(() => ['76%'], []);
+  const bottomPadding = Math.max(insets.bottom, 16) + 24;
   const [symptom, setSymptom] = useState<(typeof COMMON_SYMPTOMS)[number] | null>(null);
   const [severity, setSeverity] = useState<SymptomSeverity>('MILD');
   const [relatedMeds, setRelatedMeds] = useState<RecentIntakeContext[] | null>(null);
@@ -75,14 +83,32 @@ export const SymptomLogSheet = forwardRef<SymptomLogSheetRef, Record<string, unk
     }
   }, [symptom, severity]);
 
+  const renderBackdrop = useCallback(
+    (props: BottomSheetBackdropProps) => (
+      <BottomSheetBackdrop
+        {...props}
+        disappearsOnIndex={-1}
+        appearsOnIndex={0}
+        opacity={0.5}
+        pressBehavior="close"
+      />
+    ),
+    [],
+  );
+
   return (
     <BottomSheetModal
       ref={modalRef}
       snapPoints={snapPoints}
+      enablePanDownToClose
+      backdropComponent={renderBackdrop}
       backgroundStyle={{ backgroundColor: theme.colors.surface }}
       handleIndicatorStyle={{ backgroundColor: theme.colors.hairline }}
     >
-      <BottomSheetView style={{ flex: 1 }}>
+      <BottomSheetScrollView
+        contentContainerStyle={{ paddingBottom: bottomPadding }}
+        showsVerticalScrollIndicator={false}
+      >
         <View className="gap-1 px-6 pb-4">
           <Text className="text-title-lg" style={{ color: theme.colors.ink }}>
             {t('vitals.symptomSheet.title')}
@@ -145,7 +171,9 @@ export const SymptomLogSheet = forwardRef<SymptomLogSheetRef, Record<string, unk
               </View>
             </View>
 
-            <LargeTextButton label={t('vitals.symptomSheet.saveSymptom')} onPress={handleSave} disabled={!symptom} loading={saving} />
+            <View style={{ marginTop: 8 }}>
+              <LargeTextButton label={t('vitals.symptomSheet.saveSymptom')} onPress={handleSave} disabled={!symptom} loading={saving} />
+            </View>
           </View>
         ) : (
           <View className="gap-4 px-6">
@@ -166,10 +194,12 @@ export const SymptomLogSheet = forwardRef<SymptomLogSheetRef, Record<string, unk
                 </Text>
               </View>
             ))}
-            <LargeTextButton label={t('common.done')} variant="secondary" onPress={() => modalRef.current?.dismiss()} />
+            <View style={{ marginTop: 8 }}>
+              <LargeTextButton label={t('common.done')} variant="secondary" onPress={() => modalRef.current?.dismiss()} />
+            </View>
           </View>
         )}
-      </BottomSheetView>
+      </BottomSheetScrollView>
     </BottomSheetModal>
   );
 });

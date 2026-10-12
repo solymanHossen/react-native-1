@@ -2,11 +2,12 @@ import {
   BottomSheetBackdrop,
   type BottomSheetBackdropProps,
   BottomSheetModal,
+  BottomSheetScrollView,
   BottomSheetTextInput,
-  BottomSheetView,
 } from '@gorhom/bottom-sheet';
 import { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { Keyboard, Pressable, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { Medication } from '../../db/types';
 import { useTranslation, type TranslationKey } from '../../i18n';
 import { useTheme } from '../../theme/useTheme';
@@ -56,8 +57,10 @@ export const ManualMedicationSheet = forwardRef<ManualMedicationSheetRef, Manual
   function ManualMedicationSheetImpl({ onSave }, ref) {
     const theme = useTheme();
     const { t } = useTranslation();
+    const insets = useSafeAreaInsets();
     const modalRef = useRef<BottomSheetModal>(null);
-    const snapPoints = useMemo(() => ['75%'], []);
+    const snapPoints = useMemo(() => ['86%'], []);
+    const bottomPadding = Math.max(insets.bottom, 16) + 24;
     const [name, setName] = useState('');
     const [strength, setStrength] = useState('');
     const [form, setForm] = useState<Medication['form']>('tablet');
@@ -131,7 +134,11 @@ export const ManualMedicationSheet = forwardRef<ManualMedicationSheetRef, Manual
         backgroundStyle={{ backgroundColor: theme.colors.surface }}
         handleIndicatorStyle={{ backgroundColor: theme.colors.hairline }}
       >
-        <BottomSheetView style={{ flex: 1 }}>
+        <BottomSheetScrollView
+          contentContainerStyle={{ paddingBottom: bottomPadding }}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
           <View className="gap-1 px-6 pb-4">
             <Text className="text-title-lg" style={{ color: theme.colors.ink }}>
               {t('medications.manualSheet.title')}
@@ -205,9 +212,11 @@ export const ManualMedicationSheet = forwardRef<ManualMedicationSheetRef, Manual
               }}
             />
 
-            <LargeTextButton label={t('medications.manualSheet.save')} onPress={handleSave} disabled={!name.trim()} />
+            <View style={{ marginTop: 8, marginBottom: 8 }}>
+              <LargeTextButton label={t('medications.manualSheet.save')} onPress={handleSave} disabled={!name.trim()} />
+            </View>
           </View>
-        </BottomSheetView>
+        </BottomSheetScrollView>
       </BottomSheetModal>
     );
   },

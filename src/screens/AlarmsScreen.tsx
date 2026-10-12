@@ -10,7 +10,7 @@ import DateTimePicker, { type DateTimePickerEvent } from '@react-native-communit
 import { Camera, Check, Clock, Droplet, Moon, Nfc, Package, Pencil, Phone, Pill, Plus, ShieldAlert, ShieldCheck, Sun, Sunrise, Sunset, Trash2, X } from 'lucide-react-native';
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, type ComponentType } from 'react';
 import { ActivityIndicator, Keyboard, Pressable, ScrollView, Switch, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AlarmScheduleCard, AlarmsEmptyState, AlarmsHeroSummary } from '../components/alarms';
 import { LargeTextButton } from '../components/ui';
 import {
@@ -42,9 +42,11 @@ const CaregiverContactSheet = forwardRef<CaregiverContactSheetRef, {
 }>(function CaregiverContactSheetImpl({ onSave, onClear }, ref) {
   const theme = useTheme();
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const modalRef = useRef<BottomSheetModal>(null);
   const [phone, setPhone] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const bottomPadding = Math.max(insets.bottom, 16) + 20;
 
   useImperativeHandle(ref, () => ({
     present: (savedPhone) => {
@@ -97,7 +99,7 @@ const CaregiverContactSheet = forwardRef<CaregiverContactSheetRef, {
       backgroundStyle={{ backgroundColor: theme.colors.surface }}
       handleIndicatorStyle={{ backgroundColor: theme.colors.hairline }}
     >
-      <BottomSheetView className="gap-5 px-6 pb-8 pt-2">
+      <BottomSheetView className="gap-5 px-6 pt-2" style={{ paddingBottom: bottomPadding }}>
         <View className="flex-row items-center gap-3">
           <View className="items-center justify-center rounded-2xl" style={{ width: 48, height: 48, backgroundColor: `${theme.action.base}18` }}>
             <Phone color={theme.action.base} size={24} strokeWidth={2.25} />
@@ -255,6 +257,7 @@ const ReminderSheet = forwardRef<ReminderSheetRef, {
 }>(function ReminderSheetImpl({ onConfirm }, ref) {
   const theme = useTheme();
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const modalRef = useRef<BottomSheetModal>(null);
   const [medication, setMedication] = useState<Medication | null>(null);
   const [timeNode, setTimeNode] = useState<TimeNode>('BREAKFAST');
@@ -264,7 +267,8 @@ const ReminderSheet = forwardRef<ReminderSheetRef, {
   const [customTitle, setCustomTitle] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const snapPoints = useMemo(() => ['74%'], []);
+  const snapPoints = useMemo(() => ['78%'], []);
+  const bottomPadding = Math.max(insets.bottom, 16) + 20;
 
   useImperativeHandle(ref, () => ({
     present: (nextMedication) => {
@@ -355,7 +359,7 @@ const ReminderSheet = forwardRef<ReminderSheetRef, {
       backgroundStyle={{ backgroundColor: theme.colors.surface }}
       handleIndicatorStyle={{ backgroundColor: theme.colors.hairline }}
     >
-      <BottomSheetView className="gap-5 px-6 pb-8 pt-2">
+      <BottomSheetView className="gap-5 px-6 pt-2" style={{ paddingBottom: bottomPadding }}>
         <View className="flex-row items-center gap-3">
           <View className="items-center justify-center rounded-2xl" style={{ width: 48, height: 48, backgroundColor: `${theme.action.base}18` }}>
             <FormIcon color={theme.action.base} size={23} strokeWidth={2.25} />

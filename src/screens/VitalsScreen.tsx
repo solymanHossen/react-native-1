@@ -1,8 +1,13 @@
-import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
+import {
+  BottomSheetBackdrop,
+  type BottomSheetBackdropProps,
+  BottomSheetModal,
+  BottomSheetView,
+} from '@gorhom/bottom-sheet';
 import { Activity, Droplets, Scale, Thermometer, X } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useRef, useState, type ElementRef, type RefObject } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BloodPressureCard } from '../components/vitals/BloodPressureCard';
 import { Sparkline } from '../components/vitals/Sparkline';
 import { SymptomLogSheet, type SymptomLogSheetRef } from '../components/vitals/SymptomLogSheet';
@@ -76,7 +81,23 @@ function VitalEntrySheet({
 }) {
   const theme = useTheme();
   const { t } = useTranslation();
-  const snapPoints = useMemo(() => ['64%'], []);
+  const insets = useSafeAreaInsets();
+  const snapPoints = useMemo(() => ['70%'], []);
+  const bottomPadding = Math.max(insets.bottom, 16) + 20;
+
+  const renderBackdrop = useCallback(
+    (props: BottomSheetBackdropProps) => (
+      <BottomSheetBackdrop
+        {...props}
+        disappearsOnIndex={-1}
+        appearsOnIndex={0}
+        opacity={0.5}
+        pressBehavior="close"
+      />
+    ),
+    [],
+  );
+
   if (!selected) return null;
   const title =
     selected === 'BP'
@@ -91,10 +112,12 @@ function VitalEntrySheet({
     <BottomSheetModal
       ref={modalRef}
       snapPoints={snapPoints}
+      enablePanDownToClose
+      backdropComponent={renderBackdrop}
       backgroundStyle={{ backgroundColor: theme.colors.surface }}
       handleIndicatorStyle={{ backgroundColor: theme.colors.hairline }}
     >
-      <BottomSheetView className="flex-1 gap-5 px-6 pt-2">
+      <BottomSheetView className="gap-5 px-6 pt-2" style={{ paddingBottom: bottomPadding }}>
         <View className="flex-row items-center justify-between">
           <View>
             <Text className="text-title-lg" style={{ color: theme.colors.ink }}>

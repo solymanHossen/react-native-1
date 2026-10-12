@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { ActivityIndicator, Pressable, Text } from 'react-native';
+import { ActivityIndicator, Pressable, Text, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { triggerHaptic, type HapticType } from '../../lib/haptics';
 import { useTheme } from '../../theme/useTheme';
@@ -23,6 +23,8 @@ export interface LargeTextButtonProps {
   testID?: string;
   /** Renders the dark-mode glassmorphism styling regardless of the live theme — for AlarmScreen, which deliberately always shows a fixed dark surface no matter the user's light/dark preference. Every other caller leaves this unset and follows the live theme as before. */
   forceDark?: boolean;
+  style?: StyleProp<ViewStyle>;
+  className?: string;
 }
 
 /**
@@ -50,6 +52,8 @@ export function LargeTextButton({
   hapticType = 'impactMedium',
   testID,
   forceDark = false,
+  style,
+  className,
 }: LargeTextButtonProps) {
   const theme = useTheme();
   const scale = useSharedValue(1);
@@ -124,8 +128,8 @@ export function LargeTextButton({
       accessibilityLabel={accessibilityLabel ?? label}
       accessibilityHint={accessibilityHint}
       accessibilityState={{ disabled: !isInteractive, busy: loading }}
-      className={`min-h-hit min-w-hit flex-row items-center justify-center rounded-full border px-8 py-4 ${disabled ? 'opacity-40' : ''}`}
-      style={[{ backgroundColor, borderColor }, shadowStyle, animatedStyle]}
+      className={`min-h-hit min-w-hit flex-row items-center justify-center rounded-full border px-8 py-4 ${disabled ? 'opacity-40' : ''} ${className ?? ''}`}
+      style={[{ backgroundColor, borderColor }, shadowStyle, animatedStyle, style]}
     >
       {loading ? (
         <ActivityIndicator color={textColor} />
