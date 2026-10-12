@@ -1,8 +1,8 @@
 import { FlashList } from '@shopify/flash-list';
 import { BottomSheetModal, BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
-import { Camera, Check, ChevronDown, Clock, Droplet, Moon, Nfc, Package, Phone, Pill, ShieldAlert, Sun, Sunrise, Sunset, Trash2 } from 'lucide-react-native';
+import { Camera, Check, Clock, Droplet, Moon, Nfc, Package, Phone, Pill, ShieldAlert, Sun, Sunrise, Sunset, Trash2, X } from 'lucide-react-native';
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, type ComponentType } from 'react';
-import { Pressable, ScrollView, Switch, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LargeTextButton } from '../components/ui';
 import {
@@ -187,6 +187,206 @@ const TIME_NODE_STYLE: Record<TimeNode, { icon: ComponentType<{ size?: number; c
   FASTING: { icon: Clock, color: '#BC2F4B' },
 };
 
+interface ReminderSheetRef {
+  present: (medication: Medication) => void;
+}
+
+/**
+ * The "configure this reminder" step of adding one, split out of the main
+ * screen into its own focused sheet — picking a medication from the
+ * horizontal list now opens straight into this instead of growing an
+ * ever-taller inline card underneath the picker. Time-of-day is a 2x2 grid
+ * of the same icon cards the rest of this screen already uses (not the old
+ * collapsed dropdown), so all four options are visible and comparable at a
+ * glance instead of needing an extra tap just to see them.
+ */
+const ReminderSheet = forwardRef<ReminderSheetRef, {
+  onConfirm: (medication: Medication, timeSlot: TimeSlot, mealRelation: MealRelation) => Promise<void>;
+}>(function ReminderSheetImpl({ onConfirm }, ref) {
+  const theme = useTheme();
+  const { t } = useTranslation();
+  const modalRef = useRef<BottomSheetModal>(null);
+  const [medication, setMedication] = useState<Medication | null>(null);
+  const [timeNode, setTimeNode] = useState<TimeNode>('BREAKFAST');
+  const [mealRelation, setMealRelation] = useState<MealRelation>('WITH');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const snapPoints = useMemo(() => ['74%'], []);
+
+  useImperativeHandle(ref, () => ({
+    present: (nextMedication) => {
+      setMedication(nextMedication);
+      setTimeNode('BREAKFAST');
+      setMealRelation('WITH');
+      setError(null);
+      setSubmitting(false);
+      modalRef.current?.present();
+    },
+  }), []);
+
+  const selectedTimeSlot = TIME_SLOTS.find((slot) => slot.node === timeNode) ?? TIME_SLOTS[0];
+
+  const handleConfirm = useCallback(async () => {
+    if (!medication || submitting) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      await onConfirm(medication, selectedTimeSlot, mealRelation);
+      modalRef.current?.dismiss();
+    } catch (confirmError) {
+      console.warn('[ReminderSheet] failed to add reminder', confirmError);
+      setError(t('alarms.toggleFailed', { name: medication.name }));
+    } finally {
+      setSubmitting(false);
+    }
+  }, [mealRelation, medication, onConfirm, selectedTimeSlot, submitting, t]);
+
+  if (!medication) return null;
+  const FormIcon = medicationFormIcon(medication.form);
+
+  return (
+    <BottomSheetModal
+      ref={modalRef}
+      snapPoints={snapPoints}
+      backgroundStyle={{ backgroundColor: theme.colors.surface }}
+      handleIndicatorStyle={{ backgroundColor: theme.colors.hairline }}
+    >
+      <BottomSheetView className="gap-5 px-6 pb-8 pt-2">
+        <View className="flex-row items-center gap-3">
+          <View className="items-center justify-center rounded-2xl" style={{ width: 48, height: 48, backgroundColor: `${theme.action.base}18` }}>
+            <FormIcon color={theme.action.base} size={23} strokeWidth={2.25} />
+          </View>
+          <View className="flex-1">
+            <Text className="text-title-lg" numberOfLines={1} style={{ color: theme.colors.ink }}>
+              {t('alarms.reminderSheetTitle')}
+            </Text>
+            <Text className="text-caption" numberOfLines={1} style={{ color: theme.colors.inkSecondary }}>
+              {[medication.name, medication.strength].filter(Boolean).join(' · ')}
+            </Text>
+          </View>
+          <Pressable
+            onPress={() => modalRef.current?.dismiss()}
+            accessibilityRole="button"
+            accessibilityLabel={t('alarms.reminderSheetClose')}
+            className="min-h-hit min-w-hit items-center justify-center"
+          >
+            <X color={theme.colors.inkMuted} size={22} />
+          </Pressable>
+        </View>
+
+        <View className="gap-2.5">
+          <Text className="text-caption" style={{ color: theme.colors.inkMuted }}>
+            {t('alarms.pickTime')}
+          </Text>
+          <View className="flex-row flex-wrap gap-3">
+            {TIME_SLOTS.map((slot) => {
+              const SlotIcon = slot.icon;
+              const selected = timeNode === slot.node;
+              return (
+                <Pressable
+                  key={slot.node}
+                  onPress={() => {
+                    setTimeNode(slot.node);
+                    triggerHaptic('selection');
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={t(slot.labelKey)}
+                  accessibilityState={{ selected }}
+                  className="min-h-hit flex-row items-center gap-3 rounded-2xl border p-3.5"
+                  style={{
+                    width: '47%',
+                    backgroundColor: selected ? `${theme.action.base}12` : theme.colors.elevated,
+                    borderColor: selected ? theme.action.base : theme.colors.hairline,
+                    borderWidth: selected ? 2 : 1,
+                  }}
+                >
+                  <View className="items-center justify-center rounded-xl" style={{ width: 38, height: 38, backgroundColor: selected ? theme.action.base : `${theme.action.base}14` }}>
+                    <SlotIcon color={selected ? theme.action.ink : theme.action.base} size={19} strokeWidth={2.25} />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-body" numberOfLines={1} style={{ color: theme.colors.ink, fontWeight: selected ? '700' : '600' }}>
+                      {t(slot.labelKey)}
+                    </Text>
+                    <Text className="text-caption" numberOfLines={1} style={{ color: theme.colors.inkSecondary }}>
+                      {formatTimeLabel(slot.timeUtc)}
+                    </Text>
+                  </View>
+                  {selected ? <Check color={theme.action.base} size={17} strokeWidth={2.5} /> : null}
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+
+        <View className="gap-2.5">
+          <Text className="text-caption" style={{ color: theme.colors.inkMuted }}>
+            {t('alarms.mealRelationLabel')}
+          </Text>
+          <View className="flex-row gap-3">
+            {MEAL_RELATIONS.map((relation) => {
+              const selected = mealRelation === relation.value;
+              const RelationIcon = relation.value === 'BEFORE' ? Sunrise : relation.value === 'AFTER' ? Sunset : Check;
+              return (
+                <Pressable
+                  key={relation.value}
+                  onPress={() => {
+                    setMealRelation(relation.value);
+                    triggerHaptic('selection');
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={t(relation.labelKey)}
+                  accessibilityState={{ selected }}
+                  className="min-h-hit flex-1 items-center gap-2 rounded-2xl border p-3.5"
+                  style={{
+                    backgroundColor: selected ? `${theme.action.base}12` : theme.colors.elevated,
+                    borderColor: selected ? theme.action.base : theme.colors.hairline,
+                    borderWidth: selected ? 2 : 1,
+                  }}
+                >
+                  <View className="items-center justify-center rounded-xl" style={{ width: 36, height: 36, backgroundColor: selected ? theme.action.base : `${theme.action.base}14` }}>
+                    <RelationIcon color={selected ? theme.action.ink : theme.action.base} size={19} strokeWidth={2.25} />
+                  </View>
+                  <Text className="text-caption" numberOfLines={1} style={{ color: theme.colors.ink, fontWeight: selected ? '700' : '600' }}>
+                    {t(relation.labelKey)}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+          <Text className="text-caption" style={{ color: theme.colors.inkMuted }}>
+            {t('alarms.mealRelationHint')}
+          </Text>
+        </View>
+
+        {error ? (
+          <Text className="text-caption" style={{ color: theme.statusText('missed') }}>
+            {error}
+          </Text>
+        ) : null}
+        <Pressable
+          onPress={handleConfirm}
+          disabled={submitting}
+          accessibilityRole="button"
+          accessibilityState={{ disabled: submitting }}
+          className="min-h-hit flex-row items-center justify-center gap-2 rounded-2xl px-5 py-4"
+          style={{ backgroundColor: theme.action.base, opacity: submitting ? 0.7 : 1 }}
+        >
+          {submitting ? (
+            <ActivityIndicator color={theme.action.ink} />
+          ) : (
+            <>
+              <Clock color={theme.action.ink} size={20} strokeWidth={2.25} />
+              <Text className="text-body-lg" style={{ color: theme.action.ink, fontWeight: '700' }}>
+                {t('alarms.addReminder')}
+              </Text>
+            </>
+          )}
+        </Pressable>
+      </BottomSheetView>
+    </BottomSheetModal>
+  );
+});
+
 /**
  * Manage reminder times for your medications, plus the caregiver escalation
  * contact. The "add a reminder" flow used to create a hardcoded fake
@@ -203,17 +403,13 @@ const TIME_NODE_STYLE: Record<TimeNode, { icon: ComponentType<{ size?: number; c
 export default function AlarmsScreen() {
   const theme = useTheme();
   const { t } = useTranslation();
-  const [mediusDb, setMediusDb] = useState<MediusDatabase | null>(null);
   const [initError, setInitError] = useState<string | null>(null);
   const [schedules, setSchedules] = useState<ScheduleWithMedication[]>([]);
   const [medications, setMedications] = useState<Medication[]>([]);
-  const [selectedMedicationId, setSelectedMedicationId] = useState<number | null>(null);
-  const [selectedTimeNode, setSelectedTimeNode] = useState<TimeNode>('BREAKFAST');
-  const [timeMenuOpen, setTimeMenuOpen] = useState(false);
-  const [selectedMealRelation, setSelectedMealRelation] = useState<MealRelation>('WITH');
   const [savedCaregiverPhone, setSavedCaregiverPhone] = useState(() => getCaregiverPhone());
   const [status, setStatus] = useState<string | null>(null);
   const caregiverSheetRef = useRef<CaregiverContactSheetRef>(null);
+  const reminderSheetRef = useRef<ReminderSheetRef>(null);
 
   const refresh = useCallback(async (database: MediusDatabase) => {
     const [scheduleRows, medicationRows] = await Promise.all([
@@ -226,43 +422,30 @@ export default function AlarmsScreen() {
 
   useEffect(() => {
     initializeDatabase()
-      .then(async (database) => {
-        setMediusDb(database);
-        await refresh(database);
-      })
+      .then((database) => refresh(database))
       .catch((error: unknown) => setInitError(error instanceof Error ? error.message : String(error)));
   }, [refresh]);
 
-  const selectedMedication = useMemo(
-    () => medications.find((medication) => medication.id === selectedMedicationId) ?? null,
-    [medications, selectedMedicationId],
-  );
-  const selectedTimeSlot = TIME_SLOTS.find((slot) => slot.node === selectedTimeNode) ?? TIME_SLOTS[0];
-  const SelectedTimeIcon = selectedTimeSlot.icon;
-
   const handleAddReminder = useCallback(
-    async () => {
-      if (!mediusDb || !selectedMedication) return;
+    async (medication: Medication, timeSlot: TimeSlot, mealRelation: MealRelation) => {
       // Re-fetches the live database rather than using the `mediusDb` closure —
       // if a vault restore happened while this screen stayed mounted, `mediusDb`
       // would still point at the connection that restore just closed.
       const database = await initializeDatabase();
       await database.schedules.create({
-        medication_id: selectedMedication.id,
-        time_utc: selectedTimeSlot.timeUtc,
-        time_node: selectedTimeSlot.node,
-        meal_relation: selectedMealRelation,
+        medication_id: medication.id,
+        time_utc: timeSlot.timeUtc,
+        time_node: timeSlot.node,
+        meal_relation: mealRelation,
         dose_quantity: 1,
         days_of_week_mask: 127,
         is_active: true,
       });
       await Promise.all([refresh(database), rescheduleAllActiveAlarms()]);
       triggerHaptic('notificationSuccess');
-      setSelectedMedicationId(null);
-      setTimeMenuOpen(false);
-      setStatus(t('alarms.reminderAdded', { name: selectedMedication.name }));
+      setStatus(t('alarms.reminderAdded', { name: medication.name }));
     },
-    [mediusDb, refresh, selectedMealRelation, selectedMedication, selectedTimeSlot, t],
+    [refresh, t],
   );
 
   const handleToggleActive = useCallback(
@@ -429,7 +612,6 @@ export default function AlarmsScreen() {
                     accessibilityLabel={t('alarms.pickMedication')}
                   >
                     {medications.map((medication) => {
-                      const selected = medication.id === selectedMedicationId;
                       const FormIcon = medicationFormIcon(medication.form);
                       const outOfStock = medication.current_stock <= 0;
                       const lowStock = !outOfStock && medication.current_stock <= medication.refill_threshold;
@@ -437,27 +619,24 @@ export default function AlarmsScreen() {
                         <Pressable
                           key={medication.id}
                           onPress={() => {
-                            setSelectedMedicationId(selected ? null : medication.id);
-                            setTimeMenuOpen(false);
                             triggerHaptic('selection');
+                            reminderSheetRef.current?.present(medication);
                           }}
                           accessibilityRole="button"
                           accessibilityLabel={medication.name}
-                          accessibilityState={{ selected }}
                           className="min-h-hit justify-between rounded-3xl border p-4"
                           style={{
                             width: 208,
                             minHeight: 132,
-                            backgroundColor: selected ? `${theme.action.base}12` : theme.colors.surface,
-                            borderColor: selected ? theme.action.base : theme.colors.hairline,
-                            borderWidth: selected ? 2 : 1,
+                            backgroundColor: theme.colors.surface,
+                            borderColor: theme.colors.hairline,
+                            borderWidth: 1,
                           }}
                         >
                           <View className="flex-row items-center justify-between">
-                            <View className="items-center justify-center rounded-2xl" style={{ width: 42, height: 42, backgroundColor: selected ? theme.action.base : `${theme.action.base}14` }}>
-                              <FormIcon color={selected ? theme.action.ink : theme.action.base} size={21} strokeWidth={2.25} />
+                            <View className="items-center justify-center rounded-2xl" style={{ width: 42, height: 42, backgroundColor: `${theme.action.base}14` }}>
+                              <FormIcon color={theme.action.base} size={21} strokeWidth={2.25} />
                             </View>
-                            {selected ? <Check color={theme.action.base} size={20} strokeWidth={2.5} /> : null}
                           </View>
                           <View className="mt-3">
                             <Text className="text-body" numberOfLines={1} style={{ color: theme.colors.ink, fontWeight: '700' }}>
@@ -481,129 +660,6 @@ export default function AlarmsScreen() {
                       );
                     })}
                   </ScrollView>
-
-                  {selectedMedication ? (
-                    <View className="gap-2.5 border-t pt-4" style={{ borderColor: theme.colors.hairline }}>
-                      <Text className="text-caption" style={{ color: theme.colors.inkMuted }}>
-                        {t('alarms.pickTime')}
-                      </Text>
-                      <Pressable
-                        onPress={() => setTimeMenuOpen((open) => !open)}
-                        accessibilityRole="button"
-                        accessibilityLabel={t('alarms.timeSelectorAccessibility')}
-                        accessibilityState={{ expanded: timeMenuOpen }}
-                        className="min-h-hit flex-row items-center gap-3 rounded-2xl border px-4"
-                        style={{ backgroundColor: theme.colors.surface, borderColor: timeMenuOpen ? theme.action.base : theme.colors.hairline }}
-                      >
-                        <View className="items-center justify-center rounded-xl" style={{ width: 40, height: 40, backgroundColor: `${theme.action.base}14` }}>
-                          <SelectedTimeIcon color={theme.action.base} size={21} strokeWidth={2.25} />
-                        </View>
-                        <View className="flex-1">
-                          <Text className="text-body-lg" style={{ color: theme.colors.ink, fontWeight: '700' }}>
-                            {t(selectedTimeSlot.labelKey)}
-                          </Text>
-                          <Text className="text-caption" style={{ color: theme.colors.inkSecondary }}>
-                            {formatTimeLabel(selectedTimeSlot.timeUtc)}
-                          </Text>
-                        </View>
-                        <ChevronDown color={theme.colors.inkMuted} size={21} style={{ transform: [{ rotate: timeMenuOpen ? '180deg' : '0deg' }] }} />
-                      </Pressable>
-                      {timeMenuOpen ? (
-                        <View className="overflow-hidden rounded-2xl border" style={{ backgroundColor: theme.colors.surface, borderColor: theme.colors.hairline }}>
-                          {TIME_SLOTS.map((slot) => {
-                            const SlotIcon = slot.icon;
-                            const selected = selectedTimeNode === slot.node;
-                            return (
-                              <Pressable
-                                key={slot.node}
-                                onPress={() => {
-                                  setSelectedTimeNode(slot.node);
-                                  setTimeMenuOpen(false);
-                                  triggerHaptic('selection');
-                                }}
-                                accessibilityRole="button"
-                                accessibilityState={{ selected }}
-                                className="min-h-hit flex-row items-center gap-3 px-4"
-                                style={{ backgroundColor: selected ? `${theme.action.base}10` : theme.colors.surface }}
-                              >
-                                <SlotIcon color={selected ? theme.action.base : theme.colors.inkMuted} size={19} />
-                                <Text className="flex-1 text-body" style={{ color: theme.colors.ink, fontWeight: selected ? '700' : '500' }}>
-                                  {t(slot.labelKey)}
-                                </Text>
-                                <Text className="text-body" style={{ color: theme.colors.inkSecondary }}>
-                                  {formatTimeLabel(slot.timeUtc)}
-                                </Text>
-                                {selected ? <Check color={theme.action.base} size={18} strokeWidth={2.5} /> : null}
-                              </Pressable>
-                            );
-                          })}
-                        </View>
-                      ) : null}
-                      <Text className="text-caption" style={{ color: theme.colors.inkSecondary }}>
-                        {t('alarms.mealRelationLabel')}
-                      </Text>
-                      <ScrollView
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        snapToInterval={180}
-                        snapToAlignment="start"
-                        decelerationRate="fast"
-                        contentContainerStyle={{ gap: 12, paddingRight: 12 }}
-                        accessibilityLabel={t('alarms.mealRelationLabel')}
-                      >
-                        {MEAL_RELATIONS.map((relation) => {
-                          const selectedRelation = selectedMealRelation === relation.value;
-                          const RelationIcon = relation.value === 'BEFORE' ? Sunrise : relation.value === 'AFTER' ? Sunset : Check;
-                          return (
-                            <Pressable
-                              key={relation.value}
-                              onPress={() => {
-                                setSelectedMealRelation(relation.value);
-                                triggerHaptic('selection');
-                              }}
-                              accessibilityRole="button"
-                              accessibilityLabel={t(relation.labelKey)}
-                              accessibilityState={{ selected: selectedRelation }}
-                              className="min-h-hit justify-between rounded-2xl border p-4"
-                              style={{
-                                width: 168,
-                                backgroundColor: selectedRelation ? `${theme.action.base}12` : theme.colors.surface,
-                                borderColor: selectedRelation ? theme.action.base : theme.colors.hairline,
-                                borderWidth: selectedRelation ? 2 : 1,
-                              }}
-                            >
-                              <View className="flex-row items-center justify-between">
-                                <View
-                                  className="items-center justify-center rounded-xl"
-                                  style={{ width: 36, height: 36, backgroundColor: selectedRelation ? theme.action.base : `${theme.action.base}14` }}
-                                >
-                                  <RelationIcon color={selectedRelation ? theme.action.ink : theme.action.base} size={19} strokeWidth={2.25} />
-                                </View>
-                                {selectedRelation ? <Check color={theme.action.base} size={19} strokeWidth={2.5} /> : null}
-                              </View>
-                              <Text className="mt-3 text-body" numberOfLines={2} style={{ color: theme.colors.ink, fontWeight: '700' }}>
-                                {t(relation.labelKey)}
-                              </Text>
-                            </Pressable>
-                          );
-                        })}
-                      </ScrollView>
-                      <Text className="text-caption" style={{ color: theme.colors.inkMuted }}>
-                        {t('alarms.mealRelationHint')}
-                      </Text>
-                      <Pressable
-                        onPress={handleAddReminder}
-                        accessibilityRole="button"
-                        className="min-h-hit flex-row items-center justify-center gap-2 rounded-2xl px-5 py-4"
-                        style={{ backgroundColor: theme.action.base }}
-                      >
-                        <Clock color={theme.action.ink} size={20} strokeWidth={2.25} />
-                        <Text className="text-body-lg" style={{ color: theme.action.ink, fontWeight: '700' }}>
-                          {t('alarms.addReminder')}
-                        </Text>
-                      </Pressable>
-                    </View>
-                  ) : null}
                 </>
               )}
             </View>
@@ -694,6 +750,7 @@ export default function AlarmsScreen() {
         }}
       />
       <CaregiverContactSheet ref={caregiverSheetRef} onSave={handleSaveCaregiverPhone} onClear={handleClearCaregiverPhone} />
+      <ReminderSheet ref={reminderSheetRef} onConfirm={handleAddReminder} />
     </SafeAreaView>
   );
 }

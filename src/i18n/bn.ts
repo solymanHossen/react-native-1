@@ -139,6 +139,8 @@ export const bn: typeof en = {
     addReminder: 'রিমাইন্ডার যোগ করুন',
     noMedicationsYet: 'আপনি এখনো কোনো ওষুধ যোগ করেননি। প্রথমে ওষুধ ট্যাব থেকে একটি যোগ করুন, তারপর এখানে এসে রিমাইন্ডারের সময় নির্ধারণ করুন।',
     pickMedication: 'একটি ওষুধ বেছে নিন',
+    reminderSheetTitle: 'রিমাইন্ডার সেট করুন',
+    reminderSheetClose: 'রিমাইন্ডার যোগ না করে বন্ধ করুন',
     pickTime: 'একটি সময় বেছে নিন',
     timeSelectorAccessibility: 'রিমাইন্ডারের সময় বেছে নিন',
     mealRelationLabel: 'কখন ওষুধ খাবেন?',
