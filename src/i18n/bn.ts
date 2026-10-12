@@ -191,6 +191,10 @@ export const bn: typeof en = {
     noSnoozesLeft: 'আর কোনো স্নুজ বাকি নেই',
     overrideAccessibility: 'জরুরি নীরবতা, ১০ সেকেন্ড চেপে ধরুন',
     overrideLabel: '১০ সেকেন্ড চেপে ধরুন: জরুরি নীরবতা (গ্রহণ করা হিসেবে গণনা হবে না)',
+    overrideTitle: 'জরুরি নীরবতা',
+    overrideSubtitle: 'গ্রহণ করা গণ্য হবে না • ম্যানুয়াল ওভাররাইড হিসেবে সংরক্ষিত',
+    overrideBadge: '১০ সে. ধরে রাখুন',
+    overrideHolding: 'নীরব করতে চেপে রাখুন ({{seconds}} সে.)...',
     actionFailed: 'এটি সম্পন্ন হয়নি — অ্যালার্মটি এখনও সক্রিয় আছে। অনুগ্রহ করে আবার চেষ্টা করুন।',
   },
   vitals: {

@@ -194,6 +194,10 @@ export const en = {
     noSnoozesLeft: 'No snoozes left',
     overrideAccessibility: 'Emergency silence, hold for 10 seconds',
     overrideLabel: "Hold 10s: Emergency Silence (won't count as taken)",
+    overrideTitle: 'Emergency Silence',
+    overrideSubtitle: "Won't count as taken • Logs as manual override",
+    overrideBadge: 'Hold 10s',
+    overrideHolding: 'Keep holding to silence ({{seconds}}s)...',
     actionFailed: "That didn't go through — the alarm is still active. Please try again.",
   },
   vitals: {

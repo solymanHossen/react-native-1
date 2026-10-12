@@ -5,7 +5,7 @@ import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { Camera, useCameraDevice, useCameraPermission } from 'react-native-vision-camera';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { cancelAnimation, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
-import { LargeTextButton } from '../components/ui';
+import { EmergencyHoldButton, LargeTextButton } from '../components/ui';
 import {
   OVERRIDE_HOLD_MS,
   buildMedicationReminderMessage,
@@ -86,7 +86,6 @@ export default function AlarmScreen({ alarm }: AlarmScreenProps) {
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [resolution, setResolution] = useState<Resolution>('pending');
   const [remainingMs, setRemainingMs] = useState(() => msUntilEscalation(firedAtMs, Date.now()));
-  const [overrideProgress, setOverrideProgress] = useState(0);
   const resolvedRef = useRef(false);
   const voiceRepeatTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const pulse = usePulse();
@@ -266,34 +265,9 @@ export default function AlarmScreen({ alarm }: AlarmScreenProps) {
   // alarm without verification — logged as a manual override, never as a
   // confirmed dose. Exists so a hardware failure (no tag, dead camera)
   // or a genuine emergency can't trap someone in an un-silenceable screen.
-  const overrideTimer = useRef<ReturnType<typeof setInterval> | null>(null);
-  const handleOverridePressIn = useCallback(() => {
-    // A dropped touch-up can leave a prior interval running; clear it before
-    // starting a fresh one so two intervals never race the same progress state.
-    if (overrideTimer.current) clearInterval(overrideTimer.current);
-    const startedAt = Date.now();
-    overrideTimer.current = setInterval(() => {
-      const elapsed = Date.now() - startedAt;
-      const progress = Math.min(1, elapsed / OVERRIDE_HOLD_MS);
-      setOverrideProgress(progress);
-      if (progress >= 1) {
-        if (overrideTimer.current) clearInterval(overrideTimer.current);
-        triggerHaptic('notificationWarning');
-        resolveAndClose('overridden', () => logManualOverride(payload));
-      }
-    }, 100);
+  const handleOverrideComplete = useCallback(() => {
+    resolveAndClose('overridden', () => logManualOverride(payload));
   }, [payload, resolveAndClose]);
-
-  const handleOverridePressOut = useCallback(() => {
-    if (overrideTimer.current) clearInterval(overrideTimer.current);
-    setOverrideProgress(0);
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (overrideTimer.current) clearInterval(overrideTimer.current);
-    };
-  }, []);
 
   if (resolution === 'verified') {
     return (
@@ -466,29 +440,11 @@ export default function AlarmScreen({ alarm }: AlarmScreenProps) {
           </View>
         )}
 
-        <Pressable
-          onPressIn={handleOverridePressIn}
-          onPressOut={handleOverridePressOut}
-          accessibilityRole="button"
+        <EmergencyHoldButton
+          onComplete={handleOverrideComplete}
+          holdDurationMs={OVERRIDE_HOLD_MS}
           accessibilityLabel={t('alarmRinging.overrideAccessibility')}
-          className="min-h-hit items-center justify-center overflow-hidden rounded-full border"
-          style={{
-            borderColor: 'rgba(255,107,107,0.4)',
-            shadowColor: '#EF4444',
-            shadowOffset: { width: 0, height: 0 },
-            shadowOpacity: 0.3,
-            shadowRadius: 14,
-            elevation: 4,
-          }}
-        >
-          <View
-            pointerEvents="none"
-            style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${overrideProgress * 100}%`, backgroundColor: 'rgba(255,107,107,0.25)' }}
-          />
-          <Text className="text-body-lg" style={{ color: '#FF9B9B' }}>
-            {t('alarmRinging.overrideLabel')}
-          </Text>
-        </Pressable>
+        />
       </View>
     </SafeAreaView>
   );

@@ -6,6 +6,9 @@ export { AmbientDepthBackground } from './AmbientDepthBackground';
 export { AppLogo } from './AppLogo';
 export type { AppLogoProps } from './AppLogo';
 
+export { EmergencyHoldButton } from './EmergencyHoldButton';
+export type { EmergencyHoldButtonProps } from './EmergencyHoldButton';
+
 export { GlassCard } from './GlassCard';
 export type { GlassCardProps } from './GlassCard';
 
