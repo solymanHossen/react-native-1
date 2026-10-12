@@ -21,9 +21,12 @@ export type ThemeMode = 'light' | 'dark';
 export const MIN_HITBOX = 56;
 
 /**
- * Ocean/steel palette. The named scales mirror the product design palette so
- * every screen can use one consistent cyan, blue-slate, steel, and near-black
- * visual language in both light and dark mode.
+ * Ocean/steel palette. Originally five scales backing the whole light theme;
+ * `lightBlue`/`coolSteel`/`blueSlate`/`jetBlack` were superseded by the
+ * product-specified palettes now hardcoded directly in `palette`/`action`/
+ * `status` below (first the cream/teal palette, then this navy-to-pale-blue
+ * one) and were removed once nothing referenced them any more. `lightCyan`
+ * remains in use for the `fasting` status, which neither palette touched.
  */
 export const designPalette = {
   lightCyan: {
@@ -38,74 +41,33 @@ export const designPalette = {
     800: '#f2fdfe',
     900: '#f9fefe',
   },
-  lightBlue: {
-    DEFAULT: '#c2dfe3',
-    100: '#1b363a',
-    200: '#356d74',
-    300: '#50a3ae',
-    400: '#8ac2c9',
-    500: '#c2dfe3',
-    600: '#cfe6e9',
-    700: '#dbecef',
-    800: '#e7f3f4',
-    900: '#f3f9fa',
-  },
-  coolSteel: {
-    DEFAULT: '#9db4c0',
-    100: '#1b252a',
-    200: '#364a55',
-    300: '#516f7f',
-    400: '#7192a4',
-    500: '#9db4c0',
-    600: '#afc2cc',
-    700: '#c3d1d9',
-    800: '#d7e1e6',
-    900: '#ebf0f2',
-  },
-  blueSlate: {
-    DEFAULT: '#5c6b73',
-    100: '#131617',
-    200: '#252b2e',
-    300: '#384146',
-    400: '#4a565d',
-    500: '#5c6b73',
-    600: '#798b94',
-    700: '#9ba8af',
-    800: '#bcc5c9',
-    900: '#dee2e4',
-  },
-  jetBlack: {
-    DEFAULT: '#253237',
-    100: '#070a0b',
-    200: '#0f1416',
-    300: '#161e21',
-    400: '#1d282c',
-    500: '#253237',
-    600: '#465f69',
-    700: '#688c9b',
-    800: '#9bb3bc',
-    900: '#cdd9de',
-  },
 } as const;
 
 export const palette = {
-  // Premium warm-neutral background system (product-specified palette): a
-  // soft ivory canvas with crisp white cards floating on top via the
-  // shadow/border styling every card already carries — the "cream + white"
-  // pairing reads as premium/editorial rather than the cooler neutral-slate
-  // system this replaced. `hairline` is a warm taupe (not a cool gray) so
-  // card borders stay consistent with the ivory canvas instead of clashing
-  // against it. `ink` is the product-specified text color; inkSecondary/
-  // inkMuted are untouched (no replacement was specified for those, and
-  // the existing dark slate-blue tones are neutral enough not to clash).
+  // Product-specified 6-step blue scale (twine.net), replacing the previous
+  // navy-to-pale-blue palette entirely. Canvas uses the near-white lightest
+  // step; cards stay white, separated from it by the existing shadow/border
+  // styling (the same small gap the cream palette before it used, which
+  // already read fine). `hairline` is the next step up for a visible edge.
+  // `ink`/`inkSecondary` share the scale's one darkest step (#395886):
+  // MetricCard's "contrast slot isolation" comment requires inkSecondary to
+  // be >= 7:1 (AAA body text) and none of the lighter steps clear that bar
+  // against this near-white canvas/white cards — #395886 is the only one
+  // that does (~7.2:1), so there isn't a second, lighter value available for
+  // a distinct inkSecondary tier without going outside the given palette.
+  // `inkMuted` has no such floor (decorative/non-essential text only), so it
+  // uses the mid-scale step instead. Two of the six steps (#B1C9EF, #8AAEE0)
+  // aren't used by a core token — nothing in this token set needed a 3rd and
+  // 4th blue, but they're legitimate, accessible choices for a future
+  // one-off accent if needed.
   light: {
-    canvas: '#F5F1EB',
+    canvas: '#F0F3FA',
     surface: '#FFFFFF',
     elevated: '#FFFFFF',
-    hairline: '#E8E0D2',
-    ink: '#263238',
-    inkSecondary: designPalette.blueSlate[300],
-    inkMuted: designPalette.coolSteel[300],
+    hairline: '#D5DEEF',
+    ink: '#395886',
+    inkSecondary: '#395886',
+    inkMuted: '#628ECB',
   },
   // Premium glassmorphism dark theme: deep slate canvas, semi-transparent
   // "floating" card surfaces, and a 1px translucent-white hairline/border —
@@ -122,23 +84,23 @@ export const palette = {
 } as const;
 
 /**
- * Primary action color, mode-specific: light mode uses the product's
- * specified brand teal, dark mode keeps its own deep slate blue accent
+ * Primary action color, mode-specific: light mode reuses the scale's one
+ * darkest step (same value as `ink` above — a common, deliberate pattern:
+ * buttons are already visually distinct by shape/elevation, so sharing a hue
+ * with headline text isn't a hierarchy problem the way two text tiers
+ * sharing a color would be). Dark mode keeps its own deep slate blue accent
  * untouched. `useTheme()` resolves `theme.action` to whichever of these
  * matches the current mode, so every existing call site (`theme.action.base`,
  * `theme.action.ink`) keeps working unchanged.
  *
  * `ink` (the color drawn ON TOP of `base`, e.g. a filled button's label) is
- * the dark text color rather than white in light mode: the brand teal is a
- * medium-bright hue, and white text on it measures ~2.4:1 contrast (fails
- * even AA) while the dark ink text measures ~5.5:1 (passes this file's
- * >= 4.5:1 interactive floor) — a bright/pastel primary needs dark-on-primary
- * text, not the light-on-dark pairing the old near-black primary used.
+ * white: `#395886` is dark enough that white text on it measures ~7.2:1
+ * (passes this file's >= 4.5:1 interactive floor with room to spare).
  */
 export const action = {
   light: {
-    base: '#13B9C8',
-    ink: '#263238',
+    base: '#395886',
+    ink: '#FFFFFF',
   },
   dark: {
     base: '#3B82F6',
@@ -169,23 +131,22 @@ interface StatusToken {
  * pending, and deep slate blue (#3B82F6) for scheduled — the same blue as
  * `action.dark.base`, since Scheduled is still "the brand accent."
  *
- * Light mode: `taken`/`scheduled` use the product's specified success-green
- * and primary-teal hues, each paired with its given pastel swatch
- * (mintGreen/skyBlue) as an explicit `tintLight` pill background — a
- * noticeably richer pastel than the ~8%-alpha wash every other status gets,
- * matching the "premium" brief. Their `onLight` text colors are darkened
- * further than a plain tint would need, specifically so they stay >= 4.5:1
- * against that stronger pastel (verified: #065F46 on mintGreen ≈ 5.9:1,
- * #0B4F57 on skyBlue ≈ 6.4:1). `pending`/`missed`/`fasting` are untouched —
- * no replacement swatch was given for them, and warning/danger colors
- * shouldn't shift with a brand reskin anyway.
+ * Light mode: `scheduled` follows `action.light.base` (still "the brand
+ * accent") with one of the palette's unused mid steps (`#D5DEEF`, otherwise
+ * only used for `hairline`) as its `tintLight` pill background and `ink`'s
+ * dark step as `onLight` text — verified ~5.3:1, which clears the floor the
+ * lighter `#B1C9EF` option fell just short of (~4.3:1). `taken` keeps its
+ * original green — this palette has no green of its own, and green/red/
+ * orange are safety-critical semantics ("taken" vs "missed") that shouldn't
+ * shift to the same hue family as "scheduled" just because the brand palette
+ * changed. `pending`/`missed`/`fasting` are untouched for the same reason.
  */
 export const status: Record<StatusKey, StatusToken> = {
   fasting: { base: designPalette.lightCyan[200], onLight: designPalette.lightCyan[100], baseDark: '#06B6D4', onDark: '#22D3EE', label: 'Fasting' },
-  taken: { base: '#08B95B', onLight: '#065F46', baseDark: '#10B981', onDark: '#34D399', tintLight: '#C5E9DF', label: 'Taken' },
+  taken: { base: '#2ECC71', onLight: '#1A7541', baseDark: '#10B981', onDark: '#34D399', label: 'Taken' },
   pending: { base: '#FFA502', onLight: '#8E5C00', baseDark: '#F59E0B', onDark: '#FBBF24', label: 'Pending' },
   missed: { base: '#FF6B6B', onLight: '#CD0000', baseDark: '#EF4444', onDark: '#F87171', label: 'Missed' },
-  scheduled: { base: action.light.base, onLight: '#0B4F57', baseDark: '#3B82F6', onDark: '#60A5FA', tintLight: '#B9DDE5', label: 'Scheduled' },
+  scheduled: { base: action.light.base, onLight: '#395886', baseDark: '#3B82F6', onDark: '#60A5FA', tintLight: '#D5DEEF', label: 'Scheduled' },
 };
 
 /**
