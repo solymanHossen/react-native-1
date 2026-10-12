@@ -117,6 +117,7 @@ export const en = {
   },
   alarms: {
     title: 'Medication Alarms',
+    databaseFailed: 'Something went wrong loading your alarms: {{error}}',
     caregiverSection: 'Caregiver Escalation',
     caregiverDescription:
       'If an alarm goes unconfirmed for 15 minutes, this number opens a pre-filled SMS alert on this phone — nothing sends automatically or silently.',
@@ -167,6 +168,7 @@ export const en = {
     off: 'Off',
     turnedOn: '{{name}} alarm turned on.',
     turnedOff: '{{name}} alarm turned off.',
+    toggleFailed: "Couldn't update {{name}}'s alarm — please try again.",
     turnOffAccessibility: 'Turn off the alarm for {{name}}',
     turnOnAccessibility: 'Turn on the alarm for {{name}}',
   },
@@ -185,6 +187,7 @@ export const en = {
     noSnoozesLeft: 'No snoozes left',
     overrideAccessibility: 'Emergency silence, hold for 10 seconds',
     overrideLabel: "Hold 10s: Emergency Silence (won't count as taken)",
+    actionFailed: "That didn't go through — the alarm is still active. Please try again.",
   },
   vitals: {
     title: 'Vitals',

@@ -114,6 +114,7 @@ export const bn: typeof en = {
   },
   alarms: {
     title: 'ওষুধের অ্যালার্ম',
+    databaseFailed: 'আপনার অ্যালার্ম লোড করতে সমস্যা হয়েছে: {{error}}',
     caregiverSection: 'পরিচর্যাকারীর এসকেলেশন',
     caregiverDescription:
       'কোনো অ্যালার্ম ১৫ মিনিট ধরে নিশ্চিত না হলে, এই নম্বরে একটি পূর্বপূরণকৃত এসএমএস সতর্কতা এই ফোনে খোলে — স্বয়ংক্রিয়ভাবে বা নীরবে কিছু পাঠানো হয় না।',
@@ -164,6 +165,7 @@ export const bn: typeof en = {
     off: 'বন্ধ',
     turnedOn: '{{name}} অ্যালার্ম চালু করা হয়েছে।',
     turnedOff: '{{name}} অ্যালার্ম বন্ধ করা হয়েছে।',
+    toggleFailed: '{{name}}-এর অ্যালার্ম আপডেট করা যায়নি — অনুগ্রহ করে আবার চেষ্টা করুন।',
     turnOffAccessibility: '{{name}} এর অ্যালার্ম বন্ধ করুন',
     turnOnAccessibility: '{{name}} এর অ্যালার্ম চালু করুন',
   },
@@ -182,6 +184,7 @@ export const bn: typeof en = {
     noSnoozesLeft: 'আর কোনো স্নুজ বাকি নেই',
     overrideAccessibility: 'জরুরি নীরবতা, ১০ সেকেন্ড চেপে ধরুন',
     overrideLabel: '১০ সেকেন্ড চেপে ধরুন: জরুরি নীরবতা (গ্রহণ করা হিসেবে গণনা হবে না)',
+    actionFailed: 'এটি সম্পন্ন হয়নি — অ্যালার্মটি এখনও সক্রিয় আছে। অনুগ্রহ করে আবার চেষ্টা করুন।',
   },
   vitals: {
     title: 'ভাইটালস',

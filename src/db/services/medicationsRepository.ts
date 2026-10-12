@@ -135,8 +135,11 @@ export class MedicationsRepository {
 
   /**
    * Removes a medication from the active list without deleting its schedules
-   * or intake history. Schedules are deactivated in the same transaction so
-   * removing a medication can never leave an active alarm pointing at it.
+   * or intake history. Schedules are deactivated in the same transaction, but
+   * this only updates the DB — callers must also cancel each affected
+   * schedule's real notifee alarm (e.g. via `cancelAlarm` from
+   * `alarms/alarmScheduler`), or an already-armed trigger keeps ringing for a
+   * medication that's no longer active. See `DrugLabScreen.removeMedication`.
    */
   async archive(id: number): Promise<void> {
     await this.db.transaction(async (tx) => {

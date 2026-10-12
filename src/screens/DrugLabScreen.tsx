@@ -7,6 +7,7 @@ import { ManualMedicationSheet, type ManualMedicationInput, type ManualMedicatio
 import { MedicationDetailsSheet, type MedicationDetailsSheetRef } from '../components/medications/MedicationDetailsSheet';
 import { MedicationHistorySheet, type MedicationHistorySheetRef } from '../components/medications/MedicationHistorySheet';
 import { ActionRow, ActionRowGroup, StatusPill } from '../components/ui';
+import { cancelAlarm } from '../alarms';
 import { DuplicateMedicationError, initializeDatabase, type DrugConflict, type DrugSearchResult, type Medication, type MediusDatabase } from '../db';
 import { useTranslation } from '../i18n';
 import { triggerHaptic } from '../lib/haptics';
@@ -247,7 +248,11 @@ export default function DrugLabScreen() {
       }
       setSearching(true);
       try {
-        setResults(await mediusDb.drugSearch.search(text, 10));
+        // Re-fetches the live database rather than using the `mediusDb` closure —
+        // if a vault restore happened while this screen stayed mounted, `mediusDb`
+        // would still point at the connection that restore just closed.
+        const database = await initializeDatabase();
+        setResults(await database.drugSearch.search(text, 10));
       } finally {
         setSearching(false);
       }
@@ -264,7 +269,8 @@ export default function DrugLabScreen() {
       setDuplicateName(null);
       setManualAddedName(null);
       try {
-        await mediusDb.medications.create({
+        const database = await initializeDatabase();
+        await database.medications.create({
           name: result.brand_name,
           generic_id: result.rowid,
           strength: result.strength,
@@ -278,13 +284,13 @@ export default function DrugLabScreen() {
           course_start_date: null,
           course_end_date: null,
         });
-        const conflicts = await mediusDb.conflicts.checkDrugConflicts(result.generic_name);
+        const conflicts = await database.conflicts.checkDrugConflicts(result.generic_name);
         triggerHaptic(conflicts.length > 0 ? 'notificationWarning' : 'notificationSuccess');
         setAddedName(result.brand_name);
         setAddedConflicts(conflicts);
         setQuery('');
         setResults([]);
-        await refreshMedications(mediusDb);
+        await refreshMedications(database);
       } catch (error) {
         if (error instanceof DuplicateMedicationError) {
           triggerHaptic('notificationWarning');
@@ -313,7 +319,8 @@ export default function DrugLabScreen() {
       setDuplicateName(null);
       setManualAddedName(null);
       try {
-        await mediusDb.medications.create({
+        const database = await initializeDatabase();
+        await database.medications.create({
           name: input.name,
           generic_id: null,
           strength: input.strength,
@@ -331,7 +338,7 @@ export default function DrugLabScreen() {
         setManualAddedName(input.name);
         setQuery('');
         setResults([]);
-        await refreshMedications(mediusDb);
+        await refreshMedications(database);
       } catch (error) {
         if (error instanceof DuplicateMedicationError) {
           triggerHaptic('notificationWarning');
@@ -355,8 +362,14 @@ export default function DrugLabScreen() {
             if (!mediusDb) return;
             setRemoveError(null);
             try {
-              await mediusDb.medications.archive(medication.id);
-              await refreshMedications(mediusDb);
+              const database = await initializeDatabase();
+              const schedulesToCancel = await database.schedules.listForMedication(medication.id);
+              await database.medications.archive(medication.id);
+              // `archive` only deactivates schedules in the DB — the real notifee
+              // trigger for each one has to be cancelled separately, or it keeps
+              // ringing for a medication that's no longer in the active list.
+              await Promise.all(schedulesToCancel.map((schedule) => cancelAlarm(schedule.id)));
+              await refreshMedications(database);
               triggerHaptic('notificationSuccess');
             } catch (error) {
               setRemoveError(t('medications.removeFailed', { error: error instanceof Error ? error.message : String(error) }));

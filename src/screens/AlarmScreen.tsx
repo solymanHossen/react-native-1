@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { Camera, useCameraDevice, useCameraPermission } from 'react-native-vision-camera';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Animated, { cancelAnimation, runOnJS, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
+import Animated, { cancelAnimation, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
 import { LargeTextButton } from '../components/ui';
 import {
   OVERRIDE_HOLD_MS,
@@ -82,15 +82,22 @@ export default function AlarmScreen({ alarm }: AlarmScreenProps) {
     async (next: Resolution, action: () => Promise<void>) => {
       if (resolvedRef.current) return;
       resolvedRef.current = true;
-      setResolution(next);
       try {
         await action();
-      } finally {
-        await notifee.cancelNotification(alarm.notificationId).catch(() => {});
-        setTimeout(() => clearActiveAlarm(), next === 'verified' ? 1100 : 0);
+      } catch (error) {
+        // The action (confirmIntake/escalateToCaregiver/logManualOverride) never
+        // completed, so the alarm must stay active and resolvable — flipping to
+        // "confirmed" here would tell the patient a dose was logged when it wasn't.
+        console.warn('[AlarmScreen] resolution action failed, keeping alarm active', error);
+        resolvedRef.current = false;
+        setStatusMessage(t('alarmRinging.actionFailed'));
+        return;
       }
+      setResolution(next);
+      await notifee.cancelNotification(alarm.notificationId).catch(() => {});
+      setTimeout(() => clearActiveAlarm(), next === 'verified' ? 1100 : 0);
     },
-    [alarm.notificationId, clearActiveAlarm],
+    [alarm.notificationId, clearActiveAlarm, t],
   );
 
   // NFC: starts listening the moment the screen mounts (or the moment the
@@ -107,7 +114,7 @@ export default function AlarmScreen({ alarm }: AlarmScreenProps) {
     const stopListening = listenForTag((uid) => {
       if (!active) return;
       if (payload.nfcTagUid && uid === payload.nfcTagUid) {
-        runOnJS(triggerHapticCascade)();
+        triggerHapticCascade();
         resolveAndClose('verified', () => confirmIntake(payload, 'NFC'));
       } else {
         setStatusMessage(t('alarmRinging.nfcMismatch'));
@@ -128,6 +135,7 @@ export default function AlarmScreen({ alarm }: AlarmScreenProps) {
   const { hasPermission, requestPermission } = useCameraPermission();
   const device = useCameraDevice('back');
   const [scanning, setScanning] = useState(false);
+  const scanningRef = useRef(false);
   const [lastConfidence, setLastConfidence] = useState<number | null>(null);
 
   useEffect(() => {
@@ -137,7 +145,8 @@ export default function AlarmScreen({ alarm }: AlarmScreenProps) {
       return;
     }
     const interval = setInterval(async () => {
-      if (!cameraRef.current || scanning || resolvedRef.current) return;
+      if (!cameraRef.current || scanningRef.current || resolvedRef.current) return;
+      scanningRef.current = true;
       setScanning(true);
       try {
         const photo = await cameraRef.current.takePhoto({ flash: 'off', enableShutterSound: false });
@@ -150,11 +159,16 @@ export default function AlarmScreen({ alarm }: AlarmScreenProps) {
       } catch (captureError) {
         console.warn('[AlarmScreen] vision capture failed', captureError);
       } finally {
+        scanningRef.current = false;
         setScanning(false);
       }
     }, VISION_CAPTURE_INTERVAL_MS);
     return () => clearInterval(interval);
-  }, [mode, hasPermission, requestPermission, scanning, payload, resolveAndClose]);
+    // `scanning` is deliberately not a dependency: the interval callback itself
+    // toggles it every cycle via setScanning (kept only for the UI spinner), so
+    // including it here would tear down and recreate this interval twice per
+    // capture, drifting the real capture cadence away from VISION_CAPTURE_INTERVAL_MS.
+  }, [mode, hasPermission, requestPermission, payload, resolveAndClose]);
 
   // Escalation countdown — ticks every second; once 15 minutes pass with no
   // resolution, auto-marks the dose MISSED and alerts the configured
@@ -171,13 +185,24 @@ export default function AlarmScreen({ alarm }: AlarmScreenProps) {
   }, [firedAtMs, payload, resolveAndClose]);
 
   const handleSnooze = useCallback(async () => {
-    if (!canSnooze(snoozeCount)) return;
+    // Shares `resolvedRef` with resolveAndClose so an NFC/vision match or the
+    // escalation timeout landing while this is in flight can't race it —
+    // without this guard both paths could run concurrently and double-write.
+    if (!canSnooze(snoozeCount) || resolvedRef.current) return;
+    resolvedRef.current = true;
     triggerHaptic('impactMedium');
-    await scheduleSnoozeAlarm(alarm.notificationId, payload);
+    try {
+      await scheduleSnoozeAlarm(alarm.notificationId, payload);
+    } catch (error) {
+      console.warn('[AlarmScreen] snooze failed, keeping alarm active', error);
+      resolvedRef.current = false;
+      setStatusMessage(t('alarmRinging.actionFailed'));
+      return;
+    }
     incrementSnooze();
     await notifee.cancelNotification(alarm.notificationId).catch(() => {});
     clearActiveAlarm();
-  }, [alarm.notificationId, clearActiveAlarm, incrementSnooze, payload, snoozeCount]);
+  }, [alarm.notificationId, clearActiveAlarm, incrementSnooze, payload, snoozeCount, t]);
 
   // Hold-to-override: a sustained press for OVERRIDE_HOLD_MS silences the
   // alarm without verification — logged as a manual override, never as a
@@ -185,6 +210,9 @@ export default function AlarmScreen({ alarm }: AlarmScreenProps) {
   // or a genuine emergency can't trap someone in an un-silenceable screen.
   const overrideTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const handleOverridePressIn = useCallback(() => {
+    // A dropped touch-up can leave a prior interval running; clear it before
+    // starting a fresh one so two intervals never race the same progress state.
+    if (overrideTimer.current) clearInterval(overrideTimer.current);
     const startedAt = Date.now();
     overrideTimer.current = setInterval(() => {
       const elapsed = Date.now() - startedAt;
@@ -201,6 +229,12 @@ export default function AlarmScreen({ alarm }: AlarmScreenProps) {
   const handleOverridePressOut = useCallback(() => {
     if (overrideTimer.current) clearInterval(overrideTimer.current);
     setOverrideProgress(0);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (overrideTimer.current) clearInterval(overrideTimer.current);
+    };
   }, []);
 
   if (resolution === 'verified') {

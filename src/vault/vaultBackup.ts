@@ -2,8 +2,10 @@ import { open } from '@op-engineering/op-sqlite';
 import { errorCodes, isErrorWithCode, keepLocalCopy, pick } from '@react-native-documents/picker';
 import RNFS from 'react-native-fs';
 import Share from 'react-native-share';
+import { rescheduleAllActiveAlarms } from '../alarms/alarmScheduler';
 import { initializeDatabase, shutdownDatabase } from '../db';
 import { getOrCreateDatabaseKey } from '../db/security/keyManager';
+import { refreshAllStores } from '../store';
 
 function stripFileScheme(path: string): string {
   return path.startsWith('file://') ? path.slice('file://'.length) : path;
@@ -134,5 +136,11 @@ export async function applyVaultRestore(candidatePath: string): Promise<void> {
     // actually at `livePath` (the restored one, or the original if the copy
     // failed partway and was never removed).
     await initializeDatabase();
+    // The reopened connection above is a brand-new `MediusDatabase` instance —
+    // every reactive store and every already-armed notifee trigger was built
+    // against the *old* one, so both have to be rebuilt against the restored
+    // data now, not whenever something else happens to call refresh() next.
+    await refreshAllStores();
+    await rescheduleAllActiveAlarms();
   }
 }

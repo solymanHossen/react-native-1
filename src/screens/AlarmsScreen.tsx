@@ -163,6 +163,12 @@ const MEAL_RELATIONS: Array<{ value: MealRelation; labelKey: TranslationKey }> =
   { value: 'AFTER', labelKey: 'alarms.mealAfter' },
 ];
 
+/** Reads a TIME_SLOTS entry's icon/color back out by node — keeps TIME_NODE_STYLE's four shared entries derived from the single TIME_SLOTS source instead of re-spelling the same hex values a second time. */
+function timeSlotStyle(node: Exclude<TimeNode, 'FASTING'>) {
+  const slot = TIME_SLOTS.find((entry) => entry.node === node)!;
+  return { icon: slot.icon, color: slot.color };
+}
+
 /**
  * The same icon + color every TIME_SLOTS entry uses, keyed by time_node so a
  * saved schedule's card can be colored identically to however it looked when
@@ -174,10 +180,10 @@ const MEAL_RELATIONS: Array<{ value: MealRelation; labelKey: TranslationKey }> =
  * on a missing lookup.
  */
 const TIME_NODE_STYLE: Record<TimeNode, { icon: ComponentType<{ size?: number; color?: string; strokeWidth?: number }>; color: string }> = {
-  BREAKFAST: { icon: Sunrise, color: '#B62616' },
-  LUNCH: { icon: Sun, color: '#962013' },
-  DINNER: { icon: Sunset, color: '#6D170D' },
-  BEDTIME: { icon: Moon, color: '#240804' },
+  BREAKFAST: timeSlotStyle('BREAKFAST'),
+  LUNCH: timeSlotStyle('LUNCH'),
+  DINNER: timeSlotStyle('DINNER'),
+  BEDTIME: timeSlotStyle('BEDTIME'),
   FASTING: { icon: Clock, color: '#BC2F4B' },
 };
 
@@ -198,6 +204,7 @@ export default function AlarmsScreen() {
   const theme = useTheme();
   const { t } = useTranslation();
   const [mediusDb, setMediusDb] = useState<MediusDatabase | null>(null);
+  const [initError, setInitError] = useState<string | null>(null);
   const [schedules, setSchedules] = useState<ScheduleWithMedication[]>([]);
   const [medications, setMedications] = useState<Medication[]>([]);
   const [selectedMedicationId, setSelectedMedicationId] = useState<number | null>(null);
@@ -218,10 +225,12 @@ export default function AlarmsScreen() {
   }, []);
 
   useEffect(() => {
-    initializeDatabase().then(async (database) => {
-      setMediusDb(database);
-      await refresh(database);
-    });
+    initializeDatabase()
+      .then(async (database) => {
+        setMediusDb(database);
+        await refresh(database);
+      })
+      .catch((error: unknown) => setInitError(error instanceof Error ? error.message : String(error)));
   }, [refresh]);
 
   const selectedMedication = useMemo(
@@ -234,7 +243,11 @@ export default function AlarmsScreen() {
   const handleAddReminder = useCallback(
     async () => {
       if (!mediusDb || !selectedMedication) return;
-      await mediusDb.schedules.create({
+      // Re-fetches the live database rather than using the `mediusDb` closure —
+      // if a vault restore happened while this screen stayed mounted, `mediusDb`
+      // would still point at the connection that restore just closed.
+      const database = await initializeDatabase();
+      await database.schedules.create({
         medication_id: selectedMedication.id,
         time_utc: selectedTimeSlot.timeUtc,
         time_node: selectedTimeSlot.node,
@@ -243,8 +256,7 @@ export default function AlarmsScreen() {
         days_of_week_mask: 127,
         is_active: true,
       });
-      await refresh(mediusDb);
-      await rescheduleAllActiveAlarms();
+      await Promise.all([refresh(database), rescheduleAllActiveAlarms()]);
       triggerHaptic('notificationSuccess');
       setSelectedMedicationId(null);
       setTimeMenuOpen(false);
@@ -260,7 +272,17 @@ export default function AlarmsScreen() {
       // the real notifee trigger, which takes a moment, and the switch
       // shouldn't visibly lag behind the tap that flipped it.
       setSchedules((prev) => prev.map((entry) => (entry.id === schedule.id ? { ...entry, is_active: nextActive } : entry)));
-      await setScheduleActive(schedule, nextActive);
+      try {
+        await setScheduleActive(schedule, nextActive);
+      } catch (error) {
+        // The DB flag and/or the real notifee trigger never actually flipped —
+        // revert the optimistic switch so the UI doesn't drift from reality.
+        console.warn('[AlarmsScreen] failed to toggle schedule', error);
+        setSchedules((prev) => prev.map((entry) => (entry.id === schedule.id ? { ...entry, is_active: !nextActive } : entry)));
+        setStatus(t('alarms.toggleFailed', { name: schedule.medicationName }));
+        triggerHaptic('notificationError');
+        return;
+      }
       setStatus(
         nextActive
           ? t('alarms.turnedOn', { name: schedule.medicationName })
@@ -293,7 +315,11 @@ export default function AlarmsScreen() {
         <Text className="text-title-lg" style={{ color: theme.colors.ink }}>
           {t('alarms.title')}
         </Text>
-        {status ? (
+        {initError ? (
+          <Text className="mt-2 text-caption" style={{ color: theme.statusText('missed') }}>
+            {t('alarms.databaseFailed', { error: initError })}
+          </Text>
+        ) : status ? (
           <Text className="mt-2 text-caption" style={{ color: theme.statusText('taken') }}>
             {status}
           </Text>

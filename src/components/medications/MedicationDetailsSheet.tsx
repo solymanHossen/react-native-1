@@ -233,7 +233,11 @@ export const MedicationDetailsSheet = forwardRef<MedicationDetailsSheetRef, Medi
               <BottomSheetTextInput
                 value={stockDraft}
                 onChangeText={(value) => {
-                  setStockDraft(value.replace(/[^\d]/g, ''));
+                  // Keeps digits and a decimal point — saveStock's own validation
+                  // regex (/^(?:\d+)(?:\.\d{1,2})?$/) explicitly allows a fractional
+                  // value (e.g. "12.5" units of syrup), which a digits-only filter
+                  // made impossible to ever type.
+                  setStockDraft(value.replace(/[^\d.]/g, ''));
                   setStockError(false);
                 }}
                 keyboardType="decimal-pad"
