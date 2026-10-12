@@ -89,22 +89,21 @@ export const designPalette = {
 } as const;
 
 export const palette = {
-  // Modern neutral-slate background system: a soft, slightly-tinted-gray
-  // canvas with crisp white cards floating on top via the shadow/border
-  // styling every card already carries. Replaces the original cyan-on-cyan
-  // canvas/elevated pair, which were nearly identical in lightness and hue
-  // (both sampled from `lightCyan`) and so barely separated a card from the
-  // screen behind it. Uses the same neutral slate family as the dark theme's
-  // canvas/surface (see `palette.dark` below) so light and dark read as one
-  // consistent "modern slate" design language at different lightness, not
-  // two unrelated themes — ink/inkSecondary/inkMuted and every status/severity
-  // color are untouched, so this only changes background/card surfaces.
+  // Premium warm-neutral background system (product-specified palette): a
+  // soft ivory canvas with crisp white cards floating on top via the
+  // shadow/border styling every card already carries — the "cream + white"
+  // pairing reads as premium/editorial rather than the cooler neutral-slate
+  // system this replaced. `hairline` is a warm taupe (not a cool gray) so
+  // card borders stay consistent with the ivory canvas instead of clashing
+  // against it. `ink` is the product-specified text color; inkSecondary/
+  // inkMuted are untouched (no replacement was specified for those, and
+  // the existing dark slate-blue tones are neutral enough not to clash).
   light: {
-    canvas: '#F1F5F9',
+    canvas: '#F5F1EB',
     surface: '#FFFFFF',
     elevated: '#FFFFFF',
-    hairline: '#E2E8F0',
-    ink: designPalette.jetBlack[500],
+    hairline: '#E8E0D2',
+    ink: '#263238',
     inkSecondary: designPalette.blueSlate[300],
     inkMuted: designPalette.coolSteel[300],
   },
@@ -123,16 +122,23 @@ export const palette = {
 } as const;
 
 /**
- * Primary action color, now mode-specific: light mode keeps the original
- * jet-black action color untouched, dark mode gets the new deep slate blue
- * accent. `useTheme()` resolves `theme.action` to whichever of these matches
- * the current mode, so every existing call site (`theme.action.base`,
+ * Primary action color, mode-specific: light mode uses the product's
+ * specified brand teal, dark mode keeps its own deep slate blue accent
+ * untouched. `useTheme()` resolves `theme.action` to whichever of these
+ * matches the current mode, so every existing call site (`theme.action.base`,
  * `theme.action.ink`) keeps working unchanged.
+ *
+ * `ink` (the color drawn ON TOP of `base`, e.g. a filled button's label) is
+ * the dark text color rather than white in light mode: the brand teal is a
+ * medium-bright hue, and white text on it measures ~2.4:1 contrast (fails
+ * even AA) while the dark ink text measures ~5.5:1 (passes this file's
+ * >= 4.5:1 interactive floor) — a bright/pastel primary needs dark-on-primary
+ * text, not the light-on-dark pairing the old near-black primary used.
  */
 export const action = {
   light: {
-    base: designPalette.jetBlack.DEFAULT,
-    ink: '#FFFFFF',
+    base: '#13B9C8',
+    ink: '#263238',
   },
   dark: {
     base: '#3B82F6',
@@ -151,24 +157,35 @@ interface StatusToken {
   baseDark?: string;
   /** Brightened variant used as text/icon color in dark mode, only set when the dark-mode hue itself fails contrast on a dark tint. */
   onDark?: string;
+  /** Explicit light-mode pill background, overriding the generic ~8%-alpha-from-base tint — only set where the product spec gives a specific pastel swatch (taken/scheduled). Every other status keeps the generic alpha tint. */
+  tintLight?: string;
   label: string;
 }
 
 /**
- * Five clinical states. Light mode keeps its original, WCAG-verified
- * green/orange/red safety colors untouched. Dark mode gets its own vivid
- * medical tones (part of the glassmorphism dark-theme redesign): rich
- * emerald green (#10B981) for taken, soft coral red (#EF4444) for missed,
- * amber for pending, and deep slate blue (#3B82F6) for scheduled — the same
- * blue as `action.dark.base`, since Scheduled is still "the brand accent,"
- * same as before.
+ * Five clinical states. Dark mode keeps its own vivid medical tones
+ * untouched (part of the glassmorphism dark-theme redesign): rich emerald
+ * green (#10B981) for taken, soft coral red (#EF4444) for missed, amber for
+ * pending, and deep slate blue (#3B82F6) for scheduled — the same blue as
+ * `action.dark.base`, since Scheduled is still "the brand accent."
+ *
+ * Light mode: `taken`/`scheduled` use the product's specified success-green
+ * and primary-teal hues, each paired with its given pastel swatch
+ * (mintGreen/skyBlue) as an explicit `tintLight` pill background — a
+ * noticeably richer pastel than the ~8%-alpha wash every other status gets,
+ * matching the "premium" brief. Their `onLight` text colors are darkened
+ * further than a plain tint would need, specifically so they stay >= 4.5:1
+ * against that stronger pastel (verified: #065F46 on mintGreen ≈ 5.9:1,
+ * #0B4F57 on skyBlue ≈ 6.4:1). `pending`/`missed`/`fasting` are untouched —
+ * no replacement swatch was given for them, and warning/danger colors
+ * shouldn't shift with a brand reskin anyway.
  */
 export const status: Record<StatusKey, StatusToken> = {
   fasting: { base: designPalette.lightCyan[200], onLight: designPalette.lightCyan[100], baseDark: '#06B6D4', onDark: '#22D3EE', label: 'Fasting' },
-  taken: { base: '#2ECC71', onLight: '#1A7541', baseDark: '#10B981', onDark: '#34D399', label: 'Taken' },
+  taken: { base: '#08B95B', onLight: '#065F46', baseDark: '#10B981', onDark: '#34D399', tintLight: '#C5E9DF', label: 'Taken' },
   pending: { base: '#FFA502', onLight: '#8E5C00', baseDark: '#F59E0B', onDark: '#FBBF24', label: 'Pending' },
   missed: { base: '#FF6B6B', onLight: '#CD0000', baseDark: '#EF4444', onDark: '#F87171', label: 'Missed' },
-  scheduled: { base: action.light.base, onLight: designPalette.lightCyan[100], baseDark: '#3B82F6', onDark: '#60A5FA', label: 'Scheduled' },
+  scheduled: { base: action.light.base, onLight: '#0B4F57', baseDark: '#3B82F6', onDark: '#60A5FA', tintLight: '#B9DDE5', label: 'Scheduled' },
 };
 
 /**
@@ -183,6 +200,7 @@ const STATUS_TINT_ALPHA_HEX = '14';
 
 export function statusTint(key: StatusKey, mode: ThemeMode): string {
   const token = status[key];
+  if (mode === 'light' && token.tintLight) return token.tintLight;
   const hue = mode === 'dark' ? (token.baseDark ?? token.base) : token.base;
   return `${hue}${STATUS_TINT_ALPHA_HEX}`;
 }

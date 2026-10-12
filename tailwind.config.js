@@ -23,17 +23,17 @@ module.exports = {
                 // consumed via useTheme() + an inline `style`, never via a
                 // `dark:` className. These tokens are therefore the
                 // theme-agnostic ones only.
-                // Jet-black primary action and white action text — mirrors tokens.ts
+                // Brand teal primary action and dark action text — mirrors tokens.ts
                 // `action.light` (the only mode-agnostic value these untagged,
-                // non-`dark:` utilities can correctly represent — the new
+                // non-`dark:` utilities can correctly represent — the
                 // glassmorphism dark-mode accent lives only in theme/tokens.ts,
                 // consumed via useTheme() like every other dark-mode color).
-                action: "#253237",
-                "action-ink": "#FFFFFF",
+                action: "#13B9C8",
+                "action-ink": "#263238",
                 // Semantic status codes (vivid/base hue — see tokens.ts for
                 // the per-theme text/tint variants StatusPill resolves at runtime)
                 fasting: "#11a7ad",
-                taken: "#2ECC71",
+                taken: "#08B95B",
                 pending: "#FFA502",
                 missed: "#FF6B6B",
                 // Five-step sequential red ramp for ordered severity states
