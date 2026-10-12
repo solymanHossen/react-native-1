@@ -21,6 +21,7 @@ const mockSchedule: ScheduleWithMedication = {
   medicationStrength: '500mg',
   medicationForm: 'tablet',
   nfcTagUid: 'test-nfc-tag-uid',
+  courseEndDate: null,
 };
 
 describe('Modern Alarms System Components', () => {

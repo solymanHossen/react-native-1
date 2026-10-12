@@ -1,7 +1,7 @@
 import { FlashList } from '@shopify/flash-list';
 import { BottomSheetModal, BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import { Camera, Check, Clock, Droplet, Moon, Nfc, Package, Phone, Pill, ShieldAlert, Sun, Sunrise, Sunset, Trash2, X } from 'lucide-react-native';
+import { Camera, Check, Clock, Droplet, Moon, Nfc, Package, Pencil, Phone, Pill, Plus, ShieldAlert, ShieldCheck, Sun, Sunrise, Sunset, Trash2, X } from 'lucide-react-native';
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, type ComponentType } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -652,70 +652,138 @@ export default function AlarmsScreen() {
         keyExtractor={(schedule) => String(schedule.id)}
         ListHeaderComponent={
           <View className="gap-6" style={{ marginBottom: 20 }}>
-            <View
-              className="gap-4 rounded-3xl border p-6 shadow-md"
-              style={{ backgroundColor: theme.colors.elevated, borderColor: theme.colors.hairline }}
-            >
-              <View className="flex-row items-center gap-3">
-                <View
-                  className="items-center justify-center rounded-2xl"
-                  style={{ width: 40, height: 40, backgroundColor: `${theme.action.base}14` }}
-                >
-                  <ShieldAlert color={theme.action.base} size={20} strokeWidth={2.25} />
+            {maskedCaregiverPhone ? (
+              <View
+                className="rounded-3xl border p-5 shadow-sm"
+                style={{ backgroundColor: theme.colors.elevated, borderColor: theme.colors.hairline }}
+              >
+                <View className="flex-row items-center justify-between">
+                  <View className="flex-row items-center gap-3">
+                    <View
+                      className="items-center justify-center rounded-2xl"
+                      style={{ width: 42, height: 42, backgroundColor: `${theme.statusText('taken')}18` }}
+                    >
+                      <ShieldCheck color={theme.statusText('taken')} size={22} strokeWidth={2.25} />
+                    </View>
+                    <View>
+                      <Text className="text-body-lg font-bold" style={{ color: theme.colors.ink }}>
+                        {t('alarms.caregiverSection')}
+                      </Text>
+                      <View className="flex-row items-center gap-1.5 mt-0.5">
+                        <View
+                          className="rounded-full"
+                          style={{ width: 7, height: 7, backgroundColor: theme.statusText('taken') }}
+                        />
+                        <Text className="text-caption font-semibold" style={{ color: theme.statusText('taken') }}>
+                          {t('alarms.caregiverReady')}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
                 </View>
-                <View className="flex-1">
-                  <Text className="text-caption uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
-                    {t('alarms.caregiverSection')}
-                  </Text>
-                  <Text className="mt-1 text-caption" style={{ color: savedCaregiverPhone ? theme.statusText('taken') : theme.colors.inkMuted }}>
-                    {savedCaregiverPhone ? t('alarms.caregiverReady') : t('alarms.caregiverNotConfigured')}
-                  </Text>
+
+                <Text className="mt-3 text-caption leading-relaxed" style={{ color: theme.colors.inkSecondary }}>
+                  {t('alarms.caregiverDescription')}
+                </Text>
+
+                <View
+                  className="mt-4 flex-row items-center justify-between rounded-2xl border px-4 py-3"
+                  style={{
+                    backgroundColor: theme.colors.surface,
+                    borderColor: theme.colors.hairline,
+                  }}
+                >
+                  <View className="flex-row items-center gap-3 flex-1 mr-2">
+                    <View
+                      className="items-center justify-center rounded-xl"
+                      style={{ width: 38, height: 38, backgroundColor: `${theme.action.base}14` }}
+                    >
+                      <Phone color={theme.action.base} size={18} strokeWidth={2.2} />
+                    </View>
+                    <View className="flex-1">
+                      <Text className="text-caption font-medium" style={{ color: theme.colors.inkMuted }}>
+                        {t('alarms.caregiverSavedContact')}
+                      </Text>
+                      <Text className="text-body-lg font-bold" style={{ color: theme.colors.ink }}>
+                        {maskedCaregiverPhone}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View className="flex-row items-center gap-2">
+                    <Pressable
+                      onPress={() => {
+                        triggerHaptic('selection');
+                        caregiverSheetRef.current?.present(savedCaregiverPhone);
+                      }}
+                      accessibilityRole="button"
+                      accessibilityLabel={t('alarms.editCaregiverAccessibility')}
+                      className="min-h-hit flex-row items-center gap-1.5 rounded-xl px-3.5 py-2 border"
+                      style={{
+                        backgroundColor: `${theme.action.base}12`,
+                        borderColor: `${theme.action.base}30`,
+                      }}
+                    >
+                      <Pencil color={theme.action.base} size={14} strokeWidth={2.2} />
+                      <Text className="text-caption font-bold" style={{ color: theme.action.base }}>
+                        {t('alarms.editCaregiver')}
+                      </Text>
+                    </Pressable>
+
+                    <Pressable
+                      onPress={handleClearCaregiverPhone}
+                      accessibilityRole="button"
+                      accessibilityLabel={t('alarms.clearCaregiverAccessibility')}
+                      className="min-h-hit min-w-hit items-center justify-center rounded-xl p-2.5 border"
+                      style={{
+                        backgroundColor: `${theme.statusText('missed')}10`,
+                        borderColor: `${theme.statusText('missed')}25`,
+                      }}
+                    >
+                      <Trash2 color={theme.statusText('missed')} size={16} strokeWidth={2.2} />
+                    </Pressable>
+                  </View>
                 </View>
               </View>
-              <Text className="text-caption" style={{ color: theme.colors.inkMuted }}>
-                {t('alarms.caregiverDescription')}
-              </Text>
-              {maskedCaregiverPhone ? (
-                <View className="flex-row items-center gap-3 rounded-2xl border px-4 py-3" style={{ borderColor: theme.colors.hairline }}>
-                  <Phone color={theme.statusText('taken')} size={18} strokeWidth={2.25} />
+            ) : (
+              <View
+                className="rounded-3xl border p-5 shadow-sm"
+                style={{ backgroundColor: theme.colors.elevated, borderColor: theme.colors.hairline }}
+              >
+                <View className="flex-row items-start gap-3">
+                  <View
+                    className="items-center justify-center rounded-2xl"
+                    style={{ width: 42, height: 42, backgroundColor: `${theme.action.base}18` }}
+                  >
+                    <ShieldAlert color={theme.action.base} size={22} strokeWidth={2.25} />
+                  </View>
                   <View className="flex-1">
-                    <Text className="text-caption" style={{ color: theme.colors.inkMuted }}>
-                      {t('alarms.caregiverSavedContact')}
+                    <Text className="text-body-lg font-bold" style={{ color: theme.colors.ink }}>
+                      {t('alarms.caregiverSection')}
                     </Text>
-                    <Text className="text-body-lg" style={{ color: theme.colors.ink, fontWeight: '600' }}>
-                      {maskedCaregiverPhone}
+                    <Text className="mt-1 text-caption leading-relaxed" style={{ color: theme.colors.inkSecondary }}>
+                      {t('alarms.caregiverDescription')}
                     </Text>
                   </View>
-                  <Pressable
-                    onPress={handleClearCaregiverPhone}
-                    accessibilityRole="button"
-                    accessibilityLabel={t('alarms.clearCaregiverAccessibility')}
-                    className="min-h-hit min-w-hit items-center justify-center"
-                  >
-                    <Trash2 color={theme.colors.inkMuted} size={19} />
-                  </Pressable>
                 </View>
-              ) : (
-                <View className="flex-row items-center gap-3 rounded-2xl border px-4 py-3" style={{ borderColor: theme.colors.hairline }}>
-                  <ShieldAlert color={theme.colors.inkMuted} size={18} />
-                  <Text className="flex-1 text-caption" style={{ color: theme.colors.inkSecondary }}>
-                    {t('alarms.caregiverNotConfigured')}
+
+                <Pressable
+                  onPress={() => {
+                    triggerHaptic('selection');
+                    caregiverSheetRef.current?.present(null);
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('alarms.addCaregiverAccessibility')}
+                  className="mt-4 min-h-hit flex-row items-center justify-center gap-2 rounded-2xl px-5 py-3.5 shadow-sm"
+                  style={{ backgroundColor: theme.action.base }}
+                >
+                  <Plus color={theme.action.ink} size={18} strokeWidth={2.5} />
+                  <Text className="text-body-md font-bold" style={{ color: theme.action.ink }}>
+                    {t('alarms.addCaregiver')}
                   </Text>
-                </View>
-              )}
-              <Pressable
-                onPress={() => caregiverSheetRef.current?.present(savedCaregiverPhone)}
-                accessibilityRole="button"
-                accessibilityLabel={savedCaregiverPhone ? t('alarms.editCaregiverAccessibility') : t('alarms.addCaregiverAccessibility')}
-                className="min-h-hit flex-row items-center justify-center gap-2 rounded-2xl px-5 py-4"
-                style={{ backgroundColor: theme.action.base }}
-              >
-                <Phone color={theme.action.ink} size={20} strokeWidth={2.25} />
-                <Text className="text-body-lg" style={{ color: theme.action.ink, fontWeight: '700' }}>
-                  {savedCaregiverPhone ? t('alarms.editCaregiver') : t('alarms.addCaregiver')}
-                </Text>
-              </Pressable>
-            </View>
+                </Pressable>
+              </View>
+            )}
 
             <View
               className="gap-4 rounded-3xl border p-6 shadow-md"
