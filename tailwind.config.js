@@ -23,7 +23,11 @@ module.exports = {
                 // consumed via useTheme() + an inline `style`, never via a
                 // `dark:` className. These tokens are therefore the
                 // theme-agnostic ones only.
-                // Jet-black primary action and white action text — mirrors tokens.ts.
+                // Jet-black primary action and white action text — mirrors tokens.ts
+                // `action.light` (the only mode-agnostic value these untagged,
+                // non-`dark:` utilities can correctly represent — the new
+                // glassmorphism dark-mode accent lives only in theme/tokens.ts,
+                // consumed via useTheme() like every other dark-mode color).
                 action: "#253237",
                 "action-ink": "#FFFFFF",
                 // Semantic status codes (vivid/base hue — see tokens.ts for

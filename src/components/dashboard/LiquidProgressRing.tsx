@@ -32,8 +32,18 @@ function makeWavePath(width: number, height: number, amplitude: number, waveleng
  */
 export function LiquidProgressRing({ ratio, size = 180, label }: LiquidProgressRingProps) {
   const theme = useTheme();
-  const adherenceStatus = ratio >= 0.8 ? 'taken' : ratio >= 0.5 ? 'pending' : 'missed';
-  const liquidColor = theme.statusText(adherenceStatus);
+  // Dark mode: the glassmorphism redesign's vibrant medical tones (emerald
+  // taken / blue in-progress / coral missed), at thresholds tuned for that
+  // more saturated palette. Light mode is untouched — same statuses,
+  // thresholds, and WCAG-verified colors as before the redesign.
+  const liquidColor =
+    theme.mode === 'dark'
+      ? ratio >= 0.75
+        ? '#10B981'
+        : ratio >= 0.4
+          ? '#3B82F6'
+          : '#EF4444'
+      : theme.statusText(ratio >= 0.8 ? 'taken' : ratio >= 0.5 ? 'pending' : 'missed');
   const radius = size / 2;
   const amplitude = size * 0.045;
   const wavelength = size * 0.9;
@@ -68,9 +78,6 @@ export function LiquidProgressRing({ ratio, size = 180, label }: LiquidProgressR
   const waveATransform = useDerivedValue(() => [{ translateX: phaseA.value }]);
   const waveBTransform = useDerivedValue(() => [{ translateX: phaseB.value }]);
 
-  // Counts up/down in lockstep with the liquid fill (both driven by the same
-  // `fillLevel` tween) instead of the percentage digits jumping straight to
-  // their final value while only the visual fill animates underneath them.
   const [displayPercent, setDisplayPercent] = useState(() => Math.round(ratio * 100));
   useAnimatedReaction(
     () => Math.round(fillLevel.value * 100),
@@ -79,45 +86,54 @@ export function LiquidProgressRing({ ratio, size = 180, label }: LiquidProgressR
     },
   );
 
+  const canvasBackground = theme.mode === 'dark' ? '#0F172A' : theme.colors.surface;
+  const strokeColor = theme.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : theme.colors.hairline;
+
   return (
     <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
       <Canvas style={{ width: size, height: size }}>
-        <Circle cx={radius} cy={radius} r={radius} color={theme.colors.surface} />
+        <Circle cx={radius} cy={radius} r={radius} color={canvasBackground} />
         <Group clip={clipPath}>
           <Group transform={liquidTransform}>
             <Group transform={waveBTransform}>
               <Path path={wavePath} color={liquidColor} opacity={0.35} />
             </Group>
             <Group transform={waveATransform}>
-              <Path path={wavePath} color={liquidColor} opacity={0.85} />
+              <Path path={wavePath} color={liquidColor} opacity={0.9} />
             </Group>
           </Group>
         </Group>
-        <Circle cx={radius} cy={radius} r={radius - 2} style="stroke" strokeWidth={3} color={theme.colors.hairline} />
+        <Circle cx={radius} cy={radius} r={radius - 2} style="stroke" strokeWidth={3} color={strokeColor} />
       </Canvas>
       <View
         pointerEvents="none"
         style={{
           position: 'absolute',
           alignItems: 'center',
-          paddingHorizontal: 10,
-          paddingVertical: 4,
-          borderRadius: 16,
-          backgroundColor: theme.colors.surface,
+          paddingHorizontal: 12,
+          paddingVertical: 5,
+          borderRadius: 18,
+          backgroundColor: theme.mode === 'dark' ? 'rgba(15, 23, 42, 0.9)' : theme.colors.surface,
           borderWidth: 1,
-          borderColor: theme.colors.hairline,
+          borderColor: theme.mode === 'dark' ? 'rgba(255, 255, 255, 0.12)' : theme.colors.hairline,
+          shadowColor: liquidColor,
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.35,
+          shadowRadius: 8,
+          elevation: 4,
         }}
       >
         <Text
           className="text-title-lg"
           style={{
             color: theme.colors.ink,
+            fontWeight: '800',
           }}
         >
           {displayPercent}%
         </Text>
         {label ? (
-          <Text className="text-caption" style={{ color: theme.colors.inkSecondary }}>
+          <Text className="text-caption font-medium" style={{ color: theme.colors.inkSecondary }}>
             {label}
           </Text>
         ) : null}

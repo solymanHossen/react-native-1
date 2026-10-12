@@ -54,21 +54,27 @@ export function ActionRow({ icon: Icon, label, caption, onPress, loading = false
       accessibilityRole={isInteractive ? 'button' : undefined}
       accessibilityLabel={caption ? `${label}. ${caption}` : label}
       accessibilityState={{ disabled: !isInteractive, busy: loading }}
-      className="min-h-hit flex-row items-center gap-3 px-4 py-3"
+      className="min-h-hit flex-row items-center gap-3.5 px-4 py-3.5"
       style={[{ opacity: disabled ? 0.5 : 1 }, style]}
     >
       <View
         className="items-center justify-center rounded-xl"
-        style={{ width: 36, height: 36, backgroundColor: `${theme.action.base}14` }}
+        style={{
+          width: 38,
+          height: 38,
+          backgroundColor: theme.mode === 'dark' ? 'rgba(59, 130, 246, 0.14)' : `${theme.action.base}14`,
+          borderWidth: theme.mode === 'dark' ? 1 : 0,
+          borderColor: 'rgba(59, 130, 246, 0.25)',
+        }}
       >
-        <Icon color={theme.action.base} size={18} strokeWidth={2.25} />
+        <Icon color={theme.action.base} size={19} strokeWidth={2.2} />
       </View>
       <View className="flex-1">
-        <Text className="text-body-lg" numberOfLines={1} style={{ color: theme.colors.ink }}>
+        <Text className="text-body-lg font-semibold" numberOfLines={1} style={{ color: theme.colors.ink }}>
           {label}
         </Text>
         {caption ? (
-          <Text className="mt-0.5 text-caption" numberOfLines={1} style={{ color: theme.colors.inkSecondary }}>
+          <Text className="mt-0.5 text-caption font-medium" numberOfLines={1} style={{ color: theme.colors.inkSecondary }}>
             {caption}
           </Text>
         ) : null}
@@ -76,7 +82,7 @@ export function ActionRow({ icon: Icon, label, caption, onPress, loading = false
       {loading ? (
         <ActivityIndicator color={theme.action.base} />
       ) : showChevron && onPress ? (
-        <ChevronRight color={theme.colors.inkMuted} size={18} />
+        <ChevronRight color={theme.colors.inkMuted} size={18} strokeWidth={2.2} />
       ) : null}
     </AnimatedPressable>
   );
@@ -86,16 +92,49 @@ export interface ActionRowGroupProps {
   children: React.ReactNode;
 }
 
-/** The rounded-3xl card + hairline-divider chrome shared by every group of `ActionRow`s, so individual rows stay unaware of their position in the list. */
+/** The rounded-3xl card + hairline-divider chrome shared by every group of `ActionRow`s */
 export function ActionRowGroup({ children }: ActionRowGroupProps) {
   const theme = useTheme();
   const rows = (Array.isArray(children) ? children : [children]).filter(Boolean);
 
   return (
-    <View className="overflow-hidden rounded-3xl border" style={{ backgroundColor: theme.colors.elevated, borderColor: theme.colors.hairline }}>
+    <View
+      className="overflow-hidden rounded-3xl"
+      style={{
+        backgroundColor: theme.mode === 'dark' ? 'rgba(31, 41, 55, 0.75)' : theme.colors.elevated,
+        borderWidth: 1,
+        borderColor: theme.mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : theme.colors.hairline,
+        shadowColor: '#000000',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: theme.mode === 'dark' ? 0.35 : 0.08,
+        shadowRadius: 16,
+        elevation: 6,
+      }}
+    >
+      {theme.mode === 'dark' ? (
+        <View
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 20,
+            right: 20,
+            height: 1,
+            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+          }}
+        />
+      ) : null}
       {rows.map((row, index) => (
         <View key={index}>
-          {index > 0 ? <View style={{ height: 1, backgroundColor: theme.colors.hairline, marginLeft: 16 + 36 + 12 }} /> : null}
+          {index > 0 ? (
+            <View
+              style={{
+                height: 1,
+                backgroundColor: theme.mode === 'dark' ? 'rgba(255, 255, 255, 0.06)' : theme.colors.hairline,
+                marginLeft: 16 + 38 + 14,
+              }}
+            />
+          ) : null}
           {row}
         </View>
       ))}

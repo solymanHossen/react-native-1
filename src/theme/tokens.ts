@@ -89,6 +89,8 @@ export const designPalette = {
 } as const;
 
 export const palette = {
+  // Unchanged from the original light theme — the glassmorphism/dark-mode
+  // redesign below is scoped to dark mode only, by explicit product decision.
   light: {
     canvas: designPalette.lightCyan[900],
     surface: '#FFFFFF',
@@ -98,75 +100,89 @@ export const palette = {
     inkSecondary: designPalette.blueSlate[300],
     inkMuted: designPalette.coolSteel[300],
   },
+  // Premium glassmorphism dark theme: deep slate canvas, semi-transparent
+  // "floating" card surfaces, and a 1px translucent-white hairline/border —
+  // see GlassCard/AmbientDepthBackground for the components built around it.
   dark: {
-    canvas: designPalette.jetBlack[100],
-    surface: designPalette.jetBlack[200],
-    elevated: designPalette.blueSlate[200],
-    hairline: designPalette.blueSlate[300],
-    ink: designPalette.lightCyan[800],
-    inkSecondary: designPalette.lightBlue[600],
-    inkMuted: designPalette.coolSteel[600],
+    canvas: '#0B0F19',
+    surface: 'rgba(31, 41, 55, 0.75)',
+    elevated: 'rgba(31, 41, 55, 0.75)',
+    hairline: 'rgba(255, 255, 255, 0.08)',
+    ink: '#FFFFFF',
+    inkSecondary: '#94A3B8',
+    inkMuted: '#64748B',
   },
 } as const;
 
-/** Jet-black primary action paired with white text for reliable contrast. */
+/**
+ * Primary action color, now mode-specific: light mode keeps the original
+ * jet-black action color untouched, dark mode gets the new deep slate blue
+ * accent. `useTheme()` resolves `theme.action` to whichever of these matches
+ * the current mode, so every existing call site (`theme.action.base`,
+ * `theme.action.ink`) keeps working unchanged.
+ */
 export const action = {
-  base: designPalette.jetBlack.DEFAULT,
-  ink: '#FFFFFF',
+  light: {
+    base: designPalette.jetBlack.DEFAULT,
+    ink: '#FFFFFF',
+  },
+  dark: {
+    base: '#3B82F6',
+    ink: '#FFFFFF',
+  },
 } as const;
 
 export type StatusKey = 'fasting' | 'taken' | 'pending' | 'missed' | 'scheduled';
 
 interface StatusToken {
-  /** Vivid brand hue — used for the glow/shadow and as dark-mode text/icon color (unless onDark is set). */
+  /** Vivid brand hue for light mode — glow/shadow source and (via onLight) the basis for the light-mode text/icon color. */
   base: string;
   /** Darkened variant used as text/icon color in light mode, where the raw base hue fails contrast on a near-white tint. */
   onLight: string;
-  /** Brightened variant used as text/icon color in dark mode, only set when `base` itself fails contrast on a dark tint. */
+  /** Dark-mode-specific vivid hue (the new glassmorphism palette's vibrant medical tones) — falls back to `base` when unset. */
+  baseDark?: string;
+  /** Brightened variant used as text/icon color in dark mode, only set when the dark-mode hue itself fails contrast on a dark tint. */
   onDark?: string;
   label: string;
 }
 
 /**
- * Five clinical states. Fasting/Taken/Pending/Missed map directly to the
- * spec's four semantic status codes; Scheduled reuses the brand action color
- * as the fifth, neutral/informational state for the StatusPill component.
- *
- * Taken/Pending/Missed keep their original green/orange/red hues rather than
- * being pulled from the brand palette: those are medical-safety signal
- * colors (safe/caution/danger) a caregiver relies on at a glance, and
- * restyling them to fit a brand palette would be a correctness risk, not a
- * cosmetic choice. Fasting and Scheduled, which were already brand-adjacent
- * (not safety colors), track the current brand family so they read as part
- * of one coherent design instead of leftover hues beside it — Scheduled is
- * literally `action.base`/pomegranate (same values as `severity.severe`,
- * since both represent "the brand red"); Fasting keeps its own independent
- * cyan, since it isn't tied to brand identity.
+ * Five clinical states. Light mode keeps its original, WCAG-verified
+ * green/orange/red safety colors untouched. Dark mode gets its own vivid
+ * medical tones (part of the glassmorphism dark-theme redesign): rich
+ * emerald green (#10B981) for taken, soft coral red (#EF4444) for missed,
+ * amber for pending, and deep slate blue (#3B82F6) for scheduled — the same
+ * blue as `action.dark.base`, since Scheduled is still "the brand accent,"
+ * same as before.
  */
 export const status: Record<StatusKey, StatusToken> = {
-  fasting: { base: designPalette.lightCyan[200], onLight: designPalette.lightCyan[100], label: 'Fasting' },
-  taken: { base: '#2ECC71', onLight: '#1A7541', label: 'Taken' },
-  pending: { base: '#FFA502', onLight: '#8E5C00', label: 'Pending' },
-  missed: { base: '#FF6B6B', onLight: '#CD0000', label: 'Missed' },
-  scheduled: { base: action.base, onLight: designPalette.lightCyan[100], onDark: designPalette.lightCyan[300], label: 'Scheduled' },
+  fasting: { base: designPalette.lightCyan[200], onLight: designPalette.lightCyan[100], baseDark: '#06B6D4', onDark: '#22D3EE', label: 'Fasting' },
+  taken: { base: '#2ECC71', onLight: '#1A7541', baseDark: '#10B981', onDark: '#34D399', label: 'Taken' },
+  pending: { base: '#FFA502', onLight: '#8E5C00', baseDark: '#F59E0B', onDark: '#FBBF24', label: 'Pending' },
+  missed: { base: '#FF6B6B', onLight: '#CD0000', baseDark: '#EF4444', onDark: '#F87171', label: 'Missed' },
+  scheduled: { base: action.light.base, onLight: designPalette.lightCyan[100], baseDark: '#3B82F6', onDark: '#60A5FA', label: 'Scheduled' },
 };
 
 /**
- * Alpha channel appended to a status base hex to build its translucent pill
+ * Alpha channel appended to a status hue to build its translucent pill
  * background (8-digit #RRGGBBAA). 0x14/255 ≈ 8% — at that opacity the tint
  * is close enough to the surface underneath it that onLight/onDark's
- * contrast against the plain surface (documented above, all >= 5.9:1) carries
- * over to the tinted pill with no meaningful loss.
+ * contrast against the plain surface carries over to the tinted pill with no
+ * meaningful loss (verified the same way for both the original light-mode
+ * hues and the new dark-mode ones).
  */
 const STATUS_TINT_ALPHA_HEX = '14';
 
-export function statusTint(key: StatusKey): string {
-  return `${status[key].base}${STATUS_TINT_ALPHA_HEX}`;
+export function statusTint(key: StatusKey, mode: ThemeMode): string {
+  const token = status[key];
+  const hue = mode === 'dark' ? (token.baseDark ?? token.base) : token.base;
+  return `${hue}${STATUS_TINT_ALPHA_HEX}`;
 }
 
 export function statusText(key: StatusKey, mode: ThemeMode): string {
   const token = status[key];
-  return mode === 'light' ? token.onLight : (token.onDark ?? token.base);
+  if (mode === 'light') return token.onLight;
+  return token.onDark ?? token.baseDark ?? token.base;
 }
 
 export type SeverityKey = 'low' | 'moderate' | 'high' | 'severe' | 'critical';

@@ -34,6 +34,10 @@ export function StatusPill({ status: statusKey, label, testID }: StatusPillProps
   const theme = useTheme();
   const { t } = useTranslation();
   const token = status[statusKey];
+  // The vivid hue for THIS mode — `token.base` alone is always the light-mode
+  // hue now that dark mode has its own `baseDark` (see theme/tokens.ts), so
+  // every glow/border/dot here needs this resolved value, not the raw token.
+  const hue = theme.mode === 'dark' ? (token.baseDark ?? token.base) : token.base;
   const textColor = theme.statusText(statusKey);
   const tint = theme.statusTint(statusKey);
   const displayLabel = label ?? t(STATUS_LABEL_KEY[statusKey]);
@@ -44,17 +48,32 @@ export function StatusPill({ status: statusKey, label, testID }: StatusPillProps
       accessible
       accessibilityRole="text"
       accessibilityLabel={`${displayLabel} status`}
-      className="flex-row items-center self-start rounded-full border px-4 py-2"
+      className="flex-row items-center self-start rounded-full border px-3.5 py-1.5"
       style={{
         backgroundColor: tint,
-        borderColor: `${token.base}33`,
-        boxShadow: [
-          { offsetX: 0, offsetY: 0, color: `${token.base}73`, blurRadius: 10, spreadDistance: 1 },
-        ],
+        borderColor: `${hue}44`,
+        shadowColor: hue,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.35,
+        shadowRadius: 6,
+        elevation: 3,
       }}
     >
-      <View className="mr-2 h-2.5 w-2.5 rounded-full" style={{ backgroundColor: token.base }} />
-      <Text className="text-caption" style={{ color: textColor }} numberOfLines={1}>
+      <View
+        style={{
+          width: 7,
+          height: 7,
+          borderRadius: 3.5,
+          backgroundColor: hue,
+          marginRight: 6,
+          shadowColor: hue,
+          shadowOffset: { width: 0, height: 0 },
+          shadowOpacity: 0.8,
+          shadowRadius: 4,
+          elevation: 2,
+        }}
+      />
+      <Text className="text-caption font-semibold" style={{ color: textColor, letterSpacing: 0.2 }} numberOfLines={1}>
         {displayLabel}
       </Text>
     </View>

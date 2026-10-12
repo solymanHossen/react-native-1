@@ -91,7 +91,7 @@ export function useSetThemePreference(): (preference: ThemePreference) => void {
 export interface ResolvedTheme {
   mode: ThemeMode;
   colors: (typeof palette)[ThemeMode];
-  action: typeof action;
+  action: (typeof action)[ThemeMode];
   status: typeof status;
   statusTint: (key: StatusKey) => string;
   statusText: (key: StatusKey) => string;
@@ -113,9 +113,9 @@ export function useTheme(): ResolvedTheme {
     () => ({
       mode,
       colors: palette[mode],
-      action,
+      action: action[mode],
       status,
-      statusTint,
+      statusTint: (key: StatusKey) => statusTint(key, mode),
       statusText: (key: StatusKey) => statusText(key, mode),
       severity,
       severityTint,

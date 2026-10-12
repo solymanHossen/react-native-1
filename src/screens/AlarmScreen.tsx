@@ -289,7 +289,7 @@ export default function AlarmScreen({ alarm }: AlarmScreenProps) {
         {mode === 'nfc' ? (
           <View className="items-center gap-4">
             <Animated.View style={pulseStyle}>
-              <View className="items-center justify-center rounded-full" style={{ width: 140, height: 140, backgroundColor: `${brandAction.base}2E` }}>
+              <View className="items-center justify-center rounded-full" style={{ width: 140, height: 140, backgroundColor: `${brandAction.dark.base}2E` }}>
                 <Nfc color={SCHEDULED_ACCENT} size={64} strokeWidth={1.5} />
               </View>
             </Animated.View>

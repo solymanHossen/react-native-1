@@ -13,7 +13,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { HealthRecordsSheet, type HealthRecordsSheetRef } from '../components/records/HealthRecordsSheet';
 import { LiquidProgressRing } from '../components/dashboard/LiquidProgressRing';
-import { ActionRow, ActionRowGroup, AppLogo, LargeTextButton, MetricCard, StatusPill } from '../components/ui';
+import { ActionRow, ActionRowGroup, AmbientDepthBackground, AppLogo, LargeTextButton, MetricCard, StatusPill } from '../components/ui';
 import { useTranslation, type TranslationKey } from '../i18n';
 import { triggerHaptic } from '../lib/haptics';
 import { generateClinicalReportPdf, shareClinicalReportPdf } from '../reports/pdfService';
@@ -192,24 +192,10 @@ export default function HomeScreen({ onNavigateToVitals, onOpenSettings }: HomeS
   const scrollHandler = useAnimatedScrollHandler((event) => {
     scrollY.value = event.contentOffset.y;
   });
-  const compactTitleStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(scrollY.value, [24, 64], [0, 1], Extrapolation.CLAMP),
-  }));
-  const headerHairlineStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(scrollY.value, [0, 24], [0, 1], Extrapolation.CLAMP),
-  }));
-  // The fixed bar "lifts" above the scrolling content with a soft shadow
-  // once there's something to lift above — zero elevation at rest (where a
-  // shadow would just look like a stray line under an empty bar), growing in
-  // over the same 24dp the hairline fades in over so the two depth cues
-  // settle together instead of arriving at different moments.
+
   const headerElevationStyle = useAnimatedStyle(() => ({
-    shadowOpacity: interpolate(scrollY.value, [0, 24], [0, 0.12], Extrapolation.CLAMP),
-    elevation: interpolate(scrollY.value, [0, 24], [0, 6], Extrapolation.CLAMP),
-  }));
-  const largeTitleStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(scrollY.value, [0, 50], [1, 0], Extrapolation.CLAMP),
-    transform: [{ translateY: interpolate(scrollY.value, [0, 50], [0, -8], Extrapolation.CLAMP) }],
+    shadowOpacity: interpolate(scrollY.value, [0, 24], [0, 0.4], Extrapolation.CLAMP),
+    elevation: interpolate(scrollY.value, [0, 24], [0, 8], Extrapolation.CLAMP),
   }));
 
   const seeAllScale = useSharedValue(1);
@@ -217,58 +203,92 @@ export default function HomeScreen({ onNavigateToVitals, onOpenSettings }: HomeS
 
   return (
     <SafeAreaView className="flex-1" edges={['top', 'left', 'right']} style={{ backgroundColor: theme.colors.canvas }}>
-      {/* Persistent bar: always on screen, same spot a real iOS nav bar's
-          trailing button would be. Only the small logo+title lockup cross-
-          fades in — the theme toggle never moves or disappears. A soft
-          shadow (headerElevationStyle) grows in alongside it so the bar
-          reads as lifted above the content scrolling beneath it, not just a
-          flat strip with a line under it. */}
+      {theme.mode === 'dark' ? <AmbientDepthBackground /> : null}
+
+      {/* World-class persistent header strictly adhering to Apple HIG & Material You */}
       <Animated.View
         style={[
           {
-            height: 56,
+            height: 64,
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'space-between',
-            paddingHorizontal: 24,
-            backgroundColor: theme.colors.canvas,
-            shadowColor: theme.colors.ink,
+            paddingHorizontal: 20,
+            backgroundColor: theme.mode === 'dark' ? 'rgba(11, 15, 25, 0.92)' : theme.colors.canvas,
+            borderBottomWidth: 1,
+            borderBottomColor: theme.mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : theme.colors.hairline,
+            shadowColor: '#000000',
             shadowOffset: { width: 0, height: 4 },
-            shadowRadius: 10,
+            shadowRadius: 12,
           },
           headerElevationStyle,
         ]}
       >
-        <Animated.View style={[{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }, compactTitleStyle]}>
-          <AppLogo size={30} />
-          <Text className="text-title-lg" style={{ color: theme.colors.ink, fontSize: 22, lineHeight: 28 }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
-            {t('home.brand')}
-          </Text>
-        </Animated.View>
-        <View className="flex-row items-center">
+        {/* Top-left branding: perfectly proportioned squircle mark cleanly aligned with zero awkward spacing */}
+        <View className="flex-row items-center gap-3">
+          <AppLogo size={42} />
+          <View className="justify-center">
+            <Text
+              className="text-caption font-semibold uppercase tracking-wider"
+              style={{ color: theme.colors.inkSecondary, fontSize: 11, letterSpacing: 0.8 }}
+            >
+              {greeting}
+            </Text>
+            <Text
+              className="text-title-lg font-extrabold"
+              style={{ color: theme.colors.ink, fontSize: 21, lineHeight: 25 }}
+              numberOfLines={1}
+            >
+              {t('home.brand')}
+            </Text>
+          </View>
+        </View>
+
+        {/* Top-right quick actions: frosted glass circular buttons in dark mode, the original tinted-action-color buttons in light mode */}
+        <View className="flex-row items-center gap-2.5">
+          <Pressable
+            onPress={handleSync}
+            disabled={syncing}
+            accessibilityRole="button"
+            accessibilityLabel={t('home.syncWithClinic')}
+            hitSlop={6}
+            className="items-center justify-center rounded-full"
+            style={{
+              width: 40,
+              height: 40,
+              backgroundColor: theme.mode === 'dark' ? 'rgba(255, 255, 255, 0.06)' : `${theme.action.base}14`,
+              borderWidth: theme.mode === 'dark' ? 1 : 0,
+              borderColor: 'rgba(255, 255, 255, 0.08)',
+            }}
+          >
+            {syncing ? (
+              <RefreshCw color={theme.action.base} size={18} />
+            ) : (
+              <FileText color={theme.mode === 'dark' ? theme.colors.inkSecondary : theme.action.base} size={19} strokeWidth={2} />
+            )}
+          </Pressable>
           <Pressable
             onPress={onOpenSettings}
             accessibilityRole="button"
             accessibilityLabel={t('home.settings')}
             hitSlop={6}
             className="items-center justify-center rounded-full"
-            style={{ width: 40, height: 40, backgroundColor: `${theme.action.base}14` }}
+            style={{
+              width: 40,
+              height: 40,
+              backgroundColor: theme.mode === 'dark' ? 'rgba(255, 255, 255, 0.06)' : `${theme.action.base}14`,
+              borderWidth: theme.mode === 'dark' ? 1 : 0,
+              borderColor: 'rgba(255, 255, 255, 0.08)',
+            }}
           >
-            <Settings color={theme.action.base} size={21} strokeWidth={2.25} />
+            <Settings color={theme.mode === 'dark' ? theme.colors.inkSecondary : theme.action.base} size={19} strokeWidth={2} />
           </Pressable>
         </View>
       </Animated.View>
-      <Animated.View style={[{ height: 1, backgroundColor: theme.colors.hairline }, headerHairlineStyle]} />
 
       <Animated.ScrollView
         className="flex-1"
-        // 24dp between sections, not the 36dp "section" spacing token — this
-        // screen is a dashboard with eight stacked sections, not a handful
-        // of widely-separated ones, so the wider token read as excess air
-        // rather than intentional breathing room. 24dp matches the "card"
-        // token instead: still a clear break between sections, not a cramped
-        // one, just not as sparse as a screen with far fewer sections wants.
-        contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 4, paddingBottom: 32, gap: 24 }}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 36, gap: 20 }}
         showsVerticalScrollIndicator={false}
         onScroll={scrollHandler}
         scrollEventThrottle={16}
@@ -276,42 +296,44 @@ export default function HomeScreen({ onNavigateToVitals, onOpenSettings }: HomeS
           <RefreshControl refreshing={refreshing} onRefresh={handlePullToRefresh} tintColor={theme.action.base} colors={[theme.action.base]} />
         }
       >
-        <Animated.View style={[{ flexDirection: 'row', alignItems: 'center', gap: 16 }, largeTitleStyle]}>
-          <AppLogo size={52} />
-          <View style={{ flex: 1, gap: 2 }}>
-            <Text className="text-caption" style={{ color: theme.colors.inkSecondary }}>
-              {greeting}
-            </Text>
-            <Text className="text-display-lg" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.78} style={{ color: theme.colors.ink, fontSize: 36, lineHeight: 42 }}>
-              {t('home.brand')}
-            </Text>
-          </View>
-        </Animated.View>
-
-        {/* Today's Progress: the same Liquid Progress Ring the Rhythm tab
-            uses, reused as-is rather than rebuilt — an Apple Health-style
-            "rings" opening beat for the dashboard, and visual continuity
-            with the tab that shares this screen's underlying data. The
-            per-status breakdown (formerly its own separate "Medication
-            Status" section further down the page) now lives in this same
-            card as a row of pills below a hairline divider — one score card
-            with its breakdown attached, not two sections repeating the same
-            counts a scroll apart. */}
+        {/* Today's Progress Card: Glassmorphism with rich emerald adherence ring and vibrant status badges */}
         <RevealOnMount delay={0}>
           <View
-            className="gap-5 rounded-3xl border p-6 shadow-md"
-            style={{ backgroundColor: theme.colors.elevated, borderColor: theme.colors.hairline }}
+            className="gap-5 rounded-3xl p-6"
+            style={{
+              backgroundColor: theme.mode === 'dark' ? 'rgba(31, 41, 55, 0.75)' : theme.colors.elevated,
+              borderWidth: 1,
+              borderColor: theme.mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : theme.colors.hairline,
+              shadowColor: '#000000',
+              shadowOffset: { width: 0, height: 10 },
+              shadowOpacity: theme.mode === 'dark' ? 0.35 : 0.08,
+              shadowRadius: 20,
+              elevation: 8,
+            }}
           >
+            {theme.mode === 'dark' ? (
+              <View
+                pointerEvents="none"
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 20,
+                  right: 20,
+                  height: 1,
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                }}
+              />
+            ) : null}
             <View className="flex-row items-center gap-5">
-              <LiquidProgressRing ratio={overallRatio} size={116} />
+              <LiquidProgressRing ratio={overallRatio} size={118} />
               <View className="flex-1 gap-1">
-                <Text className="text-caption uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
+                <Text className="text-caption font-semibold uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
                   {t('home.todaysProgress')}
                 </Text>
-                <Text className="text-title-lg" style={{ color: theme.colors.ink }}>
+                <Text className="text-title-lg font-bold" style={{ color: theme.colors.ink, fontSize: 24 }}>
                   {t('home.doseCount', { taken: statusCounts.TAKEN, total: intakeItems.length })}
                 </Text>
-                <Text className="text-caption" style={{ color: theme.colors.inkSecondary }}>
+                <Text className="text-caption font-medium" style={{ color: theme.colors.inkSecondary }}>
                   {intakeItems.length === 0
                     ? t('home.progressEmpty')
                     : statusCounts.TAKEN === intakeItems.length
@@ -321,7 +343,13 @@ export default function HomeScreen({ onNavigateToVitals, onOpenSettings }: HomeS
               </View>
             </View>
             {intakeItems.length > 0 ? (
-              <View className="flex-row flex-wrap gap-2.5 border-t pt-4" style={{ borderColor: theme.colors.hairline }}>
+              <View
+                className="flex-row flex-wrap gap-2.5 pt-4"
+                style={{
+                  borderTopWidth: 1,
+                  borderTopColor: theme.mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : theme.colors.hairline,
+                }}
+              >
                 {(Object.keys(statusCounts) as IntakeQueueStatus[])
                   .filter((key) => statusCounts[key] > 0)
                   .map((key) => (
@@ -336,37 +364,56 @@ export default function HomeScreen({ onNavigateToVitals, onOpenSettings }: HomeS
           </View>
         </RevealOnMount>
 
-        {/* Hero: the single most important thing on the screen, sized and
-            weighted accordingly (Display Large for the time), not sharing
-            visual priority with the vitals grid below it. Real data from
-            the shared intake-queue store, not a fixed placeholder — the
-            same store the Rhythm tab's dashboard reads and writes, so
-            marking a dose taken from either screen is reflected on both. */}
+        {/* Hero Next Dose Card: Glassmorphism with crisp typography and glowing action */}
         <RevealOnMount delay={60}>
           <View
-            className="gap-5 rounded-[28px] border p-8 shadow-lg"
-            style={{ backgroundColor: theme.colors.elevated, borderColor: theme.colors.hairline }}
+            className="gap-5 rounded-[28px] p-7"
+            style={{
+              backgroundColor: theme.mode === 'dark' ? 'rgba(31, 41, 55, 0.75)' : theme.colors.elevated,
+              borderWidth: 1,
+              borderColor: theme.mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : theme.colors.hairline,
+              shadowColor: '#000000',
+              shadowOffset: { width: 0, height: 12 },
+              shadowOpacity: theme.mode === 'dark' ? 0.4 : 0.08,
+              shadowRadius: 24,
+              elevation: 10,
+            }}
           >
+            {theme.mode === 'dark' ? (
+              <View
+                pointerEvents="none"
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 20,
+                  right: 20,
+                  height: 1,
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                }}
+              />
+            ) : null}
             <View className="flex-row items-center gap-2">
-              <View className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: theme.action.base }} />
-              <Text className="text-caption uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
+              <View
+                className="h-2.5 w-2.5 rounded-full"
+                style={[
+                  { backgroundColor: theme.action.base },
+                  theme.mode === 'dark'
+                    ? { shadowColor: theme.action.base, shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.9, shadowRadius: 6, elevation: 2 }
+                    : null,
+                ]}
+              />
+              <Text className="text-caption font-semibold uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
                 {t('home.nextDose')}
               </Text>
             </View>
             {nextDose ? (
               <>
-                {/* `flex-1` + `numberOfLines` on the text column, not just
-                    `justify-between` — without a width constraint on this
-                    side, a long medication name grows the column past the
-                    card's edge and pushes the StatusPill off it (and off the
-                    screen) instead of the text wrapping/truncating. The pill
-                    itself is left at its natural size so it never shrinks. */}
                 <View className="flex-row items-end justify-between gap-3">
                   <View className="flex-1">
-                    <Text className="text-display-lg" numberOfLines={1} style={{ color: theme.colors.ink }}>
+                    <Text className="text-display-lg font-extrabold" numberOfLines={1} style={{ color: theme.colors.ink, fontSize: 38 }}>
                       {formatTimeLabel(nextDose.timeUtc)}
                     </Text>
-                    <Text className="mt-1 text-body-lg" numberOfLines={1} style={{ color: theme.colors.inkSecondary }}>
+                    <Text className="mt-1 text-body-lg font-medium" numberOfLines={1} style={{ color: theme.colors.inkSecondary }}>
                       {nextDose.medicationName} · {nextDose.dosageLabel}
                     </Text>
                   </View>
@@ -378,24 +425,18 @@ export default function HomeScreen({ onNavigateToVitals, onOpenSettings }: HomeS
                 />
               </>
             ) : (
-              <Text className="text-body-lg" style={{ color: theme.colors.inkSecondary }}>
+              <Text className="text-body-lg font-medium" style={{ color: theme.colors.inkSecondary }}>
                 {intakeItems.length === 0 ? t('home.noDoseScheduled') : t('home.allDosesTaken')}
               </Text>
             )}
           </View>
         </RevealOnMount>
 
-        {/* A horizontal carousel of compact cards, not a full-width-plus-2-up
-            grid: it scales to more vitals later without the layout needing
-            re-balancing (today it's 3 cards, tomorrow a 4th just appends),
-            and it scans like a single "today's numbers" strip rather than
-            three separately-weighted blocks. Each card keeps its own
-            `onPress` through to the Vitals tab so the dashboard stays a
-            summary — the detail, history and logging all live over there. */}
+        {/* Today's Vitals: Horizontal strip of glassmorphism MetricCards */}
         <RevealOnMount delay={120}>
           <View className="gap-4">
             <View className="flex-row items-center justify-between">
-              <Text className="text-caption uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
+              <Text className="text-caption font-semibold uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
                 {t('home.todaysVitals')}
               </Text>
               {onNavigateToVitals ? (
@@ -412,7 +453,7 @@ export default function HomeScreen({ onNavigateToVitals, onOpenSettings }: HomeS
                     className="min-h-hit flex-row items-center gap-0.5"
                     hitSlop={8}
                   >
-                    <Text className="text-caption" style={{ color: theme.action.base, fontWeight: '600' }}>
+                    <Text className="text-caption font-semibold" style={{ color: theme.action.base }}>
                       {t('common.seeAll')}
                     </Text>
                     <ChevronRight color={theme.action.base} size={16} strokeWidth={2.5} />
@@ -468,22 +509,32 @@ export default function HomeScreen({ onNavigateToVitals, onOpenSettings }: HomeS
           </View>
         </RevealOnMount>
 
+        {/* Refill and Expiry Alerts */}
         {medicationAlerts.length > 0 ? (
           <RevealOnMount delay={180}>
-            <View className="gap-4">
-              <Text className="text-caption uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
+            <View className="gap-3.5">
+              <Text className="text-caption font-semibold uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
                 {t('home.refillAndExpiry')}
               </Text>
               <View
-                className="gap-3 rounded-3xl border p-5"
-                style={{ backgroundColor: theme.statusTint('missed'), borderColor: theme.colors.hairline }}
+                className="gap-3 rounded-3xl p-5"
+                style={{
+                  backgroundColor: theme.statusTint('missed'),
+                  borderWidth: 1,
+                  borderColor: theme.mode === 'dark' ? 'rgba(239, 68, 68, 0.28)' : theme.colors.hairline,
+                  shadowColor: theme.mode === 'dark' ? theme.statusText('missed') : '#000000',
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: theme.mode === 'dark' ? 0.25 : 0,
+                  shadowRadius: 12,
+                  elevation: theme.mode === 'dark' ? 4 : 0,
+                }}
               >
                 {medicationAlerts.map((alert) => (
                   <View key={`${alert.medicationId}-${alert.kind}`} className="flex-row items-center justify-between gap-3">
-                    <Text className="flex-1 text-body-lg" numberOfLines={1} style={{ color: theme.colors.ink }}>
+                    <Text className="flex-1 text-body-lg font-semibold" numberOfLines={1} style={{ color: theme.colors.ink }}>
                       {alert.medicationName}
                     </Text>
-                    <Text className="text-caption" style={{ color: theme.statusText('missed'), fontWeight: '600' }}>
+                    <Text className="text-caption font-semibold" style={{ color: theme.statusText('missed') }}>
                       {alert.kind === 'LOW_STOCK'
                         ? t('home.alertLeft', { count: alert.value })
                         : alert.kind === 'EXPIRED'
@@ -499,18 +550,10 @@ export default function HomeScreen({ onNavigateToVitals, onOpenSettings }: HomeS
           </RevealOnMount>
         ) : null}
 
-        {/* Menu rows, not stacked LargeTextButtons: every entry here is
-            navigation ("go open X"), not a commitment the way Mark as Taken
-            or Confirm is, so a repeated full-width colored pill per row gave
-            each one the same maximum visual weight and ate far more vertical
-            space than a scannable list needs. The old "Unavailable Offline"
-            entry — a permanently-disabled button with no real feature behind
-            it — is dropped rather than carried forward in the new style; a
-            dead control that can never be pressed doesn't earn a place in a
-            cleaned-up menu just because it existed before. */}
+        {/* Quick Clinical Actions */}
         <RevealOnMount delay={300}>
-          <View className="gap-4">
-            <Text className="text-caption uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
+          <View className="gap-3.5">
+            <Text className="text-caption font-semibold uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
               {t('home.actions')}
             </Text>
             <ActionRowGroup>
@@ -530,16 +573,17 @@ export default function HomeScreen({ onNavigateToVitals, onOpenSettings }: HomeS
               />
             </ActionRowGroup>
             {syncStatus ? (
-              <Text className="text-caption" style={{ color: theme.colors.inkSecondary }}>
+              <Text className="text-caption font-medium" style={{ color: theme.colors.inkSecondary }}>
                 {syncStatus}
               </Text>
             ) : null}
           </View>
         </RevealOnMount>
 
+        {/* Health Records */}
         <RevealOnMount delay={360}>
-          <View className="gap-4">
-            <Text className="text-caption uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
+          <View className="gap-3.5">
+            <Text className="text-caption font-semibold uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
               {t('home.healthRecords')}
             </Text>
             <ActionRowGroup>

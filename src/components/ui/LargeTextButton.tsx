@@ -71,10 +71,37 @@ export function LargeTextButton({
     onPress();
   }, [isInteractive, hapticType, onPress]);
 
+  const isDark = theme.mode === 'dark';
   const isPrimary = variant === 'primary';
-  const backgroundColor = isPrimary ? theme.action.base : theme.colors.elevated;
+  const backgroundColor = isPrimary ? theme.action.base : isDark ? 'rgba(31, 41, 55, 0.75)' : theme.colors.elevated;
   const textColor = isPrimary ? theme.action.ink : theme.colors.ink;
-  const borderColor = isPrimary ? theme.action.base : theme.colors.hairline;
+  const borderColor = isPrimary
+    ? isDark
+      ? 'rgba(96, 165, 250, 0.45)'
+      : theme.action.base
+    : isDark
+      ? 'rgba(255, 255, 255, 0.08)'
+      : theme.colors.hairline;
+
+  // Dark mode gets the glassmorphism glow treatment; light mode stays flat
+  // (as it always was) — no shadow at all.
+  const shadowStyle = !isDark
+    ? null
+    : isPrimary
+      ? {
+          shadowColor: theme.action.base,
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: 0.45,
+          shadowRadius: 14,
+          elevation: 8,
+        }
+      : {
+          shadowColor: '#000000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.25,
+          shadowRadius: 10,
+          elevation: 4,
+        };
 
   return (
     <AnimatedPressable
@@ -87,8 +114,8 @@ export function LargeTextButton({
       accessibilityLabel={accessibilityLabel ?? label}
       accessibilityHint={accessibilityHint}
       accessibilityState={{ disabled: !isInteractive, busy: loading }}
-      className={`min-h-hit min-w-hit flex-row items-center justify-center rounded-full border px-8 py-5 ${disabled ? 'opacity-40' : ''}`}
-      style={[{ backgroundColor, borderColor }, animatedStyle]}
+      className={`min-h-hit min-w-hit flex-row items-center justify-center rounded-full border px-8 py-4 ${disabled ? 'opacity-40' : ''}`}
+      style={[{ backgroundColor, borderColor }, shadowStyle, animatedStyle]}
     >
       {loading ? (
         <ActivityIndicator color={textColor} />

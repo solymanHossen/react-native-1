@@ -67,12 +67,37 @@ export function MetricCard({ label, value, unit, caption, status, icon, onPress,
       accessible
       accessibilityRole={isInteractive ? 'button' : undefined}
       accessibilityLabel={accessibilityLabel}
-      className={`min-h-hit rounded-3xl border shadow-md ${compact ? 'p-4' : 'p-6'}`}
-      style={[{ backgroundColor: theme.colors.elevated, borderColor: theme.colors.hairline }, pressStyle]}
+      className={`min-h-hit rounded-3xl ${compact ? 'p-4' : 'p-6'}`}
+      style={[
+        {
+          backgroundColor: theme.mode === 'dark' ? 'rgba(31, 41, 55, 0.75)' : theme.colors.elevated,
+          borderWidth: 1,
+          borderColor: theme.mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : theme.colors.hairline,
+          shadowColor: '#000000',
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: theme.mode === 'dark' ? 0.35 : 0.08,
+          shadowRadius: 16,
+          elevation: 6,
+        },
+        pressStyle,
+      ]}
     >
+      {theme.mode === 'dark' ? (
+        <View
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 16,
+            right: 16,
+            height: 1,
+            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+          }}
+        />
+      ) : null}
       <View className="flex-row items-start justify-between">
         <Text
-          className="text-caption uppercase tracking-wider"
+          className="text-caption font-semibold uppercase tracking-wider"
           style={{ color: theme.colors.inkSecondary }}
           numberOfLines={1}
         >
@@ -82,27 +107,16 @@ export function MetricCard({ label, value, unit, caption, status, icon, onPress,
       </View>
 
       <View className="mt-2 flex-row items-baseline">
-        <Text className={compact ? 'text-title-lg' : 'text-display-lg'} style={{ color: theme.colors.ink }} numberOfLines={1}>
+        <Text className={compact ? 'text-title-lg' : 'text-display-lg'} style={{ color: theme.colors.ink, fontWeight: '800' }} numberOfLines={1}>
           {value}
         </Text>
         {unit ? (
-          <Text className="ml-1 text-body-lg" style={{ color: theme.colors.inkSecondary }}>
+          <Text className="ml-1 text-body-lg font-medium" style={{ color: theme.colors.inkSecondary }}>
             {unit}
           </Text>
         ) : null}
       </View>
 
-      {/* Stacked, not side-by-side: a pill's fixed width next to a long
-          caption left too little room for either to read fully on a narrow
-          (e.g. 2-up grid) card. `numberOfLines={2}` + a 2-line `minHeight`
-          (not just a cap on overflow) matters specifically for `compact`
-          cards sitting side by side in a horizontal carousel: Bengali
-          captions run longer than their English source and don't all wrap
-          at the same point, so without a reserved height, one card in the
-          row ends up visibly taller than its neighbor the moment the
-          language switches — this reserves the same two-line slot whether
-          the caption fills one line or two, so every card in the row stays
-          the same height regardless of caption length or script. */}
       {caption ? (
         <Text
           className="mt-3 text-caption"
