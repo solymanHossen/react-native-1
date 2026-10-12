@@ -118,6 +118,7 @@ export * from './alarmPolicy';
 export {
   cancelAlarm,
   computeNextOccurrenceMs,
+  deleteSchedule,
   rescheduleAllActiveAlarms,
   scheduleAlarm,
   scheduleSnoozeAlarm,

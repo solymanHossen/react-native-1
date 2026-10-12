@@ -1,4 +1,5 @@
 import React from 'react';
+import { Text } from 'react-native';
 import ReactTestRenderer from 'react-test-renderer';
 import { EmergencyHoldButton } from '../src/components/ui/EmergencyHoldButton';
 
@@ -28,7 +29,7 @@ describe('EmergencyHoldButton', () => {
     });
 
     const root = renderer!.root;
-    const texts = root.findAllByType('Text');
+    const texts = root.findAllByType(Text);
     const strings = texts.map((t) => t.props.children).flat();
     expect(strings).toContain('Custom Silence');
     expect(strings).toContain('Custom warning text');

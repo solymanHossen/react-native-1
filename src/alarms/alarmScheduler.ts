@@ -145,6 +145,13 @@ export async function setScheduleActive(schedule: ScheduleWithMedication, isActi
   }
 }
 
+/** Deletes a schedule from the database and withdraws any active/pending notifications. */
+export async function deleteSchedule(scheduleId: number): Promise<void> {
+  const database = await initializeDatabase();
+  await cancelAlarm(scheduleId);
+  await database.schedules.delete(scheduleId);
+}
+
 /**
  * Re-reads every active schedule from the DB and re-schedules its alarm from
  * scratch. This is the one function both app-startup and the boot-time

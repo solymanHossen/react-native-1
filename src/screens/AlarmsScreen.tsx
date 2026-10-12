@@ -5,8 +5,10 @@ import { Camera, Check, Clock, Droplet, Moon, Nfc, Package, Phone, Pill, ShieldA
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, type ComponentType } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { AlarmScheduleCard, AlarmsEmptyState, AlarmsHeroSummary } from '../components/alarms';
 import { LargeTextButton } from '../components/ui';
 import {
+  deleteSchedule,
   getCaregiverPhone,
   isValidCaregiverPhone,
   normalizeCaregiverPhone,
@@ -585,6 +587,25 @@ export default function AlarmsScreen() {
     [t],
   );
 
+  const handleDeleteSchedule = useCallback(
+    async (schedule: ScheduleWithMedication) => {
+      // Optimistic delete
+      setSchedules((prev) => prev.filter((entry) => entry.id !== schedule.id));
+      try {
+        await deleteSchedule(schedule.id);
+        setStatus(t('alarms.alarmDeleted', { name: schedule.medicationName }));
+        triggerHaptic('notificationSuccess');
+      } catch (error) {
+        console.warn('[AlarmsScreen] failed to delete schedule', error);
+        const database = await initializeDatabase();
+        await refresh(database);
+        setStatus(t('alarms.deleteFailed'));
+        triggerHaptic('notificationError');
+      }
+    },
+    [refresh, t],
+  );
+
   const handleSaveCaregiverPhone = useCallback((phone: string) => {
     const normalized = normalizeCaregiverPhone(phone);
     setCaregiverPhone(normalized);
@@ -774,95 +795,18 @@ export default function AlarmsScreen() {
               )}
             </View>
 
-            <Text className="text-caption uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
-              {t('alarms.scheduledAlarms')}
-            </Text>
+            <AlarmsHeroSummary schedules={schedules} />
           </View>
         }
-        ListEmptyComponent={
-          <Text className="text-body-lg" style={{ color: theme.colors.inkSecondary }}>
-            {t('alarms.noSchedulesYet')}
-          </Text>
-        }
-        renderItem={({ item: schedule }) => {
-          const nodeStyle = TIME_NODE_STYLE[schedule.time_node];
-          const NodeIcon = nodeStyle.icon;
-          const confirmTint = schedule.nfcTagUid ? theme.statusTint('taken') : theme.statusTint('pending');
-          const confirmText = schedule.nfcTagUid ? theme.statusText('taken') : theme.statusText('pending');
-          return (
-            <View
-              className="flex-row items-start gap-4 rounded-3xl border p-5"
-              style={{ marginBottom: 16, backgroundColor: theme.colors.elevated, borderColor: theme.colors.hairline }}
-            >
-              {/* Colored to match whichever time-of-day pill this schedule
-                  was created from (see TIME_NODE_STYLE) — the badge goes
-                  neutral gray when paused instead of dimming the whole card,
-                  so the medication name and dose stay fully legible even for
-                  a reminder that's currently off. */}
-              <View
-                className="items-center justify-center rounded-2xl"
-                style={{ width: 44, height: 44, backgroundColor: schedule.is_active ? nodeStyle.color : theme.colors.hairline }}
-              >
-                <NodeIcon color={schedule.is_active ? '#FFFFFF' : theme.colors.inkMuted} size={22} strokeWidth={2.25} />
-              </View>
-              <View className="flex-1 gap-1.5">
-                {schedule.title ? (
-                  <Text className="text-caption" numberOfLines={1} style={{ color: theme.action.base, fontWeight: '700' }}>
-                    {schedule.title}
-                  </Text>
-                ) : null}
-                <Text className="text-body-lg" numberOfLines={1} style={{ color: theme.colors.ink, fontWeight: '600' }}>
-                  {schedule.medicationName}
-                </Text>
-                <Text className="text-caption" style={{ color: theme.colors.inkSecondary }}>
-                  {t('alarms.doseAt', {
-                    quantity: schedule.dose_quantity,
-                    form: schedule.medicationForm,
-                    time: formatTimeLabel(schedule.time_utc),
-                  })}
-                </Text>
-                <Text className="text-caption" style={{ color: theme.colors.inkMuted }}>
-                  {t(`alarms.mealRelation.${schedule.meal_relation}` as never)}
-                </Text>
-                <View className="flex-row flex-wrap items-center gap-1.5">
-                  <View className="flex-row items-center gap-1 rounded-full px-2.5 py-1" style={{ backgroundColor: confirmTint }}>
-                    {schedule.nfcTagUid ? (
-                      <Nfc color={confirmText} size={12} strokeWidth={2.5} />
-                    ) : (
-                      <Camera color={confirmText} size={12} strokeWidth={2.5} />
-                    )}
-                    <Text className="text-caption" numberOfLines={1} style={{ color: confirmText }}>
-                      {schedule.nfcTagUid ? t('alarms.nfcRegistered') : t('alarms.nfcFallback')}
-                    </Text>
-                  </View>
-                  {!schedule.is_active ? (
-                    <View className="rounded-full px-2.5 py-1" style={{ backgroundColor: theme.colors.hairline }}>
-                      <Text className="text-caption" style={{ color: theme.colors.inkMuted }}>
-                        {t('alarms.off')}
-                      </Text>
-                    </View>
-                  ) : null}
-                </View>
-              </View>
-              {/* A real on/off switch, not just a "delete" option — turning an
-                  alarm off has to be reversible and has to actually cancel the
-                  live notification, not merely hide the row (see
-                  setScheduleActive's own doc comment for why). */}
-            <Switch
-              className="self-center"
-              value={schedule.is_active}
-              onValueChange={(next) => handleToggleActive(schedule, next)}
-              trackColor={{ false: theme.colors.hairline, true: theme.action.base }}
-              thumbColor="#FFFFFF"
-              accessibilityLabel={
-                schedule.is_active
-                  ? t('alarms.turnOffAccessibility', { name: schedule.medicationName })
-                  : t('alarms.turnOnAccessibility', { name: schedule.medicationName })
-              }
-            />
-            </View>
-          );
-        }}
+        ListEmptyComponent={<AlarmsEmptyState />}
+        renderItem={({ item: schedule }) => (
+          <AlarmScheduleCard
+            schedule={schedule}
+            onToggle={handleToggleActive}
+            onDelete={handleDeleteSchedule}
+            timeNodeStyle={TIME_NODE_STYLE[schedule.time_node]}
+          />
+        )}
       />
       <CaregiverContactSheet ref={caregiverSheetRef} onSave={handleSaveCaregiverPhone} onClear={handleClearCaregiverPhone} />
       <ReminderSheet ref={reminderSheetRef} onConfirm={handleAddReminder} />
