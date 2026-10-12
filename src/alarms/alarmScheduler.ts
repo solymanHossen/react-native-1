@@ -50,13 +50,14 @@ function toPayload(schedule: ScheduleWithMedication, scheduledAtMs: number): Sch
     mealRelation: schedule.meal_relation,
     nfcTagUid: schedule.nfcTagUid,
     scheduledAtMs,
+    title: schedule.title,
   };
 }
 
 function buildNotification(notificationId: string, payload: ScheduledAlarmPayload, body?: string): Notification {
   return {
     id: notificationId,
-    title: `Time for ${payload.medicationName}`,
+    title: payload.title ?? `Time for ${payload.medicationName}`,
     body: body ?? `${payload.dosageLabel} — ${mealGuidance(payload.mealRelation)} Scan the bottle's NFC tag or show the pack to the camera to confirm.`,
     data: { payload },
     android: {

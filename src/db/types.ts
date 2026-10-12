@@ -63,9 +63,11 @@ export interface Schedule {
   /** Bitmask, bit 0 = Sunday ... bit 6 = Saturday. */
   days_of_week_mask: number;
   is_active: boolean;
+  /** User-supplied label shown on the alarm notification/screen instead of the default "Time for {medication}" — null for every schedule that never had one set (OCR-created schedules, or ones added before this field existed). */
+  title: string | null;
 }
 
-export type NewSchedule = Omit<Schedule, 'id'>;
+export type NewSchedule = Omit<Schedule, 'id' | 'title'> & Partial<Pick<Schedule, 'title'>>;
 
 /** A Schedule joined with the fields of its medication the alarm engine needs — no repository returns a bare Schedule with these attached otherwise. */
 export interface ScheduleWithMedication extends Schedule {

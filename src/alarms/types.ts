@@ -19,6 +19,8 @@ export interface ScheduledAlarmPayload {
   nfcTagUid: string | null;
   /** Epoch ms this specific occurrence was scheduled for — identifies the dose being confirmed, independent of when the alarm actually fires or is resolved. */
   scheduledAtMs: number;
+  /** User-supplied label for this reminder (see Schedule.title) — null falls back to the default "Time for {medication}" notification title. */
+  title: string | null;
 }
 
 /** In-memory state for whichever alarm currently owns the screen (see activeAlarmStore.ts) — `null` means no alarm is active and the normal tab UI renders. */

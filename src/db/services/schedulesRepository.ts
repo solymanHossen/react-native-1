@@ -11,6 +11,7 @@ function toSchedule(row: Record<string, unknown>): Schedule {
     dose_quantity: Number(row.dose_quantity),
     days_of_week_mask: Number(row.days_of_week_mask),
     is_active: Number(row.is_active) === 1,
+    title: row.title === null || row.title === undefined ? null : String(row.title),
   };
 }
 
@@ -29,8 +30,8 @@ export class SchedulesRepository {
 
   async create(schedule: NewSchedule): Promise<Schedule> {
     const { insertId } = await this.db.execute(
-      `INSERT INTO schedules (medication_id, time_utc, time_node, meal_relation, dose_quantity, days_of_week_mask, is_active)
-       VALUES (?, ?, ?, ?, ?, ?, ?);`,
+      `INSERT INTO schedules (medication_id, time_utc, time_node, meal_relation, dose_quantity, days_of_week_mask, is_active, title)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?);`,
       [
         schedule.medication_id,
         schedule.time_utc,
@@ -39,6 +40,7 @@ export class SchedulesRepository {
         schedule.dose_quantity,
         schedule.days_of_week_mask,
         schedule.is_active ? 1 : 0,
+        schedule.title ?? null,
       ],
     );
     const created = await this.getById(insertId as number);

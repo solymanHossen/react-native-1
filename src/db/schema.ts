@@ -52,6 +52,7 @@ const CREATE_SCHEDULES = `
     dose_quantity REAL NOT NULL,
     days_of_week_mask INTEGER NOT NULL DEFAULT 127,
     is_active INTEGER NOT NULL DEFAULT 1,
+    title TEXT,
     FOREIGN KEY (medication_id) REFERENCES medications(id) ON DELETE CASCADE
   );
 `;
@@ -130,6 +131,11 @@ export async function runMigrations(db: DB): Promise<void> {
     }
     if (!medicationColumns.some((row) => row.name === 'photo_uri')) {
       await tx.execute('ALTER TABLE medications ADD COLUMN photo_uri TEXT;');
+    }
+
+    const { rows: scheduleColumns } = await tx.execute('PRAGMA table_info(schedules);');
+    if (!scheduleColumns.some((row) => row.name === 'title')) {
+      await tx.execute('ALTER TABLE schedules ADD COLUMN title TEXT;');
     }
   });
 }

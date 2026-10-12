@@ -252,7 +252,7 @@ export default function AlarmScreen({ alarm }: AlarmScreenProps) {
     <SafeAreaView className="flex-1" style={{ backgroundColor: palette.dark.canvas }}>
       <View className="flex-1 items-center justify-center gap-5 px-8">
         <Text className="text-caption uppercase tracking-wider" style={{ color: palette.dark.inkMuted }}>
-          {t('alarmRinging.title')}
+          {payload.title ?? t('alarmRinging.title')}
         </Text>
         <Text className="text-center text-display-lg" style={{ color: '#FFFFFF' }}>
           {payload.medicationName}

@@ -1,5 +1,6 @@
 import { FlashList } from '@shopify/flash-list';
 import { BottomSheetModal, BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
+import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { Camera, Check, Clock, Droplet, Moon, Nfc, Package, Phone, Pill, ShieldAlert, Sun, Sunrise, Sunset, Trash2, X } from 'lucide-react-native';
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, type ComponentType } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Switch, Text, View } from 'react-native';
@@ -163,6 +164,27 @@ const MEAL_RELATIONS: Array<{ value: MealRelation; labelKey: TranslationKey }> =
   { value: 'AFTER', labelKey: 'alarms.mealAfter' },
 ];
 
+function toHHMM(hours: number, minutes: number): string {
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+}
+
+/** Buckets an arbitrary picked time into whichever TIME_SLOTS preset is closest on the clock (wrapping past midnight) — a custom time still needs a `time_node` for schema storage and for the icon/color grouping every other surface (TIME_NODE_STYLE, the schedule list) keys off of. */
+function nearestTimeNode(hours: number, minutes: number): TimeNode {
+  const target = hours * 60 + minutes;
+  let best: TimeSlot = TIME_SLOTS[0];
+  let bestDistance = Infinity;
+  for (const slot of TIME_SLOTS) {
+    const [slotHours, slotMinutes] = slot.timeUtc.split(':').map(Number);
+    const diff = Math.abs(target - (slotHours * 60 + slotMinutes));
+    const distance = Math.min(diff, 1440 - diff);
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      best = slot;
+    }
+  }
+  return best.node;
+}
+
 /** Reads a TIME_SLOTS entry's icon/color back out by node — keeps TIME_NODE_STYLE's four shared entries derived from the single TIME_SLOTS source instead of re-spelling the same hex values a second time. */
 function timeSlotStyle(node: Exclude<TimeNode, 'FASTING'>) {
   const slot = TIME_SLOTS.find((entry) => entry.node === node)!;
@@ -201,14 +223,17 @@ interface ReminderSheetRef {
  * glance instead of needing an extra tap just to see them.
  */
 const ReminderSheet = forwardRef<ReminderSheetRef, {
-  onConfirm: (medication: Medication, timeSlot: TimeSlot, mealRelation: MealRelation) => Promise<void>;
+  onConfirm: (medication: Medication, time: { timeUtc: string; timeNode: TimeNode }, mealRelation: MealRelation, title: string | null) => Promise<void>;
 }>(function ReminderSheetImpl({ onConfirm }, ref) {
   const theme = useTheme();
   const { t } = useTranslation();
   const modalRef = useRef<BottomSheetModal>(null);
   const [medication, setMedication] = useState<Medication | null>(null);
   const [timeNode, setTimeNode] = useState<TimeNode>('BREAKFAST');
+  const [customTime, setCustomTime] = useState<{ hours: number; minutes: number } | null>(null);
+  const [showCustomPicker, setShowCustomPicker] = useState(false);
   const [mealRelation, setMealRelation] = useState<MealRelation>('WITH');
+  const [customTitle, setCustomTitle] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const snapPoints = useMemo(() => ['74%'], []);
@@ -217,21 +242,52 @@ const ReminderSheet = forwardRef<ReminderSheetRef, {
     present: (nextMedication) => {
       setMedication(nextMedication);
       setTimeNode('BREAKFAST');
+      setCustomTime(null);
+      setShowCustomPicker(false);
       setMealRelation('WITH');
+      setCustomTitle('');
       setError(null);
       setSubmitting(false);
       modalRef.current?.present();
     },
   }), []);
 
-  const selectedTimeSlot = TIME_SLOTS.find((slot) => slot.node === timeNode) ?? TIME_SLOTS[0];
+  // A custom time still has to resolve to one of the fixed `time_node`
+  // values the schema (and every other surface keyed on TIME_NODE_STYLE)
+  // expects — `nearestTimeNode` buckets it by clock proximity rather than
+  // inventing a 5th, unstyled node just for user-picked times.
+  const resolvedTime = useMemo(() => {
+    if (customTime) {
+      return { timeUtc: toHHMM(customTime.hours, customTime.minutes), timeNode: nearestTimeNode(customTime.hours, customTime.minutes) };
+    }
+    const slot = TIME_SLOTS.find((entry) => entry.node === timeNode) ?? TIME_SLOTS[0];
+    return { timeUtc: slot.timeUtc, timeNode: slot.node };
+  }, [customTime, timeNode]);
+
+  const customPickerValue = useMemo(() => {
+    const base = new Date();
+    if (customTime) {
+      base.setHours(customTime.hours, customTime.minutes, 0, 0);
+    } else {
+      const [hours, minutes] = resolvedTime.timeUtc.split(':').map(Number);
+      base.setHours(hours, minutes, 0, 0);
+    }
+    return base;
+  }, [customTime, resolvedTime.timeUtc]);
+
+  const handleCustomTimeChange = useCallback((event: DateTimePickerEvent, selectedDate?: Date) => {
+    setShowCustomPicker(false);
+    if (event.type !== 'set' || !selectedDate) return;
+    setCustomTime({ hours: selectedDate.getHours(), minutes: selectedDate.getMinutes() });
+    triggerHaptic('selection');
+  }, []);
 
   const handleConfirm = useCallback(async () => {
     if (!medication || submitting) return;
     setSubmitting(true);
     setError(null);
     try {
-      await onConfirm(medication, selectedTimeSlot, mealRelation);
+      await onConfirm(medication, resolvedTime, mealRelation, customTitle.trim() || null);
       modalRef.current?.dismiss();
     } catch (confirmError) {
       console.warn('[ReminderSheet] failed to add reminder', confirmError);
@@ -239,7 +295,7 @@ const ReminderSheet = forwardRef<ReminderSheetRef, {
     } finally {
       setSubmitting(false);
     }
-  }, [mealRelation, medication, onConfirm, selectedTimeSlot, submitting, t]);
+  }, [customTitle, mealRelation, medication, onConfirm, resolvedTime, submitting, t]);
 
   if (!medication) return null;
   const FormIcon = medicationFormIcon(medication.form);
@@ -281,12 +337,13 @@ const ReminderSheet = forwardRef<ReminderSheetRef, {
           <View className="flex-row flex-wrap gap-3">
             {TIME_SLOTS.map((slot) => {
               const SlotIcon = slot.icon;
-              const selected = timeNode === slot.node;
+              const selected = !customTime && timeNode === slot.node;
               return (
                 <Pressable
                   key={slot.node}
                   onPress={() => {
                     setTimeNode(slot.node);
+                    setCustomTime(null);
                     triggerHaptic('selection');
                   }}
                   accessibilityRole="button"
@@ -316,6 +373,39 @@ const ReminderSheet = forwardRef<ReminderSheetRef, {
               );
             })}
           </View>
+
+          {/* A 5th, full-width option rather than wedging it into the 2x2
+              grid — picking any exact time is a different kind of choice
+              than picking one of four fixed presets, and reads clearer as
+              its own row than as an oddly-wrapping fifth card. */}
+          <Pressable
+            onPress={() => setShowCustomPicker(true)}
+            accessibilityRole="button"
+            accessibilityLabel={t('alarms.timeSelectorAccessibility')}
+            accessibilityState={{ selected: customTime !== null }}
+            className="min-h-hit flex-row items-center gap-3 rounded-2xl border p-3.5"
+            style={{
+              backgroundColor: customTime ? `${theme.action.base}12` : theme.colors.elevated,
+              borderColor: customTime ? theme.action.base : theme.colors.hairline,
+              borderWidth: customTime ? 2 : 1,
+            }}
+          >
+            <View className="items-center justify-center rounded-xl" style={{ width: 38, height: 38, backgroundColor: customTime ? theme.action.base : `${theme.action.base}14` }}>
+              <Clock color={customTime ? theme.action.ink : theme.action.base} size={19} strokeWidth={2.25} />
+            </View>
+            <View className="flex-1">
+              <Text className="text-body" numberOfLines={1} style={{ color: theme.colors.ink, fontWeight: customTime ? '700' : '600' }}>
+                {t('alarms.customTime')}
+              </Text>
+              <Text className="text-caption" numberOfLines={1} style={{ color: theme.colors.inkSecondary }}>
+                {customTime ? formatTimeLabel(toHHMM(customTime.hours, customTime.minutes)) : t('alarms.customTimeHint')}
+              </Text>
+            </View>
+            {customTime ? <Check color={theme.action.base} size={17} strokeWidth={2.5} /> : null}
+          </Pressable>
+          {showCustomPicker ? (
+            <DateTimePicker value={customPickerValue} mode="time" display="default" onChange={handleCustomTimeChange} />
+          ) : null}
         </View>
 
         <View className="gap-2.5">
@@ -355,6 +445,25 @@ const ReminderSheet = forwardRef<ReminderSheetRef, {
           </View>
           <Text className="text-caption" style={{ color: theme.colors.inkMuted }}>
             {t('alarms.mealRelationHint')}
+          </Text>
+        </View>
+
+        <View className="gap-2">
+          <Text className="text-caption" style={{ color: theme.colors.inkMuted }}>
+            {t('alarms.customTitleLabel')}
+          </Text>
+          <BottomSheetTextInput
+            value={customTitle}
+            onChangeText={setCustomTitle}
+            placeholder={t('alarms.customTitlePlaceholder')}
+            placeholderTextColor={theme.colors.inkMuted}
+            maxLength={60}
+            returnKeyType="done"
+            className="min-h-hit rounded-2xl border px-5 text-body-lg"
+            style={{ backgroundColor: theme.colors.elevated, borderColor: theme.colors.hairline, color: theme.colors.ink }}
+          />
+          <Text className="text-caption" style={{ color: theme.colors.inkMuted }}>
+            {t('alarms.customTitleHint', { name: medication.name })}
           </Text>
         </View>
 
@@ -427,19 +536,20 @@ export default function AlarmsScreen() {
   }, [refresh]);
 
   const handleAddReminder = useCallback(
-    async (medication: Medication, timeSlot: TimeSlot, mealRelation: MealRelation) => {
+    async (medication: Medication, time: { timeUtc: string; timeNode: TimeNode }, mealRelation: MealRelation, title: string | null) => {
       // Re-fetches the live database rather than using the `mediusDb` closure —
       // if a vault restore happened while this screen stayed mounted, `mediusDb`
       // would still point at the connection that restore just closed.
       const database = await initializeDatabase();
       await database.schedules.create({
         medication_id: medication.id,
-        time_utc: timeSlot.timeUtc,
-        time_node: timeSlot.node,
+        time_utc: time.timeUtc,
+        time_node: time.timeNode,
         meal_relation: mealRelation,
         dose_quantity: 1,
         days_of_week_mask: 127,
         is_active: true,
+        title,
       });
       await Promise.all([refresh(database), rescheduleAllActiveAlarms()]);
       triggerHaptic('notificationSuccess');
@@ -696,6 +806,11 @@ export default function AlarmsScreen() {
                 <NodeIcon color={schedule.is_active ? '#FFFFFF' : theme.colors.inkMuted} size={22} strokeWidth={2.25} />
               </View>
               <View className="flex-1 gap-1.5">
+                {schedule.title ? (
+                  <Text className="text-caption" numberOfLines={1} style={{ color: theme.action.base, fontWeight: '700' }}>
+                    {schedule.title}
+                  </Text>
+                ) : null}
                 <Text className="text-body-lg" numberOfLines={1} style={{ color: theme.colors.ink, fontWeight: '600' }}>
                   {schedule.medicationName}
                 </Text>
