@@ -89,13 +89,21 @@ export const designPalette = {
 } as const;
 
 export const palette = {
-  // Unchanged from the original light theme — the glassmorphism/dark-mode
-  // redesign below is scoped to dark mode only, by explicit product decision.
+  // Modern neutral-slate background system: a soft, slightly-tinted-gray
+  // canvas with crisp white cards floating on top via the shadow/border
+  // styling every card already carries. Replaces the original cyan-on-cyan
+  // canvas/elevated pair, which were nearly identical in lightness and hue
+  // (both sampled from `lightCyan`) and so barely separated a card from the
+  // screen behind it. Uses the same neutral slate family as the dark theme's
+  // canvas/surface (see `palette.dark` below) so light and dark read as one
+  // consistent "modern slate" design language at different lightness, not
+  // two unrelated themes — ink/inkSecondary/inkMuted and every status/severity
+  // color are untouched, so this only changes background/card surfaces.
   light: {
-    canvas: designPalette.lightCyan[900],
+    canvas: '#F1F5F9',
     surface: '#FFFFFF',
-    elevated: designPalette.lightCyan.DEFAULT,
-    hairline: designPalette.lightBlue[600],
+    elevated: '#FFFFFF',
+    hairline: '#E2E8F0',
     ink: designPalette.jetBlack[500],
     inkSecondary: designPalette.blueSlate[300],
     inkMuted: designPalette.coolSteel[300],
