@@ -6,6 +6,31 @@ const BCP47_LANGUAGE: Record<LanguageCode, string> = {
   bn: 'bn-BD',
 };
 
+/**
+ * Routes the announcement through Android's ALARM audio stream instead of
+ * the engine's default (MUSIC) stream. Without this, `Tts.speak()` is
+ * perfectly correct code that simply speaks into silence on any phone with
+ * media volume turned down or muted — exactly the state a phone is likely to
+ * be in overnight, i.e. exactly when a medication alarm matters most. The
+ * alarm's own tone/vibration (via Notifee's `AlarmType.SET_ALARM_CLOCK`)
+ * already plays on the ALARM stream specifically so it can't be silenced
+ * that way; the spoken announcement needs the same guarantee.
+ * `iosVoiceId`/`rate` are intentionally omitted (not just empty-stringed):
+ * the native iOS module reads them with `valueForKey:`, which returns nil
+ * for an absent key and leaves voice/rate at their existing defaults,
+ * so this is Android-only in effect despite the shared call site. Typed
+ * as `any` because `react-native-tts`'s `Options` type requires
+ * `iosVoiceId`/`rate` alongside `androidParams` even though the native code
+ * on both platforms treats every one of these keys as optional.
+ */
+const ANDROID_ALARM_STREAM_OPTIONS = {
+  androidParams: {
+    KEY_PARAM_STREAM: 'STREAM_ALARM',
+    KEY_PARAM_VOLUME: 1,
+    KEY_PARAM_PAN: 0,
+  },
+} as any;
+
 let readyPromise: Promise<void> | null = null;
 
 function ensureReady(): Promise<void> {
@@ -43,7 +68,7 @@ export async function speakReminder(text: string, language: LanguageCode): Promi
       console.warn(`[tts] language "${BCP47_LANGUAGE[language]}" unavailable, using engine default`, error);
     });
     await Tts.stop();
-    Tts.speak(text);
+    Tts.speak(text, ANDROID_ALARM_STREAM_OPTIONS);
   } catch (error) {
     console.warn('[tts] speak failed — continuing without voice', error);
   }

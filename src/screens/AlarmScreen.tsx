@@ -1,5 +1,5 @@
 import notifee from '@notifee/react-native';
-import { AlertTriangle, Camera as CameraIcon, CheckCircle2, Nfc } from 'lucide-react-native';
+import { AlertTriangle, Camera as CameraIcon, CheckCircle2, Clock, Nfc } from 'lucide-react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { Camera, useCameraDevice, useCameraPermission } from 'react-native-vision-camera';
@@ -28,7 +28,6 @@ import {
 } from '../alarms';
 import { useTranslation } from '../i18n';
 import { action as brandAction, palette, status } from '../theme/tokens';
-import { useTheme } from '../theme/useTheme';
 import { triggerHapticCascade, triggerHaptic } from '../lib/haptics';
 import { speakReminder, stopSpeaking } from '../lib/tts';
 
@@ -64,7 +63,6 @@ interface AlarmScreenProps {
  * or the hold-to-override safety valve.
  */
 export default function AlarmScreen({ alarm }: AlarmScreenProps) {
-  const theme = useTheme();
   const { t, language } = useTranslation();
   const { payload, firedAtMs, snoozeCount } = alarm;
   const clearActiveAlarm = useActiveAlarmStore((state) => state.clearActiveAlarm);
@@ -264,9 +262,23 @@ export default function AlarmScreen({ alarm }: AlarmScreenProps) {
 
   if (resolution === 'verified') {
     return (
-      <SafeAreaView className="flex-1 items-center justify-center gap-6" style={{ backgroundColor: theme.colors.canvas }}>
-        <CheckCircle2 color={theme.status.taken.base} size={96} strokeWidth={1.5} />
-        <Text className="text-title-lg" style={{ color: theme.colors.ink }}>
+      <SafeAreaView className="flex-1 items-center justify-center gap-6" style={{ backgroundColor: palette.dark.canvas }}>
+        <View
+          className="items-center justify-center rounded-full"
+          style={{
+            width: 160,
+            height: 160,
+            backgroundColor: 'rgba(16, 185, 129, 0.12)',
+            shadowColor: status.taken.baseDark ?? status.taken.base,
+            shadowOffset: { width: 0, height: 0 },
+            shadowOpacity: 0.5,
+            shadowRadius: 24,
+            elevation: 10,
+          }}
+        >
+          <CheckCircle2 color={status.taken.baseDark ?? status.taken.base} size={96} strokeWidth={1.5} />
+        </View>
+        <Text className="text-title-lg" style={{ color: palette.dark.ink }}>
           {t('alarmRinging.confirmed', { name: payload.medicationName })}
         </Text>
       </SafeAreaView>
@@ -276,20 +288,53 @@ export default function AlarmScreen({ alarm }: AlarmScreenProps) {
   return (
     <SafeAreaView className="flex-1" style={{ backgroundColor: palette.dark.canvas }}>
       <View className="flex-1 items-center justify-center gap-5 px-8">
-        <Text className="text-caption uppercase tracking-wider" style={{ color: palette.dark.inkMuted }}>
-          {payload.title ?? t('alarmRinging.title')}
-        </Text>
-        <Text className="text-center text-display-lg" style={{ color: '#FFFFFF' }}>
-          {payload.medicationName}
-        </Text>
-        <Text className="text-center text-body-lg" style={{ color: palette.dark.inkSecondary }}>
-          {payload.dosageLabel}
-        </Text>
+        {/* Medication info card: the one piece of information the whole screen
+            exists to surface, so it gets the same glass-card treatment as
+            every other primary surface in the app instead of floating
+            directly on the bare canvas. */}
+        <View
+          className="w-full items-center gap-2 rounded-3xl px-6 py-7"
+          style={{
+            backgroundColor: 'rgba(31, 41, 55, 0.75)',
+            borderWidth: 1,
+            borderColor: 'rgba(255, 255, 255, 0.08)',
+            shadowColor: '#000000',
+            shadowOffset: { width: 0, height: 10 },
+            shadowOpacity: 0.35,
+            shadowRadius: 20,
+            elevation: 8,
+          }}
+        >
+          <View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 20, right: 20, height: 1, backgroundColor: 'rgba(255, 255, 255, 0.1)' }} />
+          <Text className="text-caption uppercase tracking-wider" style={{ color: palette.dark.inkMuted }}>
+            {payload.title ?? t('alarmRinging.title')}
+          </Text>
+          <Text className="text-center text-display-lg" style={{ color: '#FFFFFF' }}>
+            {payload.medicationName}
+          </Text>
+          <Text className="text-center text-body-lg" style={{ color: palette.dark.inkSecondary }}>
+            {payload.dosageLabel}
+          </Text>
+        </View>
 
         {mode === 'nfc' ? (
           <View className="items-center gap-4">
             <Animated.View style={pulseStyle}>
-              <View className="items-center justify-center rounded-full" style={{ width: 140, height: 140, backgroundColor: `${brandAction.dark.base}2E` }}>
+              <View
+                className="items-center justify-center rounded-full"
+                style={{
+                  width: 140,
+                  height: 140,
+                  backgroundColor: `${brandAction.dark.base}2E`,
+                  borderWidth: 1,
+                  borderColor: `${brandAction.dark.base}55`,
+                  shadowColor: brandAction.dark.base,
+                  shadowOffset: { width: 0, height: 0 },
+                  shadowOpacity: 0.6,
+                  shadowRadius: 20,
+                  elevation: 8,
+                }}
+              >
                 <Nfc color={SCHEDULED_ACCENT} size={64} strokeWidth={1.5} />
               </View>
             </Animated.View>
@@ -299,7 +344,21 @@ export default function AlarmScreen({ alarm }: AlarmScreenProps) {
           </View>
         ) : (
           <View className="w-full items-center gap-3">
-            <View className="overflow-hidden rounded-3xl" style={{ width: 240, height: 320, backgroundColor: '#000000' }}>
+            <View
+              className="overflow-hidden rounded-3xl"
+              style={{
+                width: 240,
+                height: 320,
+                backgroundColor: '#000000',
+                borderWidth: 1,
+                borderColor: 'rgba(255, 255, 255, 0.12)',
+                shadowColor: '#000000',
+                shadowOffset: { width: 0, height: 10 },
+                shadowOpacity: 0.4,
+                shadowRadius: 20,
+                elevation: 8,
+              }}
+            >
               {device && hasPermission ? (
                 <Camera ref={cameraRef} style={{ width: 240, height: 320 }} device={device} isActive photo />
               ) : (
@@ -321,7 +380,14 @@ export default function AlarmScreen({ alarm }: AlarmScreenProps) {
         )}
 
         {statusMessage ? (
-          <View className="flex-row items-center gap-2 rounded-2xl px-4 py-2" style={{ backgroundColor: 'rgba(255,107,107,0.15)' }}>
+          <View
+            className="flex-row items-center gap-2 rounded-2xl px-4 py-2"
+            style={{
+              backgroundColor: 'rgba(255,107,107,0.15)',
+              borderWidth: 1,
+              borderColor: 'rgba(255,107,107,0.3)',
+            }}
+          >
             <AlertTriangle color="#FF6B6B" size={18} />
             <Text className="text-caption" style={{ color: '#FF9B9B' }}>
               {statusMessage}
@@ -335,9 +401,15 @@ export default function AlarmScreen({ alarm }: AlarmScreenProps) {
           </Text>
         </Pressable>
 
-        <Text className="text-caption" style={{ color: palette.dark.inkMuted }}>
-          {t('alarmRinging.autoEscalates', { time: formatCountdown(remainingMs) })}
-        </Text>
+        <View
+          className="flex-row items-center gap-2 rounded-full px-4 py-2"
+          style={{ backgroundColor: 'rgba(255, 255, 255, 0.06)', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.08)' }}
+        >
+          <Clock color={palette.dark.inkMuted} size={14} />
+          <Text className="text-caption" style={{ color: palette.dark.inkMuted }}>
+            {t('alarmRinging.autoEscalates', { time: formatCountdown(remainingMs) })}
+          </Text>
+        </View>
       </View>
 
       <View className="gap-4 px-8 pb-10">
@@ -346,9 +418,13 @@ export default function AlarmScreen({ alarm }: AlarmScreenProps) {
             label={t('alarmRinging.snooze', { count: remainingSnoozes(snoozeCount) })}
             variant="secondary"
             onPress={handleSnooze}
+            forceDark
           />
         ) : (
-          <View className="min-h-hit items-center justify-center rounded-full border px-8 py-5" style={{ borderColor: palette.dark.hairline }}>
+          <View
+            className="min-h-hit items-center justify-center rounded-full border px-8 py-5"
+            style={{ backgroundColor: 'rgba(31, 41, 55, 0.75)', borderColor: palette.dark.hairline }}
+          >
             <Text className="text-body-lg" style={{ color: palette.dark.inkMuted }}>
               {t('alarmRinging.noSnoozesLeft')}
             </Text>
@@ -361,7 +437,14 @@ export default function AlarmScreen({ alarm }: AlarmScreenProps) {
           accessibilityRole="button"
           accessibilityLabel={t('alarmRinging.overrideAccessibility')}
           className="min-h-hit items-center justify-center overflow-hidden rounded-full border"
-          style={{ borderColor: 'rgba(255,107,107,0.4)' }}
+          style={{
+            borderColor: 'rgba(255,107,107,0.4)',
+            shadowColor: '#EF4444',
+            shadowOffset: { width: 0, height: 0 },
+            shadowOpacity: 0.3,
+            shadowRadius: 14,
+            elevation: 4,
+          }}
         >
           <View
             pointerEvents="none"

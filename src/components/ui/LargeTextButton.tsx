@@ -21,6 +21,8 @@ export interface LargeTextButtonProps {
   accessibilityHint?: string;
   hapticType?: HapticType;
   testID?: string;
+  /** Renders the dark-mode glassmorphism styling regardless of the live theme — for AlarmScreen, which deliberately always shows a fixed dark surface no matter the user's light/dark preference. Every other caller leaves this unset and follows the live theme as before. */
+  forceDark?: boolean;
 }
 
 /**
@@ -47,6 +49,7 @@ export function LargeTextButton({
   accessibilityHint,
   hapticType = 'impactMedium',
   testID,
+  forceDark = false,
 }: LargeTextButtonProps) {
   const theme = useTheme();
   const scale = useSharedValue(1);
@@ -71,10 +74,17 @@ export function LargeTextButton({
     onPress();
   }, [isInteractive, hapticType, onPress]);
 
-  const isDark = theme.mode === 'dark';
+  const isDark = forceDark || theme.mode === 'dark';
   const isPrimary = variant === 'primary';
   const backgroundColor = isPrimary ? theme.action.base : isDark ? 'rgba(31, 41, 55, 0.75)' : theme.colors.elevated;
-  const textColor = isPrimary ? theme.action.ink : theme.colors.ink;
+  // The secondary-variant branch has no live-dark-mode value to fall back to
+  // the way background/border do (they hardcode the glass rgba literal
+  // directly) — without this branch, `forceDark` on a live-light device would
+  // pair a forced-dark background with light-theme (dark) ink text, which is
+  // illegible. In live dark mode `theme.colors.ink` is already '#FFFFFF', so
+  // this changes nothing there; it only matters when `forceDark` diverges
+  // from the live theme.
+  const textColor = isPrimary ? theme.action.ink : isDark ? '#FFFFFF' : theme.colors.ink;
   const borderColor = isPrimary
     ? isDark
       ? 'rgba(96, 165, 250, 0.45)'
