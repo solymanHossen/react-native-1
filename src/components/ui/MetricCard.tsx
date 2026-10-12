@@ -70,6 +70,15 @@ export function MetricCard({ label, value, unit, caption, status, icon, onPress,
       className={`min-h-hit rounded-3xl ${compact ? 'p-4' : 'p-6'}`}
       style={[
         {
+          // Fixed (not minimum) height in compact mode: these cards sit
+          // side-by-side in HomeScreen's horizontal Vitals strip, where one
+          // card's optional status pill or a caption that wraps to a second
+          // line (e.g. "High Blood Pressure Stage 2") used to make it taller
+          // than its neighbors, breaking the row's bottom alignment. Fixing
+          // the height makes every card the same size regardless of which
+          // optional content it has; shorter content just leaves empty
+          // space below rather than the whole card shrinking.
+          height: compact ? 190 : undefined,
           backgroundColor: theme.mode === 'dark' ? 'rgba(31, 41, 55, 0.75)' : theme.colors.elevated,
           borderWidth: 1,
           borderColor: theme.mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : theme.colors.hairline,

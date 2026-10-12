@@ -78,11 +78,21 @@ function hoursAgoLabel(iso: string, t: ReturnType<typeof useTranslation>['t']): 
  * read as "designed" rather than "rendered". Plain `useEffect` + `withDelay`
  * per instance, not a shared orchestrator: each section mounts once and
  * never needs to replay, so there's nothing to coordinate centrally.
+ *
+ * "Once" means once per app session, not once per mount: App.tsx's tab
+ * switcher fully unmounts/remounts the active screen on every tab change
+ * (HomeScreen's own data-refresh effect below relies on that remount to
+ * re-read stores on every revisit), so without this module-level flag the
+ * whole stagger would replay — cards sliding/fading in again — every single
+ * time someone tabs back to Home, not just on first launch.
  */
+let homeRevealedThisSession = false;
+
 function RevealOnMount({ delay, children }: { delay: number; children: ReactNode }) {
-  const progress = useSharedValue(0);
+  const progress = useSharedValue(homeRevealedThisSession ? 1 : 0);
 
   useEffect(() => {
+    if (homeRevealedThisSession) return;
     progress.value = withDelay(delay, withSpring(1, REVEAL_SPRING));
   }, [delay, progress]);
 
@@ -130,6 +140,13 @@ export default function HomeScreen({ onNavigateToVitals, onOpenSettings }: HomeS
   useEffect(() => {
     refreshEverything().catch(() => {});
   }, [refreshEverything]);
+
+  // Marks the entrance stagger (see RevealOnMount above) as already played
+  // for the rest of this app session, so tabbing back to Home later shows
+  // the cards in place immediately instead of re-animating them in.
+  useEffect(() => {
+    homeRevealedThisSession = true;
+  }, []);
 
   const handlePullToRefresh = useCallback(() => {
     setRefreshing(true);
