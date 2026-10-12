@@ -12,7 +12,7 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 import { HealthRecordsSheet, type HealthRecordsSheetRef } from '../components/records/HealthRecordsSheet';
-import { LiquidProgressRing } from '../components/dashboard/LiquidProgressRing';
+import { LiquidProgressRing, TodayStatusCard } from '../components/dashboard';
 import { ActionRow, ActionRowGroup, AmbientDepthBackground, AppLogo, LargeTextButton, MetricCard, StatusPill } from '../components/ui';
 import { useTranslation, type TranslationKey } from '../i18n';
 import { triggerHaptic } from '../lib/haptics';
@@ -169,6 +169,25 @@ export default function HomeScreen({ onNavigateToVitals, onOpenSettings }: HomeS
     for (const item of intakeItems) counts[item.status] += 1;
     return counts;
   }, [intakeItems]);
+
+  const statusRows = useMemo(() => {
+    const active = (Object.keys(statusCounts) as IntakeQueueStatus[]).filter(
+      (key) => statusCounts[key] > 0,
+    );
+    if (active.length === 0) return [];
+    if (active.length === 1) return [[active[0]]];
+    if (active.length === 2) return [[active[0], active[1]]];
+    if (active.length === 3) return [[active[0], active[1]], [active[2]]];
+    const rows: IntakeQueueStatus[][] = [];
+    for (let i = 0; i < active.length; i += 2) {
+      if (i + 1 < active.length) {
+        rows.push([active[i], active[i + 1]]);
+      } else {
+        rows.push([active[i]]);
+      }
+    }
+    return rows;
+  }, [statusCounts]);
 
   const overallRatio = intakeItems.length === 0 ? 0 : statusCounts.TAKEN / intakeItems.length;
 
@@ -359,23 +378,26 @@ export default function HomeScreen({ onNavigateToVitals, onOpenSettings }: HomeS
                 </Text>
               </View>
             </View>
-            {intakeItems.length > 0 ? (
+            {statusRows.length > 0 ? (
               <View
-                className="flex-row flex-wrap gap-2.5 pt-4"
+                className="gap-2.5 pt-4"
                 style={{
                   borderTopWidth: 1,
                   borderTopColor: theme.mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : theme.colors.hairline,
                 }}
               >
-                {(Object.keys(statusCounts) as IntakeQueueStatus[])
-                  .filter((key) => statusCounts[key] > 0)
-                  .map((key) => (
-                    <StatusPill
-                      key={key}
-                      status={STATUS_TO_KEY[key]}
-                      label={`${t(STATUS_TRANSLATION_KEY[key])} · ${statusCounts[key]}`}
-                    />
-                  ))}
+                {statusRows.map((row, rowIndex) => (
+                  <View key={rowIndex} className="flex-row gap-2.5">
+                    {row.map((key) => (
+                      <TodayStatusCard
+                        key={key}
+                        status={STATUS_TO_KEY[key]}
+                        label={t(STATUS_TRANSLATION_KEY[key])}
+                        count={statusCounts[key]}
+                      />
+                    ))}
+                  </View>
+                ))}
               </View>
             ) : null}
           </View>
