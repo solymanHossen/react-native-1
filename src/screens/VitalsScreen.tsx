@@ -341,10 +341,10 @@ export default function VitalsScreen({ focusVital = null }: VitalsScreenProps) {
                   onPress={() => setTrendType(option.type)}
                   accessibilityRole="button"
                   accessibilityState={{ selected: isActive }}
-                  className="min-h-hit items-center justify-center rounded-full border px-5"
+                  className="min-h-hit flex-1 basis-[31%] items-center justify-center rounded-full border px-5"
                   style={{ backgroundColor: isActive ? theme.action.base : theme.colors.elevated, borderColor: isActive ? theme.action.base : theme.colors.hairline }}
                 >
-                  <Text className="text-caption" style={{ color: isActive ? theme.action.ink : theme.colors.ink, fontWeight: '600' }}>
+                  <Text className="text-caption" numberOfLines={1} style={{ color: isActive ? theme.action.ink : theme.colors.ink, fontWeight: '600' }}>
                     {t(option.labelKey)}
                   </Text>
                 </Pressable>
@@ -360,10 +360,10 @@ export default function VitalsScreen({ focusVital = null }: VitalsScreenProps) {
                   onPress={() => setTrendRange(range)}
                   accessibilityRole="button"
                   accessibilityState={{ selected: isActive }}
-                  className="min-h-hit items-center justify-center rounded-full border px-5"
+                  className="min-h-hit flex-1 items-center justify-center rounded-full border px-5"
                   style={{ backgroundColor: isActive ? theme.colors.hairline : 'transparent', borderColor: theme.colors.hairline }}
                 >
-                  <Text className="text-caption" style={{ color: theme.colors.ink, fontWeight: '600' }}>
+                  <Text className="text-caption" numberOfLines={1} style={{ color: theme.colors.ink, fontWeight: '600' }}>
                     {range === 7 ? t('vitals.days7') : t('vitals.days30')}
                   </Text>
                 </Pressable>
