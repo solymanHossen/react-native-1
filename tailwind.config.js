@@ -50,7 +50,15 @@ module.exports = {
             fontSize: {
                 "display-lg": ["44px", { lineHeight: "50px", fontWeight: "800" }],
                 "title-lg": ["30px", { lineHeight: "36px", fontWeight: "700" }],
+                "title-md": ["24px", { lineHeight: "30px", fontWeight: "700" }],
                 "body-lg": ["20px", { lineHeight: "28px", fontWeight: "400" }],
+                // "body" and "body-md" are the same value — two different
+                // spellings for the same missing size, used across many
+                // files (button labels, list rows, form fields) before
+                // either was actually defined here, so every one of those
+                // was silently falling back to unstyled text.
+                "body-md": ["17px", { lineHeight: "24px", fontWeight: "400" }],
+                body: ["17px", { lineHeight: "24px", fontWeight: "400" }],
                 caption: ["15px", { lineHeight: "21px", fontWeight: "500" }],
             },
             // Absolute minimum interactive hitbox (56x56dp), usable as

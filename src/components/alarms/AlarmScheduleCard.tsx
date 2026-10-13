@@ -1,7 +1,7 @@
 import { ComponentType, useMemo } from 'react';
 import { Alert, Pressable, Switch, Text, View } from 'react-native';
 import { Camera, Clock, Droplet, Nfc, Package, Pill, Trash2 } from 'lucide-react-native';
-import type { Medication, ScheduleWithMedication, TimeNode } from '../../db/types';
+import type { Medication, ScheduleWithMedication } from '../../db/types';
 import { computeNextOccurrenceMs } from '../../alarms/alarmScheduler';
 import { useTranslation, type TranslationKey } from '../../i18n';
 import { triggerHaptic } from '../../lib/haptics';
@@ -11,11 +11,34 @@ export interface AlarmScheduleCardProps {
   schedule: ScheduleWithMedication;
   onToggle: (schedule: ScheduleWithMedication, nextActive: boolean) => void;
   onDelete: (schedule: ScheduleWithMedication) => void;
+  /** `depth` is 0 (breakfast) to 3 (bedtime), or -1 for fasting (not a time of day — see badge color computation below). */
   timeNodeStyle: {
     icon: ComponentType<{ size?: number; color?: string; strokeWidth?: number }>;
-    color: string;
+    depth: number;
   };
 }
+
+/** Alpha strength per day/night depth (0–2); depth 3 (bedtime) renders as a solid fill instead — see `badgeColors` below. Deepens from breakfast to bedtime so the four badges still read as a progression through the day, the quality the old hardcoded pomegranate-red badges had, while staying within the app's single blue brand hue (`theme.action.base`) instead of an unrelated color family that didn't adapt to light/dark mode. */
+const DEPTH_TINT_ALPHA = ['14', '29', '4D'];
+
+/**
+ * A static lookup, not a derived string (`` `alarms.time${timeNode...}` ``):
+ * the `time_node` enum (BREAKFAST/LUNCH/DINNER/BEDTIME/FASTING) and the
+ * existing translation keys (timeMorning/timeAfternoon/timeEvening/
+ * timeBedtime) don't actually share a naming scheme — the derived-string
+ * approach silently produced `alarms.timeBreakfast`, `alarms.timeLunch`,
+ * `alarms.timeDinner`, none of which exist, so the raw untranslated key
+ * string rendered straight into the card for 3 of the 5 time nodes. FASTING
+ * has no `alarms.*` label of its own; it reuses `status.fasting` (the same
+ * "Fasting" text already shown for the Fasting status pill elsewhere).
+ */
+const TIME_NODE_LABEL_KEY: Record<ScheduleWithMedication['time_node'], TranslationKey> = {
+  BREAKFAST: 'alarms.timeMorning',
+  LUNCH: 'alarms.timeAfternoon',
+  DINNER: 'alarms.timeEvening',
+  BEDTIME: 'alarms.timeBedtime',
+  FASTING: 'status.fasting',
+};
 
 function medicationFormIcon(form: Medication['form']) {
   return form === 'tablet' || form === 'capsule' ? Pill : form === 'syrup' || form === 'drop' ? Droplet : Package;
@@ -70,6 +93,20 @@ export function AlarmScheduleCard({
   const { displayTime, period } = useMemo(() => formatTimeParts(schedule.time_utc), [schedule.time_utc]);
   const FormIcon = useMemo(() => medicationFormIcon(schedule.medicationForm), [schedule.medicationForm]);
   const NodeIcon = timeNodeStyle.icon;
+
+  // Fasting isn't a time of day, so it keeps its own `fasting` status color
+  // (the same cyan used for the Fasting pill elsewhere, e.g. Home's Blood
+  // Sugar card) instead of a slot in the breakfast→bedtime depth
+  // progression. Every real time slot derives its badge from the single
+  // brand blue at increasing strength as the day goes on, solid by bedtime.
+  const isFasting = timeNodeStyle.depth < 0;
+  const badgeBase = isFasting ? (theme.status.fasting.baseDark ?? theme.status.fasting.base) : theme.action.base;
+  const badgeBg = isFasting
+    ? theme.statusTint('fasting')
+    : timeNodeStyle.depth >= 3
+      ? theme.action.base
+      : `${theme.action.base}${DEPTH_TINT_ALPHA[timeNodeStyle.depth] ?? DEPTH_TINT_ALPHA[0]}`;
+  const badgeIconColor = isFasting ? theme.statusText('fasting') : timeNodeStyle.depth >= 3 ? theme.action.ink : theme.action.base;
 
   const timeRemaining = useMemo(() => {
     if (!schedule.is_active) return null;
@@ -155,15 +192,15 @@ export function AlarmScheduleCard({
             style={{
               width: 46,
               height: 46,
-              backgroundColor: isActive ? timeNodeStyle.color : (isDark ? 'rgba(255, 255, 255, 0.08)' : theme.colors.hairline),
-              shadowColor: isActive ? timeNodeStyle.color : 'transparent',
+              backgroundColor: isActive ? badgeBg : (isDark ? 'rgba(255, 255, 255, 0.08)' : theme.colors.hairline),
+              shadowColor: isActive ? badgeBase : 'transparent',
               shadowOffset: { width: 0, height: 3 },
               shadowOpacity: isActive ? 0.4 : 0,
               shadowRadius: 8,
               elevation: isActive ? 4 : 0,
             }}
           >
-            <NodeIcon color={isActive ? '#FFFFFF' : theme.colors.inkMuted} size={24} strokeWidth={2.2} />
+            <NodeIcon color={isActive ? badgeIconColor : theme.colors.inkMuted} size={24} strokeWidth={2.2} />
           </View>
 
           {/* Clock Display */}
@@ -221,7 +258,7 @@ export function AlarmScheduleCard({
             </View>
 
             <Text className="text-caption font-medium" style={{ color: theme.colors.inkSecondary }}>
-              {t(`alarms.time${schedule.time_node.charAt(0) + schedule.time_node.slice(1).toLowerCase()}` as TranslationKey)} · {t('alarms.daily')}
+              {t(TIME_NODE_LABEL_KEY[schedule.time_node])} · {t('alarms.daily')}
             </Text>
           </View>
         </View>

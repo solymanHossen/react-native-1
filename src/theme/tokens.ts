@@ -220,9 +220,9 @@ export function severityText(key: SeverityKey, mode: ThemeMode): string {
 
 /**
  * Geriatric/low-vision type scale. Mirrors the `fontSize` entries in
- * tailwind.config.js (display-lg/title-lg/body-lg/caption) for call sites
- * that need raw numbers instead of a className (e.g. measuring text, or
- * styling a component that takes a numeric `size` prop).
+ * tailwind.config.js (display-lg/title-lg/title-md/body-lg/body-md/caption)
+ * for call sites that need raw numbers instead of a className (e.g.
+ * measuring text, or styling a component that takes a numeric `size` prop).
  *
  * Sized up twice from the original 34/24/18/14 pass after direct user
  * feedback that it still read too small for an app meant to work equally
@@ -233,11 +233,21 @@ export function severityText(key: SeverityKey, mode: ThemeMode): string {
  * punch at the top of the hierarchy, not body-copy density. Pure size
  * increases don't affect the WCAG contrast math above (that's about color,
  * not scale), so no re-verification was needed there.
+ *
+ * `titleMedium`/`bodyMedium` fill a gap several newer card/button designs
+ * needed but that didn't exist — a secondary heading inside a dense card
+ * (smaller than a full `titleLarge`) and a compact button/action label
+ * (smaller than full-reading-text `bodyLarge`) — added here rather than
+ * reused from the nearest existing size so those call sites get a real,
+ * deliberate value instead of an silently-unstyled `text-title-md`/
+ * `text-body-md` className that doesn't match anything in this scale.
  */
 export const typography = {
   displayLarge: { fontSize: 44, lineHeight: 50, fontWeight: '800' },
   titleLarge: { fontSize: 30, lineHeight: 36, fontWeight: '700' },
+  titleMedium: { fontSize: 24, lineHeight: 30, fontWeight: '700' },
   bodyLarge: { fontSize: 20, lineHeight: 28, fontWeight: '400' },
+  bodyMedium: { fontSize: 17, lineHeight: 24, fontWeight: '400' },
   caption: { fontSize: 15, lineHeight: 21, fontWeight: '500' },
 } as const;
 

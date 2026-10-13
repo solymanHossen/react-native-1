@@ -7,9 +7,9 @@ import {
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import { Camera, Check, Clock, Droplet, Moon, Nfc, Package, Pencil, Phone, Pill, Plus, ShieldAlert, ShieldCheck, Sun, Sunrise, Sunset, Trash2, X } from 'lucide-react-native';
+import { Check, Clock, Droplet, Moon, Package, Pencil, Phone, Pill, Plus, ShieldAlert, ShieldCheck, Sun, Sunrise, Sunset, Trash2, X } from 'lucide-react-native';
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, type ComponentType } from 'react';
-import { ActivityIndicator, Keyboard, Pressable, ScrollView, Switch, Text, View } from 'react-native';
+import { ActivityIndicator, Keyboard, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AlarmScheduleCard, AlarmsEmptyState, AlarmsHeroSummary } from '../components/alarms';
 import { LargeTextButton } from '../components/ui';
@@ -171,21 +171,20 @@ interface TimeSlot {
   timeUtc: string;
   labelKey: TranslationKey;
   icon: ComponentType<{ size?: number; color?: string; strokeWidth?: number }>;
-  /** Each slot gets its own shade from the app's brand (pomegranate) family
-   * (not a repeat of the single action color) — a light-to-dark progression
-   * that actually tracks the time of day, so the four chips read as
-   * genuinely different choices at a glance instead of four identical
-   * pills. White text/icon on every one is intentional: each shade was
-   * picked to clear 4.5:1 contrast with white, the same bar every other
-   * status/action color in this app's token file is held to. */
-  color: string;
+  /** Index into the day, 0 (breakfast) to 3 (bedtime) — lets the schedule
+   * list badge (AlarmScheduleCard) render a light-to-dark progression that
+   * tracks time of day using the single app brand color (`theme.action.base`
+   * at increasing tint strength) instead of a disconnected hardcoded "brand
+   * (pomegranate) family" that doesn't adapt to light/dark mode or match the
+   * rest of the app. */
+  depth: number;
 }
 
 const TIME_SLOTS: TimeSlot[] = [
-  { node: 'BREAKFAST', timeUtc: '08:00', labelKey: 'alarms.timeMorning', icon: Sunrise, color: '#B62616' },
-  { node: 'LUNCH', timeUtc: '13:00', labelKey: 'alarms.timeAfternoon', icon: Sun, color: '#962013' },
-  { node: 'DINNER', timeUtc: '20:00', labelKey: 'alarms.timeEvening', icon: Sunset, color: '#6D170D' },
-  { node: 'BEDTIME', timeUtc: '22:00', labelKey: 'alarms.timeBedtime', icon: Moon, color: '#240804' },
+  { node: 'BREAKFAST', timeUtc: '08:00', labelKey: 'alarms.timeMorning', icon: Sunrise, depth: 0 },
+  { node: 'LUNCH', timeUtc: '13:00', labelKey: 'alarms.timeAfternoon', icon: Sun, depth: 1 },
+  { node: 'DINNER', timeUtc: '20:00', labelKey: 'alarms.timeEvening', icon: Sunset, depth: 2 },
+  { node: 'BEDTIME', timeUtc: '22:00', labelKey: 'alarms.timeBedtime', icon: Moon, depth: 3 },
 ];
 
 const MEAL_RELATIONS: Array<{ value: MealRelation; labelKey: TranslationKey }> = [
@@ -215,28 +214,30 @@ function nearestTimeNode(hours: number, minutes: number): TimeNode {
   return best.node;
 }
 
-/** Reads a TIME_SLOTS entry's icon/color back out by node — keeps TIME_NODE_STYLE's four shared entries derived from the single TIME_SLOTS source instead of re-spelling the same hex values a second time. */
+/** Reads a TIME_SLOTS entry's icon/depth back out by node — keeps TIME_NODE_STYLE's four shared entries derived from the single TIME_SLOTS source instead of re-spelling the same values a second time. */
 function timeSlotStyle(node: Exclude<TimeNode, 'FASTING'>) {
   const slot = TIME_SLOTS.find((entry) => entry.node === node)!;
-  return { icon: slot.icon, color: slot.color };
+  return { icon: slot.icon, depth: slot.depth };
 }
 
 /**
- * The same icon + color every TIME_SLOTS entry uses, keyed by time_node so a
- * saved schedule's card can be colored identically to however it looked when
+ * The same icon + depth every TIME_SLOTS entry uses, keyed by time_node so a
+ * saved schedule's card can be badged identically to however it looked when
  * it was added — the "Add a Reminder" picker and "Scheduled Alarms" list
  * read as one coherent feature instead of a colorful picker feeding into a
  * flat gray list. FASTING isn't offered by the picker above (nothing in this
  * screen creates it anymore), but existing schedules from before this
  * redesign can still carry it, so it gets its own entry rather than crashing
- * on a missing lookup.
+ * on a missing lookup — `depth: -1` is a sentinel AlarmScheduleCard reads as
+ * "use the `fasting` status color instead of the day/night progression,"
+ * since fasting isn't a time of day at all.
  */
-const TIME_NODE_STYLE: Record<TimeNode, { icon: ComponentType<{ size?: number; color?: string; strokeWidth?: number }>; color: string }> = {
+const TIME_NODE_STYLE: Record<TimeNode, { icon: ComponentType<{ size?: number; color?: string; strokeWidth?: number }>; depth: number }> = {
   BREAKFAST: timeSlotStyle('BREAKFAST'),
   LUNCH: timeSlotStyle('LUNCH'),
   DINNER: timeSlotStyle('DINNER'),
   BEDTIME: timeSlotStyle('BEDTIME'),
-  FASTING: { icon: Clock, color: '#BC2F4B' },
+  FASTING: { icon: Clock, depth: -1 },
 };
 
 interface ReminderSheetRef {

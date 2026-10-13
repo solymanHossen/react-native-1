@@ -33,7 +33,7 @@ describe('Modern Alarms System Components', () => {
           schedule={mockSchedule}
           onToggle={jest.fn()}
           onDelete={jest.fn()}
-          timeNodeStyle={{ icon: Sun, color: '#B62616' }}
+          timeNodeStyle={{ icon: Sun, depth: 1 }}
         />
       );
     });
