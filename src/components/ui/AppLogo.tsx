@@ -8,18 +8,18 @@ export interface AppLogoProps {
 }
 
 /**
- * Perfectly proportioned app mark for Medicine Reminder, following Apple iOS
- * continuous-squircle curvature. The source image is a flat, opaque tile (the
- * same artwork used for the app icon), so it's clipped to a rounded square
- * here rather than rendered as a plain box. Dark mode adds the glassmorphism
- * redesign's subtle luminescent border + blue-glow depth; light mode stays
- * a plain clipped mark (as it always was) so it doesn't pick up a dark-tinted
- * frame against a light canvas.
+ * App mark for Medicine Reminder. The source image is already a self-contained
+ * squircle icon (its own continuous-corner mask + pale backdrop + ring baked
+ * in as real alpha transparency around the edges), so it's rendered as-is
+ * rather than clipped by a separately computed radius here. Dark mode adds
+ * the glassmorphism redesign's subtle blue-glow depth via a drop shadow only
+ * (no hard border, since one drawn at a slightly different curve than the
+ * icon's own mask would show as a mismatched seam through the transparent
+ * corners).
  */
 export function AppLogo({ size = 40, style }: AppLogoProps) {
   const theme = useTheme();
   const isDark = theme.mode === 'dark';
-  const borderRadius = Math.round(size * 0.24);
 
   return (
     <View
@@ -27,14 +27,9 @@ export function AppLogo({ size = 40, style }: AppLogoProps) {
         {
           width: size,
           height: size,
-          borderRadius,
-          overflow: 'hidden',
-          backgroundColor: isDark ? '#1E293B' : theme.colors.surface,
-          borderWidth: isDark ? 1 : 0,
-          borderColor: 'rgba(255, 255, 255, 0.12)',
           shadowColor: isDark ? theme.action.base : undefined,
           shadowOffset: { width: 0, height: 3 },
-          shadowOpacity: isDark ? 0.25 : 0,
+          shadowOpacity: isDark ? 0.3 : 0,
           shadowRadius: 8,
           elevation: isDark ? 4 : 0,
         },
@@ -42,9 +37,9 @@ export function AppLogo({ size = 40, style }: AppLogoProps) {
       ]}
     >
       <Image
-        source={require('../../../assets/branding/medicine-reminder-logo.png')}
+        source={require('../../../assets/branding/medicine-reminder-icon.png')}
         style={{ width: size, height: size }}
-        resizeMode="cover"
+        resizeMode="contain"
         accessibilityRole="image"
         accessibilityLabel="Medicine Reminder"
       />
