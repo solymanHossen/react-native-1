@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { create } from 'zustand';
 import { initializeDatabase } from '../db';
-import type { MealRelation, TimeNode } from '../db/types';
+import type { DosageForm, MealRelation, TimeNode } from '../db/types';
 import type { DoseEntry, SkipReason, UseDoseScheduleResult } from '../dashboard/types';
 import { useSentinelStore } from './sentinelStore';
 
@@ -13,6 +13,7 @@ export interface IntakeQueueItem {
   medicationName: string;
   dosageLabel: string;
   doseQuantity: number;
+  medicationForm?: DosageForm;
   timeNode: TimeNode;
   timeUtc: string;
   mealRelation: MealRelation;
@@ -83,6 +84,7 @@ async function buildQueueItems(): Promise<IntakeQueueItem[]> {
         scheduleId: schedule.id,
         medicationId: schedule.medication_id,
         medicationName: schedule.medicationName,
+        medicationForm: schedule.medicationForm,
         dosageLabel: `${schedule.dose_quantity} ${schedule.medicationForm}${schedule.dose_quantity === 1 ? '' : 's'}`,
         doseQuantity: schedule.dose_quantity,
         timeNode: schedule.time_node,

@@ -7,3 +7,5 @@ export { DoseDetailSheet } from './DoseDetailSheet';
 export type { DoseDetailSheetRef } from './DoseDetailSheet';
 export { TodayStatusCard } from './TodayStatusCard';
 export type { TodayStatusCardProps } from './TodayStatusCard';
+export { NextDoseCard, resolveDosageForm, DOSAGE_FORM_ASSETS } from './NextDoseCard';
+export type { NextDoseCardProps } from './NextDoseCard';

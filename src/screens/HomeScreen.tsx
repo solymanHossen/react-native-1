@@ -33,7 +33,7 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 import { HealthRecordsSheet, type HealthRecordsSheetRef } from '../components/records/HealthRecordsSheet';
-import { LiquidProgressRing, TodayStatusCard } from '../components/dashboard';
+import { LiquidProgressRing, NextDoseCard, TodayStatusCard } from '../components/dashboard';
 import { ActionRow, ActionRowGroup, AmbientDepthBackground, AppLogo, GlassCard, LargeTextButton, MetricCard, StatusPill } from '../components/ui';
 import { useTranslation, type TranslationKey } from '../i18n';
 import { triggerHaptic } from '../lib/haptics';
@@ -425,69 +425,13 @@ export default function HomeScreen({ onNavigateToVitals, onOpenSettings }: HomeS
           </GlassCard>
         </RevealOnMount>
 
-        {/* Hero Next Dose Card: Glassmorphism with crisp typography and glowing action */}
+        {/* Hero Next Dose Card: Glassmorphism with crisp typography, dynamic 3D dosage logo, and glowing action */}
         <RevealOnMount delay={60}>
-          <GlassCard className="gap-5 rounded-[28px] p-7">
-              <View className="flex-row items-center gap-2">
-              <Clock color={theme.colors.inkSecondary} size={14} strokeWidth={2} />
-              <Text className="text-caption font-semibold uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
-                {t('home.nextDose')}
-              </Text>
-            </View>
-            {nextDose ? (
-              <>
-                <View className="flex-row items-end justify-between gap-3">
-                  <View className="flex-1">
-                    <Text className="text-display-lg font-extrabold" numberOfLines={1} style={{ color: theme.colors.ink, fontSize: 38 }}>
-                      {formatTimeLabel(nextDose.timeUtc)}
-                    </Text>
-                    <Text className="mt-1 text-body-lg font-medium" numberOfLines={1} style={{ color: theme.colors.inkSecondary }}>
-                      {nextDose.medicationName} · {nextDose.dosageLabel}
-                    </Text>
-                    {nextDose.instructions ? (
-                      <Text className="mt-0.5 text-caption" numberOfLines={1} style={{ color: theme.colors.inkSecondary }}>
-                        {nextDose.instructions}
-                      </Text>
-                    ) : null}
-                  </View>
-                  <View style={{ alignItems: 'center', gap: 8 }}>
-                    <StatusPill status={STATUS_TO_KEY[nextDose.status]} />
-                    {/* Capsule pill illustration */}
-                    <View
-                      style={{
-                        width: 64,
-                        height: 64,
-                        borderRadius: 32,
-                        backgroundColor: theme.mode === 'dark' ? 'rgba(59,130,246,0.12)' : 'rgba(255, 255, 255, 0.90)',
-                        borderWidth: 1,
-                        borderColor: theme.mode === 'dark' ? 'rgba(59,130,246,0.25)' : `${theme.action.base}20`,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        boxShadow: [
-                          { offsetX: 0, offsetY: 2, blurRadius: 8, color: 'rgba(57, 88, 134, 0.08)' },
-                        ],
-                      }}
-                    >
-                      <Image
-                        source={require('../../assets/branding/capsule-pill.png')}
-                        style={{ width: 46, height: 46 }}
-                        resizeMode="contain"
-                      />
-                    </View>
-                  </View>
-                </View>
-                <LargeTextButton
-                  label={nextDose.status === 'MISSED' ? t('home.markAsTakenLate') : t('home.markAsTaken')}
-                  onPress={() => markTaken(nextDose.scheduleId)}
-                  icon={ActionCheckIcon}
-                />
-              </>
-            ) : (
-              <Text className="text-body-lg font-medium" style={{ color: theme.colors.inkSecondary }}>
-                {intakeItems.length === 0 ? t('home.noDoseScheduled') : t('home.allDosesTaken')}
-              </Text>
-            )}
-          </GlassCard>
+          <NextDoseCard
+            dose={nextDose}
+            totalScheduledToday={intakeItems.length}
+            onMarkTaken={(scheduleId) => markTaken(scheduleId)}
+          />
         </RevealOnMount>
 
         {/* Today's Vitals: Horizontal strip of glassmorphism MetricCards */}

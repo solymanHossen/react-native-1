@@ -35,6 +35,28 @@ function withTiming(toValue) {
   return toValue;
 }
 
+function withRepeat(animation) {
+  return animation;
+}
+
+function withSequence(...animations) {
+  return animations[0];
+}
+
+function withDelay(_delay, animation) {
+  return animation;
+}
+
+function runOnJS(fn) {
+  return fn;
+}
+
+function useAnimatedReaction() {}
+
+function interpolate(value) {
+  return value;
+}
+
 const knownAnimated = {
   createAnimatedComponent: (Component) => Component,
   View: require('react-native').View,
@@ -61,5 +83,12 @@ module.exports = {
   useAnimatedStyle,
   withSpring,
   withTiming,
+  withRepeat,
+  withSequence,
+  withDelay,
+  runOnJS,
+  useAnimatedReaction,
+  interpolate,
   Easing,
 };
+

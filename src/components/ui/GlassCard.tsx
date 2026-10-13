@@ -8,6 +8,7 @@ export interface GlassCardProps {
   className?: string;
   glowColor?: string;
   hasGlow?: boolean;
+  testID?: string;
 }
 
 /**
@@ -30,6 +31,7 @@ export function GlassCard({
   className = '',
   glowColor = '#3B82F6',
   hasGlow = false,
+  testID,
 }: GlassCardProps) {
   const theme = useTheme();
   const isDark = theme.mode === 'dark';
@@ -38,6 +40,7 @@ export function GlassCard({
 
   return (
     <View
+      testID={testID}
       className={`rounded-3xl ${className}`}
       style={[
         {
