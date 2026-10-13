@@ -586,11 +586,9 @@ export default function HomeScreen({ onNavigateToVitals, onOpenSettings }: HomeS
                 backgroundColor: theme.mode === 'dark' ? 'rgba(16, 185, 129, 0.12)' : '#10B98114',
                 borderWidth: 1,
                 borderColor: theme.mode === 'dark' ? 'rgba(16, 185, 129, 0.3)' : '#10B98128',
-                shadowColor: '#10B981',
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.12,
-                shadowRadius: 8,
-                elevation: 2,
+                boxShadow: [
+                  { offsetX: 0, offsetY: 2, blurRadius: 8, color: '#10B98124' },
+                ],
               },
             ]}
           >
@@ -602,25 +600,23 @@ export default function HomeScreen({ onNavigateToVitals, onOpenSettings }: HomeS
                 backgroundColor: '#10B981',
                 alignItems: 'center',
                 justifyContent: 'center',
-                shadowColor: '#10B981',
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.4,
-                shadowRadius: 6,
-                elevation: 3,
+                boxShadow: [
+                  { offsetX: 0, offsetY: 2, blurRadius: 6, color: 'rgba(16, 185, 129, 0.4)' },
+                ],
                 flexShrink: 0,
               }}
             >
               <Heart size={18} color="#FFFFFF" strokeWidth={2.5} fill="#FFFFFF" />
             </View>
-            <View style={{ flex: 1 }}>
-              <Text style={{ color: theme.mode === 'dark' ? '#34D399' : '#065F46', fontSize: 15, fontWeight: '700', lineHeight: 20 }}>
+            <View style={{ flex: 1, backgroundColor: 'transparent' }}>
+              <Text style={{ color: theme.mode === 'dark' ? '#34D399' : '#065F46', fontSize: 15, fontWeight: '700', lineHeight: 20, backgroundColor: 'transparent' }}>
                 {intakeItems.length > 0 && statusCounts.MISSED === 0
                   ? "You're doing great!"
                   : statusCounts.MISSED > 0
                     ? 'Stay on track!'
                     : "You're doing great!"}
               </Text>
-              <Text style={{ color: theme.mode === 'dark' ? '#6EE7B7' : '#047857', fontSize: 13, fontWeight: '500', lineHeight: 18, marginTop: 1 }}>
+              <Text style={{ color: theme.mode === 'dark' ? '#6EE7B7' : '#047857', fontSize: 13, fontWeight: '500', lineHeight: 18, marginTop: 1, backgroundColor: 'transparent' }}>
                 Keep taking your medicines regularly
               </Text>
             </View>
@@ -641,11 +637,9 @@ export default function HomeScreen({ onNavigateToVitals, onOpenSettings }: HomeS
                   backgroundColor: theme.statusTint('missed'),
                   borderWidth: 1,
                   borderColor: theme.mode === 'dark' ? 'rgba(239, 68, 68, 0.28)' : theme.colors.hairline,
-                  shadowColor: theme.mode === 'dark' ? theme.statusText('missed') : '#000000',
-                  shadowOffset: { width: 0, height: 4 },
-                  shadowOpacity: theme.mode === 'dark' ? 0.25 : 0,
-                  shadowRadius: 12,
-                  elevation: theme.mode === 'dark' ? 4 : 0,
+                  boxShadow: [
+                    { offsetX: 0, offsetY: 4, blurRadius: 12, color: theme.mode === 'dark' ? 'rgba(239, 68, 68, 0.25)' : 'rgba(239, 68, 68, 0.12)' },
+                  ],
                 }}
               >
                 {medicationAlerts.map((alert) => (

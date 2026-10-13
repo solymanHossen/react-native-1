@@ -52,11 +52,9 @@ export function StatusPill({ status: statusKey, label, testID }: StatusPillProps
       style={{
         backgroundColor: tint,
         borderColor: `${hue}44`,
-        shadowColor: hue,
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.35,
-        shadowRadius: 6,
-        elevation: 3,
+        boxShadow: [
+          { offsetX: 0, offsetY: 2, blurRadius: 6, color: `${hue}30` },
+        ],
       }}
     >
       <View
@@ -66,14 +64,9 @@ export function StatusPill({ status: statusKey, label, testID }: StatusPillProps
           borderRadius: 3.5,
           backgroundColor: hue,
           marginRight: 6,
-          shadowColor: hue,
-          shadowOffset: { width: 0, height: 0 },
-          shadowOpacity: 0.8,
-          shadowRadius: 4,
-          elevation: 2,
         }}
       />
-      <Text className="text-caption font-semibold" style={{ color: textColor, letterSpacing: 0.2 }} numberOfLines={1}>
+      <Text className="text-caption font-semibold" style={{ color: textColor, letterSpacing: 0.2, backgroundColor: 'transparent' }} numberOfLines={1}>
         {displayLabel}
       </Text>
     </View>
