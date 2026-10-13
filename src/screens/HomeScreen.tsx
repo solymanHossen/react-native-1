@@ -1,6 +1,6 @@
-import { ChevronRight, FileText, HeartPulse, RefreshCw, Settings } from 'lucide-react-native';
+import { ChevronRight, Clock, Droplets, FileText, Heart, HeartPulse, RefreshCw, Settings } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { Image, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, {
   Extrapolation,
@@ -349,7 +349,7 @@ export default function HomeScreen({ onNavigateToVitals, onOpenSettings }: HomeS
                     ? t('home.progressEmpty')
                     : statusCounts.TAKEN === intakeItems.length
                       ? t('home.progressAllDone')
-                      : t('home.progressSummary', { pending: statusCounts.PENDING, missed: statusCounts.MISSED })}
+                      : `${statusCounts.PENDING} due soon · ${statusCounts.MISSED} missed`}
                 </Text>
               </View>
             </View>
@@ -381,16 +381,8 @@ export default function HomeScreen({ onNavigateToVitals, onOpenSettings }: HomeS
         {/* Hero Next Dose Card: Glassmorphism with crisp typography and glowing action */}
         <RevealOnMount delay={60}>
           <GlassCard className="gap-5 rounded-[28px] p-7">
-            <View className="flex-row items-center gap-2">
-              <View
-                className="h-2.5 w-2.5 rounded-full"
-                style={[
-                  { backgroundColor: theme.action.base },
-                  theme.mode === 'dark'
-                    ? { shadowColor: theme.action.base, shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.9, shadowRadius: 6, elevation: 2 }
-                    : null,
-                ]}
-              />
+              <View className="flex-row items-center gap-2">
+              <Clock color={theme.colors.inkSecondary} size={14} strokeWidth={2} />
               <Text className="text-caption font-semibold uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
                 {t('home.nextDose')}
               </Text>
@@ -405,8 +397,34 @@ export default function HomeScreen({ onNavigateToVitals, onOpenSettings }: HomeS
                     <Text className="mt-1 text-body-lg font-medium" numberOfLines={1} style={{ color: theme.colors.inkSecondary }}>
                       {nextDose.medicationName} · {nextDose.dosageLabel}
                     </Text>
+                    {nextDose.instructions ? (
+                      <Text className="mt-0.5 text-caption" numberOfLines={1} style={{ color: theme.colors.inkSecondary }}>
+                        {nextDose.instructions}
+                      </Text>
+                    ) : null}
                   </View>
-                  <StatusPill status={STATUS_TO_KEY[nextDose.status]} />
+                  <View style={{ alignItems: 'center', gap: 8 }}>
+                    <StatusPill status={STATUS_TO_KEY[nextDose.status]} />
+                    {/* Capsule pill illustration */}
+                    <View
+                      style={{
+                        width: 64,
+                        height: 64,
+                        borderRadius: 32,
+                        backgroundColor: theme.mode === 'dark' ? 'rgba(59,130,246,0.12)' : `${theme.action.base}0F`,
+                        borderWidth: 1,
+                        borderColor: theme.mode === 'dark' ? 'rgba(59,130,246,0.25)' : `${theme.action.base}20`,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <Image
+                        source={require('../../assets/branding/medicine-reminder-icon.png')}
+                        style={{ width: 44, height: 44 }}
+                        resizeMode="contain"
+                      />
+                    </View>
+                  </View>
                 </View>
                 <LargeTextButton
                   label={nextDose.status === 'MISSED' ? t('home.markAsTakenLate') : t('home.markAsTaken')}
@@ -460,9 +478,10 @@ export default function HomeScreen({ onNavigateToVitals, onOpenSettings }: HomeS
                     value={`${latestVitals.systolic.value}/${latestVitals.diastolic.value}`}
                     unit="mmHg"
                     caption={t(BP_STAGE_KEY[bloodPressureStage.stage])}
+                    iconBadge={{ Icon: Heart, color: '#EF4444' }}
                   />
                 ) : (
-                  <MetricCard compact onPress={() => onNavigateToVitals?.('BP_SYS')} label={t('home.bloodPressure')} value="—" caption={t('home.noReadingYet')} />
+                  <MetricCard compact onPress={() => onNavigateToVitals?.('BP_SYS')} label={t('home.bloodPressure')} value="—" caption={t('home.noReadingYet')} iconBadge={{ Icon: Heart, color: '#EF4444' }} />
                 )}
               </View>
               <View style={{ width: 182 }}>
@@ -475,9 +494,10 @@ export default function HomeScreen({ onNavigateToVitals, onOpenSettings }: HomeS
                     unit={latestVitals.bloodGlucose.unit}
                     caption={hoursAgoLabel(latestVitals.bloodGlucose.timestamp, t)}
                     status={latestVitals.bloodGlucose.notes === 'Fasting' ? 'fasting' : undefined}
+                    iconBadge={{ Icon: Droplets, color: '#10B981' }}
                   />
                 ) : (
-                  <MetricCard compact onPress={() => onNavigateToVitals?.('BLOOD_SUGAR')} label={t('home.bloodGlucose')} value="—" caption={t('home.tapToLog')} />
+                  <MetricCard compact onPress={() => onNavigateToVitals?.('BLOOD_SUGAR')} label={t('home.bloodGlucose')} value="—" caption={t('home.tapToLog')} iconBadge={{ Icon: Droplets, color: '#10B981' }} />
                 )}
               </View>
               <View style={{ width: 182 }}>
@@ -496,6 +516,65 @@ export default function HomeScreen({ onNavigateToVitals, onOpenSettings }: HomeS
               </View>
             </ScrollView>
           </View>
+        </RevealOnMount>
+
+        {/* Motivational Banner — shown when there are medications scheduled (encourages adherence) */}
+        <RevealOnMount delay={180}>
+          <Pressable
+            onPress={() => onNavigateToVitals?.()}
+            accessibilityRole="button"
+            accessibilityLabel="You're doing great! Keep taking your medicines regularly"
+            style={[
+              {
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 14,
+                paddingHorizontal: 16,
+                paddingVertical: 14,
+                borderRadius: 20,
+                backgroundColor: theme.mode === 'dark' ? 'rgba(16, 185, 129, 0.12)' : '#10B98114',
+                borderWidth: 1,
+                borderColor: theme.mode === 'dark' ? 'rgba(16, 185, 129, 0.3)' : '#10B98128',
+                shadowColor: '#10B981',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.12,
+                shadowRadius: 8,
+                elevation: 2,
+              },
+            ]}
+          >
+            <View
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: 20,
+                backgroundColor: '#10B981',
+                alignItems: 'center',
+                justifyContent: 'center',
+                shadowColor: '#10B981',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.4,
+                shadowRadius: 6,
+                elevation: 3,
+                flexShrink: 0,
+              }}
+            >
+              <Heart size={18} color="#FFFFFF" strokeWidth={2.5} fill="#FFFFFF" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: theme.mode === 'dark' ? '#34D399' : '#065F46', fontSize: 15, fontWeight: '700', lineHeight: 20 }}>
+                {intakeItems.length > 0 && statusCounts.MISSED === 0
+                  ? "You're doing great!"
+                  : statusCounts.MISSED > 0
+                    ? 'Stay on track!'
+                    : "You're doing great!"}
+              </Text>
+              <Text style={{ color: theme.mode === 'dark' ? '#6EE7B7' : '#047857', fontSize: 13, fontWeight: '500', lineHeight: 18, marginTop: 1 }}>
+                Keep taking your medicines regularly
+              </Text>
+            </View>
+            <ChevronRight color={theme.mode === 'dark' ? '#34D399' : '#10B981'} size={18} strokeWidth={2.5} />
+          </Pressable>
         </RevealOnMount>
 
         {/* Refill and Expiry Alerts */}

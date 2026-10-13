@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { ComponentType, ReactNode } from 'react';
 import { Pressable, Text, View, type GestureResponderEvent } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useTheme } from '../../theme/useTheme';
@@ -20,6 +20,11 @@ export interface MetricCardProps {
   caption?: string;
   status?: StatusKey;
   icon?: ReactNode;
+  /** Lucide icon rendered in a colored rounded chip at the top-right — matches the reference design's heart/droplet badges. */
+  iconBadge?: {
+    Icon: ComponentType<{ size?: number; color?: string; strokeWidth?: number }>;
+    color: string;
+  };
   onPress?: (event: GestureResponderEvent) => void;
   testID?: string;
   /** Smaller padding and a Title-Large (not Display-Large) value, for a card in a horizontal carousel rather than a full-width/2-up grid slot. */
@@ -36,7 +41,7 @@ export interface MetricCardProps {
  * because both are classed as AAA body text (>= 7:1, verified against the
  * elevated surface in both themes) rather than decorative chrome.
  */
-export function MetricCard({ label, value, unit, caption, status, icon, onPress, testID, compact = false }: MetricCardProps) {
+export function MetricCard({ label, value, unit, caption, status, icon, iconBadge, onPress, testID, compact = false }: MetricCardProps) {
   const theme = useTheme();
   const isInteractive = Boolean(onPress);
   const scale = useSharedValue(1);
@@ -125,12 +130,33 @@ export function MetricCard({ label, value, unit, caption, status, icon, onPress,
       <View className="flex-row items-start justify-between">
         <Text
           className="text-caption font-semibold uppercase tracking-wider"
-          style={{ color: theme.colors.inkSecondary }}
+          style={{ color: theme.colors.inkSecondary, flex: 1 }}
           numberOfLines={1}
         >
           {label}
         </Text>
-        {icon}
+        {iconBadge ? (() => {
+          const BadgeIcon = iconBadge.Icon;
+          return (
+            <View
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 10,
+                backgroundColor: `${iconBadge.color}18`,
+                borderWidth: 1,
+                borderColor: `${iconBadge.color}28`,
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginLeft: 8,
+              }}
+            >
+              <BadgeIcon size={18} color={iconBadge.color} strokeWidth={2} />
+            </View>
+          );
+        })() : icon ? (
+          icon
+        ) : null}
       </View>
 
       <View className="mt-2 flex-row items-baseline">

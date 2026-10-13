@@ -1,3 +1,4 @@
+import { ChevronRight } from 'lucide-react-native';
 import { Text, View } from 'react-native';
 import { status, type StatusKey } from '../../theme/tokens';
 import { useTheme } from '../../theme/useTheme';
@@ -6,6 +7,8 @@ export interface TodayStatusCardProps {
   status: StatusKey;
   label: string;
   count: number;
+  /** If provided, tapping the card calls this — and shows the trailing chevron. */
+  onPress?: () => void;
   testID?: string;
 }
 
@@ -22,6 +25,7 @@ export function TodayStatusCard({
   status: statusKey,
   label,
   count,
+  onPress,
   testID,
 }: TodayStatusCardProps) {
   const theme = useTheme();
@@ -34,23 +38,32 @@ export function TodayStatusCard({
     <View
       testID={testID}
       accessible
-      accessibilityRole="text"
+      accessibilityRole={onPress ? 'button' : 'text'}
       accessibilityLabel={`${label}: ${count} doses`}
-      className="flex-1 flex-row items-center justify-between rounded-2xl border px-3.5 py-2.5"
+      className="flex-1 flex-row items-center justify-between rounded-2xl border px-3.5 py-3"
       style={{
         backgroundColor: tint,
         borderColor: theme.mode === 'dark' ? `${hue}38` : `${hue}28`,
         overflow: 'hidden',
+        shadowColor: hue,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 6,
+        elevation: 2,
       }}
     >
-      {/* Left indicator + status label */}
-      <View className="flex-row items-center gap-2 flex-1 mr-2" style={{ backgroundColor: 'transparent' }}>
+      {/* Left: status dot + label */}
+      <View className="flex-row items-center gap-2 flex-1" style={{ backgroundColor: 'transparent' }}>
         <View
           style={{
-            width: 7,
-            height: 7,
-            borderRadius: 3.5,
+            width: 8,
+            height: 8,
+            borderRadius: 4,
             backgroundColor: hue,
+            shadowColor: hue,
+            shadowOffset: { width: 0, height: 0 },
+            shadowOpacity: 0.8,
+            shadowRadius: 4,
           }}
         />
         <Text
@@ -67,25 +80,28 @@ export function TodayStatusCard({
         </Text>
       </View>
 
-      {/* Right count badge (harmonious tinted chip, never opaque white) */}
-      <View
-        className="items-center justify-center rounded-full px-2.5 py-0.5"
-        style={{
-          backgroundColor: theme.mode === 'dark' ? `${hue}25` : `${hue}18`,
-          borderWidth: 1,
-          borderColor: theme.mode === 'dark' ? `${hue}40` : `${hue}28`,
-        }}
-      >
-        <Text
+      {/* Right: count + chevron */}
+      <View className="flex-row items-center gap-1.5">
+        <View
+          className="items-center justify-center rounded-full px-2.5 py-0.5"
           style={{
-            color: textColor,
-            fontSize: 13,
-            fontWeight: '800',
-            backgroundColor: 'transparent',
+            backgroundColor: theme.mode === 'dark' ? `${hue}25` : `${hue}18`,
+            borderWidth: 1,
+            borderColor: theme.mode === 'dark' ? `${hue}40` : `${hue}28`,
           }}
         >
-          {count}
-        </Text>
+          <Text
+            style={{
+              color: textColor,
+              fontSize: 13,
+              fontWeight: '800',
+              backgroundColor: 'transparent',
+            }}
+          >
+            {count}
+          </Text>
+        </View>
+        <ChevronRight color={textColor} size={14} strokeWidth={2.5} />
       </View>
     </View>
   );
