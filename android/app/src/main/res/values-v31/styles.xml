@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 12+ (API 31+) always shows its own system-generated splash
+     screen on cold start, taking over before the plain `windowBackground`
+     trick in the base values/styles.xml ever gets a chance to paint —
+     verified on-device: without this override, the system splash showed a
+     white background (unable to derive a color from our layer-list
+     drawable) with its own auto-picked icon render, not the branded one.
+     `windowSplashScreenBackground`/`windowSplashScreenAnimatedIcon` are the
+     actual native API for this (no added dependency — just two theme
+     attributes that only exist on API 31+, which is why this lives in a
+     -v31 qualifier rather than the base styles.xml). Pre-31 devices never
+     read this file and keep using the base theme's `windowBackground`. -->
+<resources>
+
+    <style name="AppTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="android:editTextBackground">@drawable/rn_edit_text_material</item>
+        <item name="android:windowBackground">@drawable/splash_background</item>
+        <item name="android:windowSplashScreenBackground">#395886</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_icon</item>
+    </style>
+
+</resources>

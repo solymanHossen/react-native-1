@@ -4,6 +4,11 @@
     <style name="AppTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
         <!-- Customize your theme here. -->
         <item name="android:editTextBackground">@drawable/rn_edit_text_material</item>
+        <!-- Native splash: shown as this Activity's initial background until
+             React Native's first frame draws over it — see
+             drawable/splash_background.xml for why this needs no separate
+             theme, Activity, or library. -->
+        <item name="android:windowBackground">@drawable/splash_background</item>
     </style>
 
 </resources>

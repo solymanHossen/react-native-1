@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Native splash screen shown via AppTheme's windowBackground (see
+     styles.xml) — the standard library-free RN splash pattern: this draws
+     once, instantly, as the Activity's initial background, then the real
+     app UI draws over it the moment React Native renders its first frame.
+     No separate splash Activity/theme-switch, no extra dependency.
+     Same brand blue as the adaptive icon background (#395886,
+     `action.light.base` in src/theme/tokens.ts) with the app mark centered
+     and left at its own native proportions — not stretched full-bleed. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#395886" />
+        </shape>
+    </item>
+    <item
+        android:drawable="@drawable/splash_icon"
+        android:gravity="center"
+        android:width="160dp"
+        android:height="160dp" />
+</layer-list>
