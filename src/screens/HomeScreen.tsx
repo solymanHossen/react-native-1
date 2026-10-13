@@ -1,6 +1,27 @@
-import { ChevronRight, CircleCheck, Clock, Droplets, FileText, Heart, HeartPulse, RefreshCw, Settings } from 'lucide-react-native';
+import { Check, ChevronRight, Clock, Droplets, FileText, Heart, HeartPulse, RefreshCw, Settings } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Image, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
+
+/**
+ * Improved clinical check icon chip for action buttons:
+ * Solid/frosted circular badge with a bold crisp checkmark inside.
+ */
+function ActionCheckIcon({ color = '#FFFFFF' }: { color?: string; size?: number }) {
+  return (
+    <View
+      style={{
+        width: 22,
+        height: 22,
+        borderRadius: 11,
+        backgroundColor: color === '#FFFFFF' ? 'rgba(255, 255, 255, 0.22)' : `${color}18`,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <Check size={14} color={color} strokeWidth={3} />
+    </View>
+  );
+}
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, {
   Extrapolation,
@@ -437,16 +458,19 @@ export default function HomeScreen({ onNavigateToVitals, onOpenSettings }: HomeS
                         width: 64,
                         height: 64,
                         borderRadius: 32,
-                        backgroundColor: theme.mode === 'dark' ? 'rgba(59,130,246,0.12)' : `${theme.action.base}0F`,
+                        backgroundColor: theme.mode === 'dark' ? 'rgba(59,130,246,0.12)' : 'rgba(255, 255, 255, 0.90)',
                         borderWidth: 1,
                         borderColor: theme.mode === 'dark' ? 'rgba(59,130,246,0.25)' : `${theme.action.base}20`,
                         alignItems: 'center',
                         justifyContent: 'center',
+                        boxShadow: [
+                          { offsetX: 0, offsetY: 2, blurRadius: 8, color: 'rgba(57, 88, 134, 0.08)' },
+                        ],
                       }}
                     >
                       <Image
-                        source={require('../../assets/branding/medicine-reminder-icon.png')}
-                        style={{ width: 44, height: 44 }}
+                        source={require('../../assets/branding/capsule-pill.png')}
+                        style={{ width: 46, height: 46 }}
                         resizeMode="contain"
                       />
                     </View>
@@ -455,7 +479,7 @@ export default function HomeScreen({ onNavigateToVitals, onOpenSettings }: HomeS
                 <LargeTextButton
                   label={nextDose.status === 'MISSED' ? t('home.markAsTakenLate') : t('home.markAsTaken')}
                   onPress={() => markTaken(nextDose.scheduleId)}
-                  icon={CircleCheck}
+                  icon={ActionCheckIcon}
                 />
               </>
             ) : (
