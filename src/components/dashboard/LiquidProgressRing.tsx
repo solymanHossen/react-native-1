@@ -32,18 +32,17 @@ function makeWavePath(width: number, height: number, amplitude: number, waveleng
  */
 export function LiquidProgressRing({ ratio, size = 180, label }: LiquidProgressRingProps) {
   const theme = useTheme();
-  // Dark mode: the glassmorphism redesign's vibrant medical tones (emerald
-  // taken / blue in-progress / coral missed), at thresholds tuned for that
-  // more saturated palette. Light mode is untouched — same statuses,
-  // thresholds, and WCAG-verified colors as before the redesign.
+  // Both modes now use the same vivid hue family — emerald for good adherence,
+  // brand blue for in-progress, coral for low adherence. Dark mode was already
+  // using these; light mode was using statusText() which returns dark
+  // "on-surface text" colors (#8E5C00 amber for pending) — correct for text
+  // contrast but wrong for a liquid fill, where they render as muddy brown.
   const liquidColor =
-    theme.mode === 'dark'
-      ? ratio >= 0.75
-        ? '#10B981'
-        : ratio >= 0.4
-          ? '#3B82F6'
-          : '#EF4444'
-      : theme.statusText(ratio >= 0.8 ? 'taken' : ratio >= 0.5 ? 'pending' : 'missed');
+    ratio >= 0.75
+      ? '#10B981'   // emerald green  — great adherence
+      : ratio >= 0.4
+        ? '#3B82F6' // brand blue     — in-progress / decent adherence
+        : '#EF4444'; // coral red     — low adherence, needs attention
   const radius = size / 2;
   const amplitude = size * 0.045;
   const wavelength = size * 0.9;
@@ -87,7 +86,10 @@ export function LiquidProgressRing({ ratio, size = 180, label }: LiquidProgressR
   );
 
   const canvasBackground = theme.mode === 'dark' ? '#0F172A' : theme.colors.surface;
-  const strokeColor = theme.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : theme.colors.hairline;
+  // Light mode: use a soft tint of the liquid fill colour as the ring border
+  // so the stroke complements (not fights) the wave colour underneath.
+  // Dark mode: keep the subtle white glass hairline.
+  const strokeColor = theme.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : `${liquidColor}50`;
 
   return (
     <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
@@ -103,7 +105,7 @@ export function LiquidProgressRing({ ratio, size = 180, label }: LiquidProgressR
             </Group>
           </Group>
         </Group>
-        <Circle cx={radius} cy={radius} r={radius - 2} style="stroke" strokeWidth={3} color={strokeColor} />
+        <Circle cx={radius} cy={radius} r={radius - 2} style="stroke" strokeWidth={4} color={strokeColor} />
       </Canvas>
       <View
         pointerEvents="none"

@@ -1,5 +1,5 @@
-import { useCallback } from 'react';
-import { ActivityIndicator, Pressable, Text, type StyleProp, type ViewStyle } from 'react-native';
+import { useCallback, type ComponentType } from 'react';
+import { ActivityIndicator, Pressable, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { triggerHaptic, type HapticType } from '../../lib/haptics';
 import { useTheme } from '../../theme/useTheme';
@@ -25,6 +25,14 @@ export interface LargeTextButtonProps {
   forceDark?: boolean;
   style?: StyleProp<ViewStyle>;
   className?: string;
+  /**
+   * Optional Lucide icon rendered to the left of the label.
+   * Pass e.g. `icon={CircleCheck}` — the component receives `color` and
+   * `size` automatically from the button so callers don’t need to thread
+   * them manually. The icon is hidden while `loading` is true (the spinner
+   * takes its place).
+   */
+  icon?: ComponentType<{ size?: number; color?: string; strokeWidth?: number }>;
 }
 
 /**
@@ -54,6 +62,7 @@ export function LargeTextButton({
   forceDark = false,
   style,
   className,
+  icon: Icon,
 }: LargeTextButtonProps) {
   const theme = useTheme();
   const scale = useSharedValue(1);
@@ -134,16 +143,19 @@ export function LargeTextButton({
       {loading ? (
         <ActivityIndicator color={textColor} />
       ) : (
-        // `numberOfLines={2}`, not 1: a translated label can run noticeably
-        // longer than its English source (Bengali button text especially),
-        // and silently truncating a primary action's own label into
-        // unreadable ellipsis is a real usability problem in a medical app,
-        // not a cosmetic one — wrapping to a second line (the button grows
-        // to fit, `min-h-hit` is a floor, not a fixed height) is what a
-        // button whose text length can't be predicted up front needs.
-        <Text className="text-body-lg text-center" style={{ color: textColor, fontWeight: '600' }} numberOfLines={2}>
-          {label}
-        </Text>
+        // Icon + label rendered as a centred inline row. `gap-2` keeps the
+        // icon and text snug without manual margin math. When no icon is
+        // provided the View still renders, but with a single child — no
+        // visible change to the button's layout.
+        <View className="flex-row items-center justify-center gap-2">
+          {Icon ? (
+            <Icon size={20} color={textColor} strokeWidth={2.5} />
+          ) : null}
+          {/* numberOfLines={2} — see comment in the original file header */}
+          <Text className="text-body-lg text-center" style={{ color: textColor, fontWeight: '600' }} numberOfLines={2}>
+            {label}
+          </Text>
+        </View>
       )}
     </AnimatedPressable>
   );

@@ -1,4 +1,4 @@
-import { ChevronRight, Clock, Droplets, FileText, Heart, HeartPulse, RefreshCw, Settings } from 'lucide-react-native';
+import { ChevronRight, CircleCheck, Clock, Droplets, FileText, Heart, HeartPulse, RefreshCw, Settings } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Image, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -429,6 +429,7 @@ export default function HomeScreen({ onNavigateToVitals, onOpenSettings }: HomeS
                 <LargeTextButton
                   label={nextDose.status === 'MISSED' ? t('home.markAsTakenLate') : t('home.markAsTaken')}
                   onPress={() => markTaken(nextDose.scheduleId)}
+                  icon={CircleCheck}
                 />
               </>
             ) : (
