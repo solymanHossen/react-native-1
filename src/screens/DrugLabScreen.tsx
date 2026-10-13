@@ -80,8 +80,9 @@ function MedicationRow({
       accessibilityRole="button"
       accessibilityLabel={t('medications.detailsAccessibility', { name: medication.name })}
       accessibilityHint={t('medications.detailsLongPressHint')}
-      className="rounded-3xl border p-4.5"
+      className="rounded-3xl border"
       style={{
+        padding: 16,
         backgroundColor: theme.colors.elevated,
         borderColor: isDark ? theme.colors.hairline : '#EDF2F7',
         boxShadow: [
@@ -167,7 +168,14 @@ function MedicationRow({
             </Text>
           </View>
 
-          <Text style={{ color: theme.colors.hairline, fontSize: 12 }}>|</Text>
+          <View
+            style={{
+              width: 1,
+              height: 12,
+              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.12)' : '#CBD5E1',
+              marginHorizontal: 3,
+            }}
+          />
 
           <View className="flex-row items-center gap-1.5 flex-shrink">
             <Calendar size={13} color={theme.colors.inkSecondary} strokeWidth={2.2} />
@@ -307,8 +315,9 @@ function ManualMedicationButton({ onPress }: { onPress: () => void }) {
         accessibilityRole="button"
         accessibilityLabel={t('medications.addManually')}
         accessibilityHint={t('medications.addManuallyHint')}
-        className="min-h-hit flex-row items-center gap-4 rounded-3xl border p-4.5"
+        className="min-h-hit flex-row items-center gap-4 rounded-3xl border"
         style={{
+          padding: 16,
           backgroundColor: theme.colors.elevated,
           borderColor: isDark ? theme.colors.hairline : '#EDF2F7',
           boxShadow: [
@@ -545,12 +554,9 @@ export default function DrugLabScreen() {
   );
 
   return (
-    <SafeAreaView className="flex-1" edges={['top', 'left', 'right']} style={{ backgroundColor: theme.colors.canvas }}>
+    <SafeAreaView className="flex-1" edges={['top', 'left', 'right']} style={{ flex: 1, backgroundColor: theme.colors.canvas }}>
       {/* ── Screen Header: Title + Subtitle + 3D Capsule Orb ── */}
-      <View
-        className="flex-row items-center justify-between border-b px-6 py-5"
-        style={{ borderColor: theme.colors.hairline }}
-      >
+      <View className="flex-row items-center justify-between px-5 pt-3 pb-1">
         <View>
           <Text className="text-display-sm font-black" style={{ color: theme.colors.ink, fontSize: 26 }}>
             {t('medications.title')}
@@ -579,9 +585,8 @@ export default function DrugLabScreen() {
           <Image
             source={DOSAGE_FORM_ASSETS.capsule}
             style={{
-              width: 30,
-              height: 30,
-              transform: [{ scaleX: -1 }, { rotate: '15deg' }],
+              width: 32,
+              height: 32,
             }}
             resizeMode="contain"
           />
@@ -590,8 +595,9 @@ export default function DrugLabScreen() {
 
       <ScrollView
         className="flex-1"
-        contentContainerClassName="gap-6 px-6 pt-6"
-        contentContainerStyle={{ paddingBottom: 110 }}
+        style={{ flex: 1 }}
+        contentContainerClassName="gap-5 px-5 pt-3"
+        contentContainerStyle={{ paddingBottom: 130 }}
         showsVerticalScrollIndicator={false}
       >
         {initError ? (
@@ -668,8 +674,9 @@ export default function DrugLabScreen() {
               }}
               accessibilityRole="button"
               accessibilityLabel={t('medications.historyTitle')}
-              className="flex-row items-center gap-4 rounded-3xl border p-4.5"
+              className="flex-row items-center gap-4 rounded-3xl border"
               style={{
+                padding: 16,
                 backgroundColor: theme.colors.elevated,
                 borderColor: theme.mode === 'dark' ? theme.colors.hairline : '#EDF2F7',
                 boxShadow: [
@@ -714,14 +721,14 @@ export default function DrugLabScreen() {
                   borderColor: theme.mode === 'dark' ? theme.colors.hairline : '#E2E8F0',
                 }}
               >
-                <Search size={18} color={theme.colors.inkMuted} strokeWidth={2.2} />
+                <Search size={19} color={theme.colors.inkMuted} strokeWidth={2.2} />
                 <TextInput
                   value={query}
                   onChangeText={runSearch}
                   placeholder={t('medications.searchPlaceholder')}
                   placeholderTextColor={theme.colors.inkMuted}
-                  className="flex-1 text-body-lg py-3.5"
-                  style={{ color: theme.colors.ink }}
+                  className="flex-1"
+                  style={{ color: theme.colors.ink, fontSize: 15, paddingVertical: 12 }}
                 />
               </View>
 
