@@ -239,7 +239,7 @@ export default function HomeScreen({ onNavigateToVitals, onOpenSettings }: HomeS
 
   return (
     <SafeAreaView className="flex-1" edges={['top', 'left', 'right']} style={{ backgroundColor: theme.colors.canvas }}>
-      {theme.mode === 'dark' ? <AmbientDepthBackground /> : null}
+      <AmbientDepthBackground />
 
       {/* World-class persistent header strictly adhering to Apple HIG & Material You */}
       <Animated.View
