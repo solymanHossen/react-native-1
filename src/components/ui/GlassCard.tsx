@@ -11,11 +11,18 @@ export interface GlassCardProps {
 }
 
 /**
- * Premium glassmorphism card container.
- * Strictly adheres to specifications:
- * Semi-transparent dark surfaces (#1F2937 / rgba(31, 41, 55, 0.75))
- * with a subtle 1px border stroke (rgba(255, 255, 255, 0.08)) and
- * soft ambient drop shadows to create a floating layered hierarchy.
+ * Premium glassmorphism card container — the shared floating-glass surface
+ * for Home's hero cards. Both themes get a translucent fill (not just dark
+ * mode) so the ambient background behind it actually shows through; a flat
+ * opaque fill in light mode would defeat the point of a glass system. Dark
+ * additionally gets the specular top-edge highlight a glass surface picks
+ * up under a light source — light mode skips it, since the same light-on
+ * line reads as a stray artifact rather than a sheen against a pale canvas.
+ *
+ * Shadows are a layered contact + ambient pair via the cross-platform
+ * `boxShadow` style (Fabric), not the old shadow-prop + elevation combo —
+ * `elevation` alone renders a crude, flat Material drop shadow on Android
+ * that ignores color/blur entirely (see MetricCard, which this mirrors).
  */
 export function GlassCard({
   children,
@@ -25,26 +32,33 @@ export function GlassCard({
   hasGlow = false,
 }: GlassCardProps) {
   const theme = useTheme();
+  const isDark = theme.mode === 'dark';
+  const ambientColor = hasGlow ? `${glowColor}59` : isDark ? 'rgba(0, 0, 0, 0.35)' : 'rgba(57, 88, 134, 0.12)';
+  const contactColor = hasGlow ? `${glowColor}26` : isDark ? 'rgba(0, 0, 0, 0.3)' : 'rgba(57, 88, 134, 0.08)';
 
   return (
     <View
       className={`rounded-3xl ${className}`}
       style={[
         {
-          backgroundColor: theme.mode === 'dark' ? 'rgba(31, 41, 55, 0.75)' : theme.colors.elevated,
+          backgroundColor: isDark ? 'rgba(31, 41, 55, 0.75)' : 'rgba(255, 255, 255, 0.70)',
           borderWidth: 1,
-          borderColor: theme.mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : theme.colors.hairline,
-          shadowColor: hasGlow ? glowColor : '#000000',
-          shadowOffset: { width: 0, height: 10 },
-          shadowOpacity: theme.mode === 'dark' ? (hasGlow ? 0.35 : 0.35) : 0.08,
-          shadowRadius: 20,
-          elevation: 8,
+          borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : theme.colors.hairline,
+          boxShadow: isDark
+            ? [
+                { offsetX: 0, offsetY: 2, blurRadius: 4, color: contactColor },
+                { offsetX: 0, offsetY: 12, blurRadius: 28, spreadDistance: -4, color: ambientColor },
+              ]
+            : [
+                { offsetX: 0, offsetY: 1, blurRadius: 3, color: contactColor },
+                { offsetX: 0, offsetY: 10, blurRadius: 24, spreadDistance: -4, color: ambientColor },
+              ],
         },
         style,
       ]}
     >
       {/* Specular frosted glass highlight on upper edge */}
-      {theme.mode === 'dark' ? (
+      {isDark ? (
         <View
           pointerEvents="none"
           style={{

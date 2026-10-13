@@ -67,7 +67,7 @@ export function MetricCard({ label, value, unit, caption, status, icon, onPress,
       accessible
       accessibilityRole={isInteractive ? 'button' : undefined}
       accessibilityLabel={accessibilityLabel}
-      className={`min-h-hit rounded-3xl ${compact ? 'p-4' : 'p-6'}`}
+      className={`min-h-hit rounded-3xl ${compact ? 'px-4 pt-4 pb-5' : 'px-6 pt-6 pb-7'}`}
       style={[
         {
           // Fixed (not minimum) height in compact mode: these cards sit
@@ -77,9 +77,16 @@ export function MetricCard({ label, value, unit, caption, status, icon, onPress,
           // than its neighbors, breaking the row's bottom alignment. Fixing
           // the height makes every card the same size regardless of which
           // optional content it has; shorter content just leaves empty
-          // space below rather than the whole card shrinking.
-          height: compact ? 190 : undefined,
-          backgroundColor: theme.mode === 'dark' ? 'rgba(31, 41, 55, 0.75)' : theme.colors.elevated,
+          // space below rather than the whole card shrinking. Bumped +8 over
+          // the old 190 to match the extra bottom padding above (bottom >
+          // top, since a trailing StatusPill's solid fill reads as touching
+          // the edge at equal padding) without tightening the margin below
+          // it in the no-pill, two-line-caption case.
+          height: compact ? 198 : undefined,
+          // Translucent (not flat opaque) in light mode too, matching
+          // GlassCard — this is the same floating-glass system as Home's
+          // hero cards, so the ambient background behind it shows through.
+          backgroundColor: theme.mode === 'dark' ? 'rgba(31, 41, 55, 0.75)' : 'rgba(255, 255, 255, 0.70)',
           borderWidth: 1,
           borderColor: theme.mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : theme.colors.hairline,
           // Cross-platform `boxShadow` (Fabric) replaces the old shadow*/elevation

@@ -13,7 +13,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { HealthRecordsSheet, type HealthRecordsSheetRef } from '../components/records/HealthRecordsSheet';
 import { LiquidProgressRing, TodayStatusCard } from '../components/dashboard';
-import { ActionRow, ActionRowGroup, AmbientDepthBackground, AppLogo, LargeTextButton, MetricCard, StatusPill } from '../components/ui';
+import { ActionRow, ActionRowGroup, AmbientDepthBackground, AppLogo, GlassCard, LargeTextButton, MetricCard, StatusPill } from '../components/ui';
 import { useTranslation, type TranslationKey } from '../i18n';
 import { triggerHaptic } from '../lib/haptics';
 import { generateClinicalReportPdf, shareClinicalReportPdf } from '../reports/pdfService';
@@ -334,32 +334,7 @@ export default function HomeScreen({ onNavigateToVitals, onOpenSettings }: HomeS
       >
         {/* Today's Progress Card: Glassmorphism with rich emerald adherence ring and vibrant status badges */}
         <RevealOnMount delay={0}>
-          <View
-            className="gap-5 rounded-3xl p-6"
-            style={{
-              backgroundColor: theme.mode === 'dark' ? 'rgba(31, 41, 55, 0.75)' : theme.colors.elevated,
-              borderWidth: 1,
-              borderColor: theme.mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : theme.colors.hairline,
-              shadowColor: '#000000',
-              shadowOffset: { width: 0, height: 10 },
-              shadowOpacity: theme.mode === 'dark' ? 0.35 : 0.08,
-              shadowRadius: 20,
-              elevation: 8,
-            }}
-          >
-            {theme.mode === 'dark' ? (
-              <View
-                pointerEvents="none"
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 20,
-                  right: 20,
-                  height: 1,
-                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                }}
-              />
-            ) : null}
+          <GlassCard className="gap-5 p-6">
             <View className="flex-row items-center gap-5">
               <LiquidProgressRing ratio={overallRatio} size={118} />
               <View className="flex-1 gap-1">
@@ -400,37 +375,12 @@ export default function HomeScreen({ onNavigateToVitals, onOpenSettings }: HomeS
                 ))}
               </View>
             ) : null}
-          </View>
+          </GlassCard>
         </RevealOnMount>
 
         {/* Hero Next Dose Card: Glassmorphism with crisp typography and glowing action */}
         <RevealOnMount delay={60}>
-          <View
-            className="gap-5 rounded-[28px] p-7"
-            style={{
-              backgroundColor: theme.mode === 'dark' ? 'rgba(31, 41, 55, 0.75)' : theme.colors.elevated,
-              borderWidth: 1,
-              borderColor: theme.mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : theme.colors.hairline,
-              shadowColor: '#000000',
-              shadowOffset: { width: 0, height: 12 },
-              shadowOpacity: theme.mode === 'dark' ? 0.4 : 0.08,
-              shadowRadius: 24,
-              elevation: 10,
-            }}
-          >
-            {theme.mode === 'dark' ? (
-              <View
-                pointerEvents="none"
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 20,
-                  right: 20,
-                  height: 1,
-                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                }}
-              />
-            ) : null}
+          <GlassCard className="gap-5 rounded-[28px] p-7">
             <View className="flex-row items-center gap-2">
               <View
                 className="h-2.5 w-2.5 rounded-full"
@@ -468,7 +418,7 @@ export default function HomeScreen({ onNavigateToVitals, onOpenSettings }: HomeS
                 {intakeItems.length === 0 ? t('home.noDoseScheduled') : t('home.allDosesTaken')}
               </Text>
             )}
-          </View>
+          </GlassCard>
         </RevealOnMount>
 
         {/* Today's Vitals: Horizontal strip of glassmorphism MetricCards */}
