@@ -114,6 +114,13 @@ export const en = {
       tablets: 'tablets',
       refillSoon: ' — refill soon',
     },
+    mealRelation: {
+      BEFORE: 'Before food',
+      WITH: 'With food',
+      AFTER: 'After food',
+      MINUTES_OFFSET: 'Follow interval',
+      NO_MATTER: 'Any time',
+    },
   },
   alarms: {
     title: 'Medication Alarms',
@@ -270,7 +277,14 @@ export const en = {
   },
   medications: {
     title: 'Medications',
+    subtitle: 'Your health, our priority',
+    addNew: 'Add New',
     yourMedications: 'Your Medications',
+    activeStatus: 'Active',
+    timesPerDay: '{{count}}x daily',
+    noSchedulesYet: 'No active schedule',
+    motivationalTitle: 'Stay Healthy by Taking Medicine Regularly',
+    motivationalSubtitle: 'Timely medicine, good health, brighter tomorrow.',
     noMedicationsYet: 'No medications yet — search below to add one.',
     lowStock: 'Low Stock',
     outOfStock: 'Out of Stock',

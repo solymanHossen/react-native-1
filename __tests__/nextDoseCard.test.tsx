@@ -11,7 +11,7 @@ const baseMockDose: IntakeQueueItem = {
   dosageLabel: '1 capsule',
   doseQuantity: 1,
   medicationForm: 'capsule',
-  timeNode: 'MORNING',
+  timeNode: 'BREAKFAST',
   timeUtc: '08:00',
   mealRelation: 'AFTER',
   instructions: 'Take with full glass of water',
