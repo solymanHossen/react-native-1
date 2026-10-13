@@ -5,8 +5,14 @@
      app UI draws over it the moment React Native renders its first frame.
      No separate splash Activity/theme-switch, no extra dependency.
      Same brand blue as the adaptive icon background (#395886,
-     `action.light.base` in src/theme/tokens.ts) with the app mark centered
-     and left at its own native proportions — not stretched full-bleed. -->
+     `action.light.base` in src/theme/tokens.ts). `splash_brand` is the app
+     mark plus "Medicine Reminder" / "Stay Healthy, Stay on Time" baked into
+     one static bitmap (an XML drawable can't lay out live text), white on
+     this dark background since the reference this was asked to match uses
+     dark text on a light background — pre-API-31 only, since this file
+     isn't read at all on API 31+ (see values-v31/styles.xml, which is
+     bound by the platform's own icon-only splash rules and can't show the
+     text at all — see App.tsx's BootSplash for how that's covered there). -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item>
         <shape android:shape="rectangle">
@@ -14,8 +20,8 @@
         </shape>
     </item>
     <item
-        android:drawable="@drawable/splash_icon"
+        android:drawable="@drawable/splash_brand"
         android:gravity="center"
-        android:width="160dp"
-        android:height="160dp" />
+        android:width="251dp"
+        android:height="249dp" />
 </layer-list>

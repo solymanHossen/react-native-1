@@ -7,6 +7,9 @@ import type { en } from './en';
  * for a whole section).
  */
 export const bn: typeof en = {
+  splash: {
+    tagline: 'সুস্থ থাকুন, সময়মতো থাকুন',
+  },
   common: {
     back: 'ফিরে যান',
     save: 'সংরক্ষণ করুন',

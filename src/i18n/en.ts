@@ -5,6 +5,14 @@
  * missing Bengali key falls back to whatever's here rather than crashing.
  */
 export const en = {
+  splash: {
+    // Also baked (English-only, as a static bitmap — an XML drawable can't
+    // lay out live text) into the native pre-API-31 splash screen
+    // (android/app/src/main/res/drawable/splash_brand.png). This JS copy is
+    // what covers API 31+, where the OS's own splash screen is icon-only by
+    // platform rule, and is what actually respects the language setting.
+    tagline: 'Stay Healthy, Stay on Time',
+  },
   common: {
     back: 'Back',
     save: 'Save',

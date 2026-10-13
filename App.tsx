@@ -8,10 +8,10 @@
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { AlarmClock, Camera, HeartPulse, Home, Pill, Waves } from 'lucide-react-native';
 import { useEffect, useRef, useState, type ComponentType } from 'react';
-import { Pressable, StatusBar, Text, View, type LayoutChangeEvent } from 'react-native';
+import { Image, Pressable, StatusBar, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
+import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { initializeAlarmSystem } from './src/alarms';
 import { useTranslation, type TranslationKey } from './src/i18n';
 import { triggerHaptic } from './src/lib/haptics';
@@ -255,6 +255,47 @@ function ActiveScreen({
   }
 }
 
+const BOOT_SPLASH_FADE_MS = 250;
+
+/**
+ * JS-level continuation of the native splash. The native drawable
+ * (android/app/src/main/res/drawable/splash_background.xml) only covers
+ * pre-API-31 devices showing "Medicine Reminder" / the tagline — API 31+
+ * is bound by the platform's own icon-only splash screen rules and can't
+ * show that text at all, so this picks up right where the native splash
+ * leaves off, on every Android version, until the real stores are primed.
+ * Fades out (not an abrupt unmount) once `visible` goes false.
+ */
+function BootSplash({ visible, onHidden }: { visible: boolean; onHidden: () => void }) {
+  const { t } = useTranslation();
+  const opacity = useSharedValue(1);
+
+  useEffect(() => {
+    if (!visible) {
+      opacity.value = withTiming(0, { duration: BOOT_SPLASH_FADE_MS }, (finished) => {
+        if (finished) runOnJS(onHidden)();
+      });
+    }
+  }, [visible, opacity, onHidden]);
+
+  const fadeStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
+
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={[
+        StyleSheet.absoluteFill,
+        fadeStyle,
+        { backgroundColor: '#395886', alignItems: 'center', justifyContent: 'center', zIndex: 50 },
+      ]}
+    >
+      <Image source={require('./assets/branding/medicine-reminder-icon.png')} style={{ width: 96, height: 96 }} resizeMode="contain" />
+      <Text style={{ marginTop: 14, fontSize: 21, fontWeight: '800', color: '#FFFFFF' }}>{t('home.brand')}</Text>
+      <Text style={{ marginTop: 2, fontSize: 13, fontWeight: '500', color: 'rgba(255, 255, 255, 0.8)' }}>{t('splash.tagline')}</Text>
+    </Animated.View>
+  );
+}
+
 function App() {
   // Driven by our Zustand/MMKV theme store, not the OS scheme directly — the
   // app's theme preference ('light' | 'dark' | 'system') can diverge from
@@ -266,18 +307,35 @@ function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const activeAlarm = useActiveAlarmStore((state) => state.activeAlarm);
 
+  // Boot splash: visible until the stores are actually primed *and* a
+  // minimum floor has elapsed (so it doesn't flash-and-vanish on a fast
+  // device/reload — a sub-200ms boot splash reads as a glitch, not a splash).
+  // `splashMounted` stays true through the fade-out; BootSplash flips it
+  // off itself once the animation finishes.
+  const [storesReady, setStoresReady] = useState(false);
+  const [minDelayDone, setMinDelayDone] = useState(false);
+  const [splashMounted, setSplashMounted] = useState(true);
+  const bootDone = storesReady && minDelayDone;
+
   const handleNavigate = (nextTab: Tab, focus?: VitalType) => {
     setVitalsFocus(nextTab === 'vitals' ? (focus ?? null) : null);
     setTab(nextTab);
   };
 
   useEffect(() => {
-    initializeAlarmSystem().catch((error: unknown) => {
-      console.warn('[App] failed to initialize the alarm system', error);
-    });
-    refreshAllStores().catch((error: unknown) => {
-      console.warn('[App] failed to prime the shared stores', error);
-    });
+    const timer = setTimeout(() => setMinDelayDone(true), 600);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    Promise.allSettled([
+      initializeAlarmSystem().catch((error: unknown) => {
+        console.warn('[App] failed to initialize the alarm system', error);
+      }),
+      refreshAllStores().catch((error: unknown) => {
+        console.warn('[App] failed to prime the shared stores', error);
+      }),
+    ]).finally(() => setStoresReady(true));
   }, []);
 
   return (
@@ -309,6 +367,7 @@ function App() {
             </>
           )}
         </BottomSheetModalProvider>
+        {splashMounted ? <BootSplash visible={!bootDone} onHidden={() => setSplashMounted(false)} /> : null}
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
