@@ -1,4 +1,4 @@
-import { Trophy } from 'lucide-react-native';
+import { CalendarDays, Trophy } from 'lucide-react-native';
 import { useCallback, useRef, useState } from 'react';
 import { ScrollView, Text, View, type LayoutChangeEvent } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -54,9 +54,18 @@ export default function CircadianDashboardScreen() {
       </View>
 
       <ScrollView className="flex-1" contentContainerClassName="gap-7 px-6 pt-7" showsVerticalScrollIndicator={false}>
-        <Text className="text-caption font-semibold uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
-          {t('rhythm.todayLabel')} • {new Date().toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
-        </Text>
+        <View className="flex-row items-center justify-between gap-3">
+          <Text className="text-caption font-semibold uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
+            {t('rhythm.todayLabel')} • {new Date().toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
+          </Text>
+          {/* Decorative only — there's no calendar/history view to open yet. */}
+          <View className="flex-row items-center gap-1.5 rounded-full px-3 py-1.5" style={{ backgroundColor: `${theme.action.base}14` }}>
+            <CalendarDays color={theme.action.base} size={14} strokeWidth={2.25} />
+            <Text className="text-caption font-semibold" style={{ color: theme.action.base }}>
+              {t('rhythm.viewCalendar')}
+            </Text>
+          </View>
+        </View>
 
         <View className="flex-row items-center justify-center gap-4">
           <LiquidProgressRing ratio={adherenceRatio} label={t('rhythm.adherence')} />

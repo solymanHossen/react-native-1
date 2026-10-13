@@ -1,4 +1,4 @@
-import { Canvas, Circle, Group, Path, Skia } from '@shopify/react-native-skia';
+import { Canvas, Circle, Group, LinearGradient, Path, Skia } from '@shopify/react-native-skia';
 import { useEffect, useMemo } from 'react';
 import { Text, View } from 'react-native';
 import { Easing, useDerivedValue, useSharedValue, withRepeat, withTiming, type SharedValue } from 'react-native-reanimated';
@@ -104,6 +104,22 @@ export function CircadianWaveCanvas({ doses, width, height = 220 }: CircadianWav
     return Skia.Path.MakeFromSVGString(svg) ?? Skia.Path.Make();
   }, [width, centerY, amplitude]);
 
+  // Same curve, closed down to the canvas floor, filled with a top-to-bottom
+  // fade — a plain stroke read as a line chart; the fade under it is what
+  // makes it read as a wave/tide instead.
+  const fillPath = useMemo(() => {
+    const samples = 140;
+    let svg = `M 0 ${height}`;
+    for (let i = 0; i <= samples; i += 1) {
+      const progress = i / samples;
+      const x = progress * width;
+      const y = waveY(progress, centerY, amplitude);
+      svg += ` L ${x} ${y}`;
+    }
+    svg += ` L ${width} ${height} Z`;
+    return Skia.Path.MakeFromSVGString(svg) ?? Skia.Path.Make();
+  }, [width, height, centerY, amplitude]);
+
   const markerPositions = useMemo(
     () =>
       doses.map((dose) => {
@@ -120,6 +136,9 @@ export function CircadianWaveCanvas({ doses, width, height = 220 }: CircadianWav
   return (
     <View style={{ width, height: height + 84 }}>
       <Canvas style={{ width, height }}>
+        <Path path={fillPath}>
+          <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 0, y: height }} colors={[`${theme.action.base}40`, `${theme.action.base}00`]} />
+        </Path>
         <Path path={wavePath} style="stroke" strokeWidth={3.5} strokeCap="round" strokeJoin="round" color={theme.action.base} opacity={0.85} />
         {markerPositions.map(({ dose, x, y }) => (
           <Marker key={dose.id} x={x} y={y} color={theme.status[dose.state].base} pulsing={dose.state === 'pending'} pulse={pulse} />

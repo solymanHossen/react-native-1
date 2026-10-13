@@ -1,5 +1,5 @@
 import { Check, ChevronRight, X } from 'lucide-react-native';
-import { StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   runOnJS,
@@ -139,34 +139,47 @@ export function DoseActionCard({ dose, skipReason, onMarkTaken, onRequestSkip, o
       <GestureDetector gesture={composedGesture}>
         <Animated.View
           style={[cardStyle, { backgroundColor: theme.colors.elevated, borderColor: theme.colors.hairline, borderLeftColor: stateColor }]}
-          className="gap-2 rounded-3xl border border-l-4 p-5"
+          className="flex-row gap-3 rounded-3xl border border-l-4 p-5"
         >
-          <View className="flex-row items-center justify-between gap-3">
-            {/* `flex-1` + numberOfLines on the zone/time label, not the pill:
-                the pill is the status-at-a-glance element and should never
-                truncate — if anything has to give room when space is tight,
-                it's the (less critical, also shown via the marker's color)
-                zone/time text. */}
-            <Text className="flex-1 text-caption uppercase tracking-wider" numberOfLines={1} style={{ color: theme.colors.inkSecondary }}>
-              {language === 'bn' ? dose.labelBn : dose.label} · {formatHour(dose.hour)}
-            </Text>
-            <View className="flex-row items-center gap-1.5">
-              <StatusPill status={dose.state} label={t(DOSE_STATE_KEY[dose.state])} />
-              <ChevronRight color={theme.colors.inkMuted} size={16} strokeWidth={2.5} />
-            </View>
+          {/* Decorative capsule mark, not a control — same branding touch as Home's Next Dose card. */}
+          <View
+            className="items-center justify-center rounded-full"
+            style={{ width: 38, height: 38, backgroundColor: `${theme.action.base}14` }}
+          >
+            <Image
+              source={require('../../../assets/branding/capsule-pill.png')}
+              style={{ width: 22, height: 22 * (63 / 64) }}
+              resizeMode="contain"
+            />
           </View>
-          <Text className="text-body-lg" style={{ color: theme.colors.ink, fontWeight: '600' }}>
-            {dose.medicationName}
-          </Text>
-          <Text className="text-caption" style={{ color: theme.colors.inkMuted }}>
-            {dose.dosage} · {t(`rhythm.mealRelation.${dose.mealRelation}` as never)}
-          </Text>
-          {isSkipped && skipReason ? (
-            <Text className="text-caption" style={{ color: theme.statusText('missed') }}>
-              {t('rhythm.skippedPrefix')}
-              {t(SKIP_REASON_KEY[skipReason])}
+          <View className="flex-1 gap-2">
+            <View className="flex-row items-center justify-between gap-3">
+              {/* `flex-1` + numberOfLines on the zone/time label, not the pill:
+                  the pill is the status-at-a-glance element and should never
+                  truncate — if anything has to give room when space is tight,
+                  it's the (less critical, also shown via the marker's color)
+                  zone/time text. */}
+              <Text className="flex-1 text-caption font-bold uppercase tracking-wider" numberOfLines={1} style={{ color: theme.action.base }}>
+                {language === 'bn' ? dose.labelBn : dose.label} · {formatHour(dose.hour)}
+              </Text>
+              <View className="flex-row items-center gap-1.5">
+                <StatusPill status={dose.state} label={t(DOSE_STATE_KEY[dose.state])} />
+                <ChevronRight color={theme.colors.inkMuted} size={16} strokeWidth={2.5} />
+              </View>
+            </View>
+            <Text className="text-body-lg" style={{ color: theme.colors.ink, fontWeight: '600' }}>
+              {dose.medicationName}
             </Text>
-          ) : null}
+            <Text className="text-caption" style={{ color: theme.colors.inkMuted }}>
+              {dose.dosage} · {t(`rhythm.mealRelation.${dose.mealRelation}` as never)}
+            </Text>
+            {isSkipped && skipReason ? (
+              <Text className="text-caption" style={{ color: theme.statusText('missed') }}>
+                {t('rhythm.skippedPrefix')}
+                {t(SKIP_REASON_KEY[skipReason])}
+              </Text>
+            ) : null}
+          </View>
         </Animated.View>
       </GestureDetector>
     </View>
