@@ -1,36 +1,34 @@
-import { ChevronRight, CircleCheck, CircleDot, CircleMinus, CircleSlash, CircleX, type LucideIcon } from 'lucide-react-native';
+import { Ban, Check, ChevronRight, Clock, Minus, X, type LucideIcon } from 'lucide-react-native';
 import { Pressable, Text, View } from 'react-native';
 import { status, type StatusKey } from '../../theme/tokens';
 import { useTheme } from '../../theme/useTheme';
 
 /**
- * Per-status Lucide icon map — module-level constant (allocated once per
- * bundle, never per render). Icons chosen for semantic unambiguity:
+ * Per-status Lucide icon map matching the reference design:
+ * Solid circular chip with clean white glyph inside:
  *
- *  taken     → CircleCheck   ✓  positive / complete
- *  missed    → CircleX       ✗  negative / failed
- *  pending   → CircleDot     ·  imminent / not yet acted on
- *  scheduled → CircleMinus   —  neutral  / upcoming
- *  fasting   → CircleSlash   ⊘  intentional hold / dietary
+ *  taken     → Check   ✓  crisp white checkmark
+ *  missed    → X       ✗  crisp white cross
+ *  pending   → Clock   ·  imminent / upcoming time
+ *  scheduled → Minus   —  neutral / scheduled
+ *  fasting   → Ban     ⊘  hold / dietary fasting
  */
 const STATUS_ICON: Record<StatusKey, LucideIcon> = {
-  taken: CircleCheck,
-  missed: CircleX,
-  pending: CircleDot,
-  scheduled: CircleMinus,
-  fasting: CircleSlash,
+  taken: Check,
+  missed: X,
+  pending: Clock,
+  scheduled: Minus,
+  fasting: Ban,
 };
 
 /**
- * Background tint alpha per mode.
- * Light mode uses a stronger alpha (28 ≈ 16%) so the card reads as clearly
- * coloured — not just a barely-tinted ghost — matching the reference design's
- * "obviously green / obviously red" pill appearance.
- * Dark mode keeps a lighter tint (18 ≈ 9%) because the glassmorphism surface
- * is already dark enough that a heavy tint would look overpowering.
+ * Background tint alpha per mode:
+ * Light mode uses ~10% (1A) so the card reads as a soft, luminous pastel pill
+ * matching the reference design.
+ * Dark mode keeps a subtle ~9% (18) translucent medical tint on glass.
  */
-const TINT_ALPHA_LIGHT = '2E'; // ≈ 18%  — visible colour wash on white
-const TINT_ALPHA_DARK = '18';  // ≈  9%  — subtle on near-black glass
+const TINT_ALPHA_LIGHT = '1A'; // ≈ 10% — soft luminous pastel wash on white
+const TINT_ALPHA_DARK = '18';  // ≈  9% — refined tint on dark glass
 
 export interface TodayStatusCardProps {
   status: StatusKey;
@@ -42,14 +40,13 @@ export interface TodayStatusCardProps {
 }
 
 /**
- * Clinical status badge card for Today's Progress.
+ * Clinical status badge card for Today's Progress matching the reference design:
  *
- * Layout: [icon chip] [label]  [count badge] [›]
+ * Layout: [● Icon] [Label]               [Count] [›]
  *
- * The coloured circular icon chip (status hue as fill, white icon inside)
- * makes the card's meaning legible even in peripheral vision — no
- * colour-only differentiation. A stronger background tint than the global
- * statusTint() gives each card a clear, distinct identity.
+ * Left: Solid vivid circular icon chip (status hue fill + bold white glyph)
+ * Center: Status label in deep contrast status text
+ * Right: Bold count number directly beside the chevron arrow
  */
 export function TodayStatusCard({
   status: statusKey,
@@ -61,14 +58,11 @@ export function TodayStatusCard({
   const theme = useTheme();
   const token = status[statusKey];
 
-  // Resolve vivid hue for this mode (dark has its own palette via baseDark).
-  const hue = theme.mode === 'dark' ? (token.baseDark ?? token.base) : token.base;
+  // Resolve vivid hue for this mode (using vivid medical tones from palette)
+  const hue = theme.mode === 'dark' ? (token.baseDark ?? token.base) : (token.baseDark ?? token.base);
   const textColor = theme.statusText(statusKey);
 
-  // Stronger tint than the global helper — the chip fill already uses the
-  // full hue, so bumping the background alpha makes the whole card read as
-  // one cohesive coloured element rather than a plain white pill with a
-  // small coloured dot stuck on it.
+  // Soft luminous pastel background tint matching reference
   const tintAlpha = theme.mode === 'dark' ? TINT_ALPHA_DARK : TINT_ALPHA_LIGHT;
   const backgroundColor = `${hue}${tintAlpha}`;
 
@@ -80,52 +74,54 @@ export function TodayStatusCard({
       accessible={!onPress}
       accessibilityRole={onPress ? undefined : 'text'}
       accessibilityLabel={`${label}: ${count} doses`}
-      className="flex-1 flex-row items-center justify-between rounded-2xl border px-3.5 py-3"
+      className="flex-1 flex-row items-center justify-between rounded-2xl px-3.5 py-3"
       style={{
         backgroundColor,
-        borderColor: theme.mode === 'dark' ? `${hue}38` : `${hue}40`,
+        borderColor: theme.mode === 'dark' ? `${hue}32` : `${hue}20`,
+        borderWidth: 1,
         overflow: 'hidden',
-        // Hue-tinted elevation — the shadow colour matches the card accent so
-        // the whole unit reads as one coloured chip floating above the canvas.
+        // Hue-tinted soft elevation glow matching reference pill appearance
         shadowColor: hue,
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: theme.mode === 'dark' ? 0.18 : 0.22,
-        shadowRadius: 8,
-        elevation: 3,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: theme.mode === 'dark' ? 0.22 : 0.16,
+        shadowRadius: 10,
+        elevation: 2,
       }}
     >
-      {/* ── Left: icon chip + label ──────────────────────────────────── */}
-      <View className="flex-row items-center gap-2 flex-1" style={{ backgroundColor: 'transparent' }}>
+      {/* ── Left: solid icon chip + label ────────────────────────────── */}
+      <View className="flex-row items-center gap-2.5 flex-1" style={{ backgroundColor: 'transparent' }}>
         {/*
-         * Circular icon chip: full-hue fill + white icon = maximum contrast
-         * with zero extra colour math. The drop shadow repeats the hue so the
-         * chip glows out of the tinted background rather than just sitting on it.
+         * Circular icon chip: full-hue fill + white glyph inside = maximum clarity
          */}
         <View
           style={{
-            width: 26,
-            height: 26,
-            borderRadius: 13,
+            width: 28,
+            height: 28,
+            borderRadius: 14,
             backgroundColor: hue,
             alignItems: 'center',
             justifyContent: 'center',
             shadowColor: hue,
             shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.5,
-            shadowRadius: 5,
-            elevation: 4,
+            shadowOpacity: theme.mode === 'dark' ? 0.35 : 0.3,
+            shadowRadius: 4,
+            elevation: 2,
           }}
         >
-          <StatusIcon size={15} color="#FFFFFF" strokeWidth={2.5} />
+          <StatusIcon
+            size={statusKey === 'taken' ? 16 : 15}
+            color="#FFFFFF"
+            strokeWidth={3}
+          />
         </View>
 
         <Text
           numberOfLines={1}
           style={{
             color: textColor,
-            fontSize: 14,
+            fontSize: 15,
             fontWeight: '700',
-            letterSpacing: 0.2,
+            letterSpacing: 0.1,
             backgroundColor: 'transparent',
           }}
         >
@@ -133,30 +129,19 @@ export function TodayStatusCard({
         </Text>
       </View>
 
-      {/* ── Right: count badge + chevron ────────────────────────────── */}
+      {/* ── Right: count + chevron ───────────────────────────────────── */}
       <View className="flex-row items-center gap-1.5">
-        <View
-          className="items-center justify-center rounded-full px-2.5 py-0.5"
+        <Text
           style={{
-            // Count chip background uses a slightly stronger alpha than the
-            // card so it reads as a nested layer, not just the same surface.
-            backgroundColor: theme.mode === 'dark' ? `${hue}30` : `${hue}25`,
-            borderWidth: 1,
-            borderColor: theme.mode === 'dark' ? `${hue}50` : `${hue}45`,
+            color: textColor,
+            fontSize: 17,
+            fontWeight: '800',
+            backgroundColor: 'transparent',
           }}
         >
-          <Text
-            style={{
-              color: textColor,
-              fontSize: 13,
-              fontWeight: '800',
-              backgroundColor: 'transparent',
-            }}
-          >
-            {count}
-          </Text>
-        </View>
-        <ChevronRight color={textColor} size={14} strokeWidth={2.5} />
+          {count}
+        </Text>
+        <ChevronRight color={textColor} size={16} strokeWidth={2.5} />
       </View>
     </View>
   );

@@ -170,24 +170,29 @@ export default function HomeScreen({ onNavigateToVitals, onOpenSettings }: HomeS
     return counts;
   }, [intakeItems]);
 
-  const statusRows = useMemo(() => {
+  const statusRows = useMemo<IntakeQueueStatus[][]>(() => {
+    if (intakeItems.length === 0) return [];
+    // Prioritize TAKEN and MISSED side-by-side matching the reference design layout
+    if (statusCounts.TAKEN > 0 || statusCounts.MISSED > 0) {
+      const rows: IntakeQueueStatus[][] = [['TAKEN', 'MISSED']];
+      const others = (['PENDING', 'SCHEDULED'] as IntakeQueueStatus[]).filter(
+        (key) => statusCounts[key] > 0,
+      );
+      for (let i = 0; i < others.length; i += 2) {
+        rows.push(others.slice(i, i + 2));
+      }
+      return rows;
+    }
     const active = (Object.keys(statusCounts) as IntakeQueueStatus[]).filter(
       (key) => statusCounts[key] > 0,
     );
-    if (active.length === 0) return [];
-    if (active.length === 1) return [[active[0]]];
-    if (active.length === 2) return [[active[0], active[1]]];
-    if (active.length === 3) return [[active[0], active[1]], [active[2]]];
+    if (active.length === 0) return [['TAKEN', 'MISSED']];
     const rows: IntakeQueueStatus[][] = [];
     for (let i = 0; i < active.length; i += 2) {
-      if (i + 1 < active.length) {
-        rows.push([active[i], active[i + 1]]);
-      } else {
-        rows.push([active[i]]);
-      }
+      rows.push(active.slice(i, i + 2));
     }
     return rows;
-  }, [statusCounts]);
+  }, [intakeItems.length, statusCounts]);
 
   const overallRatio = intakeItems.length === 0 ? 0 : statusCounts.TAKEN / intakeItems.length;
 
@@ -332,19 +337,46 @@ export default function HomeScreen({ onNavigateToVitals, onOpenSettings }: HomeS
           <RefreshControl refreshing={refreshing} onRefresh={handlePullToRefresh} tintColor={theme.action.base} colors={[theme.action.base]} />
         }
       >
-        {/* Today's Progress Card: Glassmorphism with rich emerald adherence ring and vibrant status badges */}
+        {/* Today's Progress Card: Clean frosted card matching reference design */}
         <RevealOnMount delay={0}>
-          <GlassCard className="gap-5 p-6">
-            <View className="flex-row items-center gap-5">
-              <LiquidProgressRing ratio={overallRatio} size={118} />
+          <GlassCard
+            className="gap-5 p-5 rounded-[28px]"
+            style={{
+              backgroundColor: theme.mode === 'dark' ? 'rgba(31, 41, 55, 0.75)' : 'rgba(248, 251, 255, 0.85)',
+              borderColor: theme.mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : '#E2EDFB',
+            }}
+          >
+            <View className="flex-row items-center gap-4">
+              <LiquidProgressRing ratio={overallRatio} size={116} />
               <View className="flex-1 gap-1">
-                <Text className="text-caption font-semibold uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
+                <Text
+                  style={{
+                    color: theme.mode === 'dark' ? theme.colors.inkSecondary : theme.colors.inkMuted,
+                    fontSize: 12.5,
+                    fontWeight: '700',
+                    letterSpacing: 0.8,
+                    textTransform: 'uppercase',
+                  }}
+                >
                   {t('home.todaysProgress')}
                 </Text>
-                <Text className="text-title-lg font-bold" style={{ color: theme.colors.ink, fontSize: 24 }}>
+                <Text
+                  style={{
+                    color: theme.colors.ink,
+                    fontSize: 25,
+                    fontWeight: '800',
+                    letterSpacing: -0.3,
+                  }}
+                >
                   {t('home.doseCount', { taken: statusCounts.TAKEN, total: intakeItems.length })}
                 </Text>
-                <Text className="text-caption font-medium" style={{ color: theme.colors.inkSecondary }}>
+                <Text
+                  style={{
+                    color: theme.mode === 'dark' ? theme.colors.inkSecondary : theme.colors.inkMuted,
+                    fontSize: 14,
+                    fontWeight: '500',
+                  }}
+                >
                   {intakeItems.length === 0
                     ? t('home.progressEmpty')
                     : statusCounts.TAKEN === intakeItems.length
@@ -354,16 +386,10 @@ export default function HomeScreen({ onNavigateToVitals, onOpenSettings }: HomeS
               </View>
             </View>
             {statusRows.length > 0 ? (
-              <View
-                className="gap-2.5 pt-4"
-                style={{
-                  borderTopWidth: 1,
-                  borderTopColor: theme.mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : theme.colors.hairline,
-                }}
-              >
-                {statusRows.map((row, rowIndex) => (
-                  <View key={rowIndex} className="flex-row gap-2.5">
-                    {row.map((key) => (
+              <View className="gap-3">
+                {statusRows.map((row: IntakeQueueStatus[], rowIndex: number) => (
+                  <View key={rowIndex} className="flex-row gap-3">
+                    {row.map((key: IntakeQueueStatus) => (
                       <TodayStatusCard
                         key={key}
                         status={STATUS_TO_KEY[key]}

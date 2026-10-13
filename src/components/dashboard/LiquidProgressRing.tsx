@@ -1,141 +1,162 @@
-import { Canvas, Circle, Group, Path, Skia, type SkPath } from '@shopify/react-native-skia';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Text, View } from 'react-native';
-import { Easing, runOnJS, useAnimatedReaction, useDerivedValue, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
+import { useEffect, useRef, useState } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { Easing, runOnJS, useAnimatedReaction, useSharedValue, withTiming } from 'react-native-reanimated';
+import Svg, { Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { triggerHapticCascade } from '../../lib/haptics';
 import { useTheme } from '../../theme/useTheme';
 
-interface LiquidProgressRingProps {
+export interface LiquidProgressRingProps {
   /** 0–1 daily adherence ratio. */
   ratio: number;
   size?: number;
+  strokeWidth?: number;
   label?: string;
-}
-
-function makeWavePath(width: number, height: number, amplitude: number, wavelength: number): SkPath {
-  let svg = `M ${-wavelength} ${amplitude}`;
-  for (let x = -wavelength; x <= width + wavelength; x += wavelength / 24) {
-    svg += ` L ${x} ${amplitude * Math.sin((x / wavelength) * 2 * Math.PI)}`;
-  }
-  svg += ` L ${width + wavelength} ${height} L ${-wavelength} ${height} Z`;
-  return Skia.Path.MakeFromSVGString(svg) ?? Skia.Path.Make();
+  testID?: string;
 }
 
 /**
- * Circular adherence gauge with a continuously-scrolling wavy fill line
- * (two layered waves at different speeds/opacities for a sense of depth),
- * clipped to a circle whose fill level tracks `ratio`. Fires a haptic
- * cascade exactly once per session the moment adherence reaches 100% —
- * guarded by a ref rather than re-firing every time `ratio` happens to
- * still be 1 on a later render (e.g. a parent re-render for an unrelated
- * reason shouldn't re-trigger the celebration).
+ * Clean circular progress ring with rounded caps, smooth gradient fill,
+ * and bold centered percentage matching the reference design.
+ *
+ * Adherence thresholds match existing project color tokens:
+ *  - >= 0.75: Emerald gradient (#34D399 -> #10B981)
+ *  - >= 0.40: Brand blue gradient (#3B82F6 -> #1D4ED8) — matches the 60% in reference
+ *  - <  0.40: Coral red gradient (#F87171 -> #EF4444)
  */
-export function LiquidProgressRing({ ratio, size = 180, label }: LiquidProgressRingProps) {
+export function LiquidProgressRing({
+  ratio,
+  size = 118,
+  strokeWidth: customStrokeWidth,
+  label,
+  testID,
+}: LiquidProgressRingProps) {
   const theme = useTheme();
-  // Both modes now use the same vivid hue family — emerald for good adherence,
-  // brand blue for in-progress, coral for low adherence. Dark mode was already
-  // using these; light mode was using statusText() which returns dark
-  // "on-surface text" colors (#8E5C00 amber for pending) — correct for text
-  // contrast but wrong for a liquid fill, where they render as muddy brown.
-  const liquidColor =
-    ratio >= 0.75
-      ? '#10B981'   // emerald green  — great adherence
-      : ratio >= 0.4
-        ? '#3B82F6' // brand blue     — in-progress / decent adherence
-        : '#EF4444'; // coral red     — low adherence, needs attention
-  const radius = size / 2;
-  const amplitude = size * 0.045;
-  const wavelength = size * 0.9;
+  const isDark = theme.mode === 'dark';
 
+  // Enforce clamped 0..1 ratio
+  const safeRatio = Math.max(0, Math.min(1, isNaN(ratio) ? 0 : ratio));
+
+  // Determine gradient colors based on adherence:
+  const [gradientStart, gradientEnd] =
+    safeRatio >= 0.75
+      ? ['#34D399', '#10B981'] // emerald green
+      : safeRatio >= 0.4
+        ? ['#3B82F6', '#1D4ED8'] // brand blue -> rich royal blue (exact reference match at 60%)
+        : ['#F87171', '#EF4444']; // coral red
+
+  // Responsive stroke width
+  const strokeWidth = customStrokeWidth ?? Math.max(9, Math.round(size * 0.095));
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const center = size / 2;
+
+  // Animated shared value for smooth transition
   const fillLevel = useSharedValue(0);
-  const phaseA = useSharedValue(0);
-  const phaseB = useSharedValue(0);
+  const [animatedRatio, setAnimatedRatio] = useState(safeRatio);
+  const [displayPercent, setDisplayPercent] = useState(() => Math.round(safeRatio * 100));
   const hasCelebrated = useRef(false);
 
   useEffect(() => {
-    fillLevel.value = withTiming(ratio, { duration: 650, easing: Easing.out(Easing.cubic) });
-  }, [ratio, fillLevel]);
+    fillLevel.value = withTiming(safeRatio, {
+      duration: 700,
+      easing: Easing.out(Easing.cubic),
+    });
+  }, [safeRatio, fillLevel]);
 
-  useEffect(() => {
-    phaseA.value = withRepeat(withTiming(wavelength, { duration: 2600, easing: Easing.linear }), -1, false);
-    phaseB.value = withRepeat(withTiming(-wavelength, { duration: 3400, easing: Easing.linear }), -1, false);
-  }, [phaseA, phaseB, wavelength]);
-
-  useEffect(() => {
-    if (ratio >= 1 && !hasCelebrated.current) {
-      hasCelebrated.current = true;
-      triggerHapticCascade();
-    } else if (ratio < 1) {
-      hasCelebrated.current = false;
-    }
-  }, [ratio]);
-
-  const wavePath = useMemo(() => makeWavePath(size, size * 1.2, amplitude, wavelength), [size, amplitude, wavelength]);
-  const clipPath = useMemo(() => Skia.Path.Circle(radius, radius, radius), [radius]);
-
-  const liquidTransform = useDerivedValue(() => [{ translateY: (1 - fillLevel.value) * size }]);
-  const waveATransform = useDerivedValue(() => [{ translateX: phaseA.value }]);
-  const waveBTransform = useDerivedValue(() => [{ translateX: phaseB.value }]);
-
-  const [displayPercent, setDisplayPercent] = useState(() => Math.round(ratio * 100));
   useAnimatedReaction(
-    () => Math.round(fillLevel.value * 100),
+    () => fillLevel.value,
     (current, previous) => {
-      if (current !== previous) runOnJS(setDisplayPercent)(current);
+      if (previous === null || Math.abs(current - previous) > 0.003) {
+        runOnJS(setAnimatedRatio)(current);
+        runOnJS(setDisplayPercent)(Math.round(current * 100));
+      }
     },
   );
 
-  const canvasBackground = theme.mode === 'dark' ? '#0F172A' : theme.colors.surface;
-  // Light mode: use a soft tint of the liquid fill colour as the ring border
-  // so the stroke complements (not fights) the wave colour underneath.
-  // Dark mode: keep the subtle white glass hairline.
-  const strokeColor = theme.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : `${liquidColor}50`;
+  useEffect(() => {
+    if (safeRatio >= 1 && !hasCelebrated.current) {
+      hasCelebrated.current = true;
+      triggerHapticCascade();
+    } else if (safeRatio < 1) {
+      hasCelebrated.current = false;
+    }
+  }, [safeRatio]);
+
+  // Track stroke color: very pale, translucent tint matching reference design
+  const trackColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(57, 88, 134, 0.10)';
+
+  // Calculate dash offset for SVG circle
+  const clampedAnimRatio = Math.max(0, Math.min(1, animatedRatio));
+  const strokeDashoffset = circumference * (1 - clampedAnimRatio);
+
+  const gradientId = `ring-grad-${size}-${Math.round(safeRatio * 10)}`;
 
   return (
-    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
-      <Canvas style={{ width: size, height: size }}>
-        <Circle cx={radius} cy={radius} r={radius} color={canvasBackground} />
-        <Group clip={clipPath}>
-          <Group transform={liquidTransform}>
-            <Group transform={waveBTransform}>
-              <Path path={wavePath} color={liquidColor} opacity={0.35} />
-            </Group>
-            <Group transform={waveATransform}>
-              <Path path={wavePath} color={liquidColor} opacity={0.9} />
-            </Group>
-          </Group>
-        </Group>
-        <Circle cx={radius} cy={radius} r={radius - 2} style="stroke" strokeWidth={4} color={strokeColor} />
-      </Canvas>
+    <View
+      testID={testID}
+      style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}
+    >
+      <Svg width={size} height={size}>
+        <Defs>
+          <LinearGradient id={gradientId} x1="0%" y1="0%" x2="0%" y2="100%">
+            <Stop offset="0%" stopColor={gradientStart} />
+            <Stop offset="100%" stopColor={gradientEnd} />
+          </LinearGradient>
+        </Defs>
+
+        {/* Background track circle */}
+        <Circle
+          cx={center}
+          cy={center}
+          r={radius}
+          stroke={trackColor}
+          strokeWidth={strokeWidth}
+          fill="none"
+        />
+
+        {/* Foreground progress arc with rounded caps */}
+        {clampedAnimRatio > 0.005 ? (
+          <Circle
+            cx={center}
+            cy={center}
+            r={radius}
+            stroke={`url(#${gradientId})`}
+            strokeWidth={strokeWidth}
+            strokeDasharray={`${circumference} ${circumference}`}
+            strokeDashoffset={strokeDashoffset}
+            strokeLinecap="round"
+            fill="none"
+            transform={`rotate(-90 ${center} ${center})`}
+          />
+        ) : null}
+      </Svg>
+
+      {/* Center content: clean bold percentage without any box or border, matching reference */}
       <View
         pointerEvents="none"
-        style={{
-          position: 'absolute',
-          alignItems: 'center',
-          paddingHorizontal: 12,
-          paddingVertical: 5,
-          borderRadius: 18,
-          backgroundColor: theme.mode === 'dark' ? 'rgba(15, 23, 42, 0.9)' : theme.colors.surface,
-          borderWidth: 1,
-          borderColor: theme.mode === 'dark' ? 'rgba(255, 255, 255, 0.12)' : theme.colors.hairline,
-          shadowColor: liquidColor,
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.35,
-          shadowRadius: 8,
-          elevation: 4,
-        }}
+        style={StyleSheet.absoluteFill}
+        className="items-center justify-center"
       >
         <Text
-          className="text-title-lg"
           style={{
-            color: theme.colors.ink,
+            fontSize: Math.round(size * 0.24),
             fontWeight: '800',
+            color: theme.colors.ink,
+            letterSpacing: -0.5,
           }}
         >
           {displayPercent}%
         </Text>
         {label ? (
-          <Text className="text-caption font-medium" style={{ color: theme.colors.inkSecondary }}>
+          <Text
+            numberOfLines={1}
+            style={{
+              fontSize: Math.round(size * 0.1),
+              fontWeight: '600',
+              color: theme.colors.inkSecondary,
+              marginTop: 2,
+            }}
+          >
             {label}
           </Text>
         ) : null}
@@ -143,3 +164,6 @@ export function LiquidProgressRing({ ratio, size = 180, label }: LiquidProgressR
     </View>
   );
 }
+
+export const CircularProgressRing = LiquidProgressRing;
+
