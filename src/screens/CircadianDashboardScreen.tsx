@@ -1,3 +1,4 @@
+import { Trophy } from 'lucide-react-native';
 import { useCallback, useRef, useState } from 'react';
 import { ScrollView, Text, View, type LayoutChangeEvent } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -53,8 +54,32 @@ export default function CircadianDashboardScreen() {
       </View>
 
       <ScrollView className="flex-1" contentContainerClassName="gap-7 px-6 pt-7" showsVerticalScrollIndicator={false}>
-        <View className="items-center">
+        <Text className="text-caption font-semibold uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
+          {t('rhythm.todayLabel')} • {new Date().toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
+        </Text>
+
+        <View className="flex-row items-center justify-center gap-4">
           <LiquidProgressRing ratio={adherenceRatio} label={t('rhythm.adherence')} />
+          {doses.length > 0 && adherenceRatio >= 1 ? (
+            <View
+              className="flex-1 gap-1 rounded-2xl p-3.5"
+              style={{
+                backgroundColor: theme.statusTint('taken'),
+                borderWidth: 1,
+                borderColor: theme.mode === 'dark' ? 'rgba(16, 185, 129, 0.28)' : theme.colors.hairline,
+              }}
+            >
+              <View className="flex-row items-center gap-1.5">
+                <Trophy color={theme.statusText('taken')} size={16} strokeWidth={2.25} />
+                <Text className="text-body-lg font-bold" numberOfLines={1} style={{ color: theme.statusText('taken') }}>
+                  {t('rhythm.allDoneTitle')}
+                </Text>
+              </View>
+              <Text className="text-caption font-medium" style={{ color: theme.statusText('taken') }}>
+                {t('rhythm.allDoneSubtitle')}
+              </Text>
+            </View>
+          ) : null}
         </View>
 
         <View onLayout={handleMeasureCanvas}>

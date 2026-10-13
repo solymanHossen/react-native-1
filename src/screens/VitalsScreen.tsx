@@ -4,7 +4,7 @@ import {
   BottomSheetModal,
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
-import { Activity, Droplets, Scale, Thermometer, X } from 'lucide-react-native';
+import { Activity, ChevronRight, Droplets, Scale, Thermometer, X } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useRef, useState, type ElementRef, type RefObject } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -314,8 +314,11 @@ export default function VitalsScreen({ focusVital = null }: VitalsScreenProps) {
                 className="min-h-hit flex-1 basis-[46%] gap-3 rounded-3xl border p-5"
                 style={{ minWidth: '46%', backgroundColor: theme.colors.elevated, borderColor: theme.colors.hairline }}
               >
-                <View className="items-center justify-center self-start rounded-2xl" style={{ width: 42, height: 42, backgroundColor: `${color}18` }}>
-                  <Icon color={color} size={22} strokeWidth={2.25} />
+                <View className="flex-row items-start justify-between">
+                  <View className="items-center justify-center rounded-2xl" style={{ width: 42, height: 42, backgroundColor: `${color}18` }}>
+                    <Icon color={color} size={22} strokeWidth={2.25} />
+                  </View>
+                  <ChevronRight color={theme.colors.inkMuted} size={18} strokeWidth={2.5} />
                 </View>
                 <Text className="text-body-lg" style={{ color: theme.colors.ink, fontWeight: '700' }}>
                   {label}

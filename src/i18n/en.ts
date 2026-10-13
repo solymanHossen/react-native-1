@@ -87,6 +87,9 @@ export const en = {
     title: "Today's Rhythm",
     subtitle: 'Swipe right to mark taken, left to skip, hold for details.',
     adherence: 'Adherence',
+    todayLabel: 'Today',
+    allDoneTitle: 'Great job!',
+    allDoneSubtitle: "You've taken all your doses today.",
     noDosesToday: 'No doses scheduled for today yet — create one from the Medications or Alarms tab.',
     doseState: {
       taken: 'Taken',

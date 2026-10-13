@@ -1,4 +1,4 @@
-import { Check, X } from 'lucide-react-native';
+import { Check, ChevronRight, X } from 'lucide-react-native';
 import { StyleSheet, Text, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
@@ -150,7 +150,10 @@ export function DoseActionCard({ dose, skipReason, onMarkTaken, onRequestSkip, o
             <Text className="flex-1 text-caption uppercase tracking-wider" numberOfLines={1} style={{ color: theme.colors.inkSecondary }}>
               {language === 'bn' ? dose.labelBn : dose.label} · {formatHour(dose.hour)}
             </Text>
-            <StatusPill status={dose.state} label={t(DOSE_STATE_KEY[dose.state])} />
+            <View className="flex-row items-center gap-1.5">
+              <StatusPill status={dose.state} label={t(DOSE_STATE_KEY[dose.state])} />
+              <ChevronRight color={theme.colors.inkMuted} size={16} strokeWidth={2.5} />
+            </View>
           </View>
           <Text className="text-body-lg" style={{ color: theme.colors.ink, fontWeight: '600' }}>
             {dose.medicationName}
