@@ -82,11 +82,22 @@ export function MetricCard({ label, value, unit, caption, status, icon, onPress,
           backgroundColor: theme.mode === 'dark' ? 'rgba(31, 41, 55, 0.75)' : theme.colors.elevated,
           borderWidth: 1,
           borderColor: theme.mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : theme.colors.hairline,
-          shadowColor: '#000000',
-          shadowOffset: { width: 0, height: 8 },
-          shadowOpacity: theme.mode === 'dark' ? 0.35 : 0.08,
-          shadowRadius: 16,
-          elevation: 6,
+          // Cross-platform `boxShadow` (Fabric) replaces the old shadow*/elevation
+          // combo — on Android, `elevation` alone renders a crude, flat Material
+          // drop shadow that ignores shadowColor/Radius entirely, which read as
+          // muddy/harsh next to iOS's soft shadow. A layered contact + ambient
+          // shadow (tinted with brand ink, not flat black) looks soft and
+          // consistent on both platforms.
+          boxShadow:
+            theme.mode === 'dark'
+              ? [
+                  { offsetX: 0, offsetY: 2, blurRadius: 4, color: 'rgba(0, 0, 0, 0.3)' },
+                  { offsetX: 0, offsetY: 12, blurRadius: 28, spreadDistance: -4, color: 'rgba(0, 0, 0, 0.35)' },
+                ]
+              : [
+                  { offsetX: 0, offsetY: 1, blurRadius: 3, color: 'rgba(57, 88, 134, 0.08)' },
+                  { offsetX: 0, offsetY: 10, blurRadius: 24, spreadDistance: -4, color: 'rgba(57, 88, 134, 0.12)' },
+                ],
         },
         pressStyle,
       ]}
