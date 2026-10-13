@@ -82,7 +82,7 @@ function MedicationRow({
       accessibilityHint={t('medications.detailsLongPressHint')}
       className="rounded-3xl border"
       style={{
-        padding: 16,
+        padding: 18,
         backgroundColor: theme.colors.elevated,
         borderColor: isDark ? theme.colors.hairline : '#EDF2F7',
         boxShadow: [
@@ -94,9 +94,9 @@ function MedicationRow({
       <View className="flex-row items-center gap-3.5">
         <View
           style={{
-            width: 48,
-            height: 48,
-            borderRadius: 16,
+            width: 60,
+            height: 60,
+            borderRadius: 20,
             backgroundColor: isDark ? 'rgba(59, 130, 246, 0.16)' : '#EFF6FF',
             alignItems: 'center',
             justifyContent: 'center',
@@ -104,16 +104,16 @@ function MedicationRow({
         >
           <Image
             source={asset}
-            style={{ width: 34, height: 34 }}
+            style={{ width: 42, height: 42 }}
             resizeMode="contain"
           />
         </View>
 
         <View className="flex-1 gap-1">
           <Text
-            className="text-body-lg font-bold"
+            className="font-extrabold"
             numberOfLines={1}
-            style={{ color: theme.colors.ink }}
+            style={{ color: theme.colors.ink, fontSize: 20, lineHeight: 25 }}
           >
             {medication.strength ? `${medication.name} · ${medication.strength}` : medication.name}
           </Text>
@@ -121,8 +121,8 @@ function MedicationRow({
           <View
             style={{
               alignSelf: 'flex-start',
-              paddingHorizontal: 8,
-              paddingVertical: 2.5,
+              paddingHorizontal: 12,
+              paddingVertical: 3.5,
               borderRadius: 9999,
               backgroundColor: isDark ? 'rgba(59, 130, 246, 0.20)' : '#EEF4FF',
             }}
@@ -130,7 +130,7 @@ function MedicationRow({
             <Text
               style={{
                 color: isDark ? '#93C5FD' : '#3B82F6',
-                fontSize: 11,
+                fontSize: 13,
                 fontWeight: '700',
               }}
             >
@@ -139,7 +139,7 @@ function MedicationRow({
           </View>
         </View>
 
-        <ChevronRight color={theme.colors.inkMuted} size={18} strokeWidth={2.2} />
+        <ChevronRight color={theme.colors.inkMuted} size={22} strokeWidth={2.2} />
       </View>
 
       {/* ── Hairline Divider ── */}
@@ -147,7 +147,7 @@ function MedicationRow({
         style={{
           height: 1,
           backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.05)',
-          marginVertical: 12,
+          marginVertical: 14,
         }}
       />
 
@@ -155,13 +155,13 @@ function MedicationRow({
       <View className="flex-row items-center justify-between gap-2">
         <View className="flex-row items-center gap-2 flex-1">
           <View className="flex-row items-center gap-1.5 flex-shrink">
-            <Clock size={13} color={theme.colors.inkSecondary} strokeWidth={2.2} />
+            <Clock size={16} color={theme.colors.inkSecondary} strokeWidth={2.2} />
             <Text
               numberOfLines={1}
               style={{
-                fontSize: 12,
+                fontSize: 14.5,
                 color: theme.colors.inkSecondary,
-                fontWeight: '500',
+                fontWeight: '600',
               }}
             >
               {mealRelationLabel}
@@ -171,20 +171,20 @@ function MedicationRow({
           <View
             style={{
               width: 1,
-              height: 12,
-              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.12)' : '#CBD5E1',
+              height: 14,
+              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.14)' : '#CBD5E1',
               marginHorizontal: 3,
             }}
           />
 
           <View className="flex-row items-center gap-1.5 flex-shrink">
-            <Calendar size={13} color={theme.colors.inkSecondary} strokeWidth={2.2} />
+            <Calendar size={16} color={theme.colors.inkSecondary} strokeWidth={2.2} />
             <Text
               numberOfLines={1}
               style={{
-                fontSize: 12,
+                fontSize: 14.5,
                 color: theme.colors.inkSecondary,
-                fontWeight: '500',
+                fontWeight: '600',
               }}
             >
               {frequencyLabel}
@@ -198,15 +198,15 @@ function MedicationRow({
             style={{
               flexDirection: 'row',
               alignItems: 'center',
-              gap: 4,
-              paddingHorizontal: 8,
-              paddingVertical: 3,
+              gap: 5.5,
+              paddingHorizontal: 12,
+              paddingVertical: 5,
               borderRadius: 9999,
               backgroundColor: isDark ? 'rgba(239, 68, 68, 0.20)' : '#FEE2E2',
             }}
           >
-            <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#EF4444' }} />
-            <Text style={{ color: '#EF4444', fontSize: 11, fontWeight: '700' }}>
+            <View style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: '#EF4444' }} />
+            <Text style={{ color: '#EF4444', fontSize: 13, fontWeight: '700' }}>
               {t('medications.outOfStock')}
             </Text>
           </View>
@@ -215,15 +215,15 @@ function MedicationRow({
             style={{
               flexDirection: 'row',
               alignItems: 'center',
-              gap: 4,
-              paddingHorizontal: 8,
-              paddingVertical: 3,
+              gap: 5.5,
+              paddingHorizontal: 12,
+              paddingVertical: 5,
               borderRadius: 9999,
               backgroundColor: isDark ? 'rgba(245, 158, 11, 0.20)' : '#FEF3C7',
             }}
           >
-            <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#F59E0B' }} />
-            <Text style={{ color: '#F59E0B', fontSize: 11, fontWeight: '700' }}>
+            <View style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: '#F59E0B' }} />
+            <Text style={{ color: '#F59E0B', fontSize: 13, fontWeight: '700' }}>
               {t('medications.detailsStockUnits', { count: medication.current_stock, unit: t('medications.detailsStockUnit') })}
             </Text>
           </View>
@@ -232,15 +232,15 @@ function MedicationRow({
             style={{
               flexDirection: 'row',
               alignItems: 'center',
-              gap: 4,
-              paddingHorizontal: 9,
-              paddingVertical: 3.5,
+              gap: 5.5,
+              paddingHorizontal: 13,
+              paddingVertical: 5,
               borderRadius: 9999,
               backgroundColor: isDark ? 'rgba(16, 185, 129, 0.18)' : '#DCFCE7',
             }}
           >
-            <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#16A34A' }} />
-            <Text style={{ color: '#16A34A', fontSize: 11, fontWeight: '700' }}>
+            <View style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: '#16A34A' }} />
+            <Text style={{ color: '#16A34A', fontSize: 13, fontWeight: '700' }}>
               {t('medications.activeStatus')}
             </Text>
           </View>
@@ -264,14 +264,14 @@ function SearchResultRow({
 
   return (
     <View
-      className="flex-row items-center gap-4 rounded-3xl border p-5"
-      style={{ backgroundColor: theme.colors.elevated, borderColor: theme.colors.hairline }}
+      className="flex-row items-center gap-4 rounded-3xl border"
+      style={{ padding: 18, backgroundColor: theme.colors.elevated, borderColor: theme.colors.hairline }}
     >
       <View className="flex-1">
-        <Text className="text-body-lg" numberOfLines={1} style={{ color: theme.colors.ink }}>
+        <Text className="font-bold" numberOfLines={1} style={{ color: theme.colors.ink, fontSize: 18.5 }}>
           {result.brand_name} {result.strength}
         </Text>
-        <Text className="mt-0.5 text-caption" numberOfLines={1} style={{ color: theme.colors.inkSecondary }}>
+        <Text className="mt-0.5 font-medium" numberOfLines={1} style={{ color: theme.colors.inkSecondary, fontSize: 14.5 }}>
           {result.generic_name}
         </Text>
       </View>
@@ -283,9 +283,9 @@ function SearchResultRow({
           accessibilityRole="button"
           accessibilityLabel={t('medications.addResultAccessibility', { name: result.brand_name })}
           className="min-h-hit min-w-hit items-center justify-center rounded-full"
-          style={{ width: 40, height: 40, backgroundColor: `${theme.action.base}14` }}
+          style={{ width: 46, height: 46, backgroundColor: `${theme.action.base}14` }}
         >
-          <Plus color={theme.action.base} size={20} strokeWidth={2.5} />
+          <Plus color={theme.action.base} size={22} strokeWidth={2.5} />
         </Pressable>
       )}
     </View>
@@ -317,7 +317,7 @@ function ManualMedicationButton({ onPress }: { onPress: () => void }) {
         accessibilityHint={t('medications.addManuallyHint')}
         className="min-h-hit flex-row items-center gap-4 rounded-3xl border"
         style={{
-          padding: 16,
+          padding: 18,
           backgroundColor: theme.colors.elevated,
           borderColor: isDark ? theme.colors.hairline : '#EDF2F7',
           boxShadow: [
@@ -327,25 +327,25 @@ function ManualMedicationButton({ onPress }: { onPress: () => void }) {
       >
         <View
           style={{
-            width: 48,
-            height: 48,
-            borderRadius: 16,
+            width: 60,
+            height: 60,
+            borderRadius: 20,
             backgroundColor: isDark ? 'rgba(59, 130, 246, 0.16)' : '#EFF6FF',
             alignItems: 'center',
             justifyContent: 'center',
           }}
         >
-          <Plus color={isDark ? '#60A5FA' : '#365476'} size={24} strokeWidth={2.5} />
+          <Plus color={isDark ? '#60A5FA' : '#365476'} size={28} strokeWidth={2.5} />
         </View>
-        <View className="flex-1 gap-0.5">
-          <Text className="text-body-lg font-bold" numberOfLines={2} style={{ color: theme.colors.ink, fontSize: 15 }}>
+        <View className="flex-1 gap-1">
+          <Text className="font-extrabold" numberOfLines={2} style={{ color: theme.colors.ink, fontSize: 18.5 }}>
             {t('medications.addManually')}
           </Text>
-          <Text className="text-caption" numberOfLines={2} style={{ color: theme.colors.inkSecondary, fontSize: 12 }}>
+          <Text className="font-medium" numberOfLines={2} style={{ color: theme.colors.inkSecondary, fontSize: 14.5 }}>
             {t('medications.addManuallyHint')}
           </Text>
         </View>
-        <ChevronRight color={theme.colors.inkMuted} size={18} strokeWidth={2.2} />
+        <ChevronRight color={theme.colors.inkMuted} size={22} strokeWidth={2.2} />
       </Pressable>
     </Animated.View>
   );
@@ -557,11 +557,11 @@ export default function DrugLabScreen() {
     <SafeAreaView className="flex-1" edges={['top', 'left', 'right']} style={{ flex: 1, backgroundColor: theme.colors.canvas }}>
       {/* ── Screen Header: Title + Subtitle + 3D Capsule Orb ── */}
       <View className="flex-row items-center justify-between px-5 pt-3 pb-1">
-        <View>
-          <Text className="text-display-sm font-black" style={{ color: theme.colors.ink, fontSize: 26 }}>
+        <View className="gap-0.5">
+          <Text className="font-black" style={{ color: theme.colors.ink, fontSize: 32, lineHeight: 38, letterSpacing: -0.5 }}>
             {t('medications.title')}
           </Text>
-          <Text className="text-caption mt-0.5" style={{ color: theme.colors.inkSecondary }}>
+          <Text className="font-semibold" style={{ color: theme.colors.inkSecondary, fontSize: 15.5 }}>
             {t('medications.subtitle')}
           </Text>
         </View>
@@ -569,12 +569,12 @@ export default function DrugLabScreen() {
         {/* Floating 3D capsule orb on top right */}
         <View
           style={{
-            width: 48,
-            height: 48,
-            borderRadius: 24,
+            width: 58,
+            height: 58,
+            borderRadius: 29,
             backgroundColor: theme.mode === 'dark' ? 'rgba(59, 130, 246, 0.20)' : '#DBEAFE',
-            borderWidth: 1,
-            borderColor: theme.mode === 'dark' ? 'rgba(59, 130, 246, 0.40)' : 'rgba(191, 219, 254, 0.80)',
+            borderWidth: 1.5,
+            borderColor: theme.mode === 'dark' ? 'rgba(59, 130, 246, 0.40)' : 'rgba(191, 219, 254, 0.85)',
             alignItems: 'center',
             justifyContent: 'center',
             boxShadow: [
@@ -585,8 +585,8 @@ export default function DrugLabScreen() {
           <Image
             source={DOSAGE_FORM_ASSETS.capsule}
             style={{
-              width: 32,
-              height: 32,
+              width: 40,
+              height: 40,
             }}
             resizeMode="contain"
           />
@@ -616,7 +616,7 @@ export default function DrugLabScreen() {
             {/* ── Section: Your Medications (+ Add New Button) ── */}
             <View className="gap-3.5">
               <View className="flex-row items-center justify-between">
-                <Text className="text-title-sm font-extrabold" style={{ color: theme.colors.ink, fontSize: 18 }}>
+                <Text className="font-extrabold" style={{ color: theme.colors.ink, fontSize: 22 }}>
                   {t('medications.yourMedications')}
                 </Text>
 
@@ -628,16 +628,19 @@ export default function DrugLabScreen() {
                   }}
                   accessibilityRole="button"
                   accessibilityLabel={t('medications.addNew')}
-                  className="flex-row items-center gap-1.5 rounded-full px-4 py-2"
+                  className="flex-row items-center gap-2 rounded-full"
                   style={{
                     backgroundColor: theme.mode === 'dark' ? '#2563EB' : '#365476',
+                    paddingHorizontal: 20,
+                    paddingVertical: 10.5,
+                    minHeight: 46,
                     boxShadow: [
-                      { offsetX: 0, offsetY: 2, blurRadius: 8, color: 'rgba(54, 84, 118, 0.25)' },
+                      { offsetX: 0, offsetY: 3, blurRadius: 10, color: 'rgba(54, 84, 118, 0.30)' },
                     ],
                   }}
                 >
-                  <Plus size={14} color="#FFFFFF" strokeWidth={2.5} />
-                  <Text style={{ color: '#FFFFFF', fontSize: 13, fontWeight: '700' }}>
+                  <Plus size={18} color="#FFFFFF" strokeWidth={2.8} />
+                  <Text style={{ color: '#FFFFFF', fontSize: 15.5, fontWeight: '800' }}>
                     {t('medications.addNew')}
                   </Text>
                 </Pressable>
@@ -676,7 +679,7 @@ export default function DrugLabScreen() {
               accessibilityLabel={t('medications.historyTitle')}
               className="flex-row items-center gap-4 rounded-3xl border"
               style={{
-                padding: 16,
+                padding: 18,
                 backgroundColor: theme.colors.elevated,
                 borderColor: theme.mode === 'dark' ? theme.colors.hairline : '#EDF2F7',
                 boxShadow: [
@@ -686,49 +689,50 @@ export default function DrugLabScreen() {
             >
               <View
                 style={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: 16,
+                  width: 60,
+                  height: 60,
+                  borderRadius: 20,
                   backgroundColor: theme.mode === 'dark' ? 'rgba(147, 51, 234, 0.18)' : '#F3E8FF',
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
               >
-                <BookOpen size={22} color="#9333EA" strokeWidth={2.2} />
+                <BookOpen size={28} color="#9333EA" strokeWidth={2.2} />
               </View>
-              <View className="flex-1">
-                <Text className="text-body-lg font-bold" style={{ color: theme.colors.ink, fontSize: 15.5 }}>
+              <View className="flex-1 gap-1">
+                <Text className="font-extrabold" style={{ color: theme.colors.ink, fontSize: 18.5 }}>
                   {t('medications.historyTitle')}
                 </Text>
-                <Text className="text-caption mt-0.5" style={{ color: theme.colors.inkSecondary, fontSize: 12 }}>
+                <Text className="font-medium" style={{ color: theme.colors.inkSecondary, fontSize: 14.5 }}>
                   {t('medications.historyEntryCaption')}
                 </Text>
               </View>
-              <ChevronRight color={theme.colors.inkMuted} size={18} strokeWidth={2.2} />
+              <ChevronRight color={theme.colors.inkMuted} size={22} strokeWidth={2.2} />
             </Pressable>
 
             {/* ── Section: Add Medication (Search + Manual Card) ── */}
             <View className="gap-3.5">
-              <Text className="text-title-sm font-extrabold" style={{ color: theme.colors.ink, fontSize: 18 }}>
+              <Text className="font-extrabold" style={{ color: theme.colors.ink, fontSize: 22 }}>
                 {t('medications.searchMedications')}
               </Text>
 
               {/* Modern Search Bar */}
               <View
-                className="min-h-hit flex-row items-center gap-3 rounded-full border px-5"
+                className="min-h-hit flex-row items-center gap-3.5 rounded-full border px-5"
                 style={{
+                  minHeight: 56,
                   backgroundColor: theme.mode === 'dark' ? theme.colors.elevated : '#F8FAFC',
                   borderColor: theme.mode === 'dark' ? theme.colors.hairline : '#E2E8F0',
                 }}
               >
-                <Search size={19} color={theme.colors.inkMuted} strokeWidth={2.2} />
+                <Search size={22} color={theme.colors.inkMuted} strokeWidth={2.2} />
                 <TextInput
                   value={query}
                   onChangeText={runSearch}
                   placeholder={t('medications.searchPlaceholder')}
                   placeholderTextColor={theme.colors.inkMuted}
                   className="flex-1"
-                  style={{ color: theme.colors.ink, fontSize: 15, paddingVertical: 12 }}
+                  style={{ color: theme.colors.ink, fontSize: 16.5, paddingVertical: 14 }}
                 />
               </View>
 
@@ -760,7 +764,7 @@ export default function DrugLabScreen() {
                 className="gap-1 rounded-3xl border p-5"
                 style={{ backgroundColor: theme.colors.elevated, borderColor: theme.colors.hairline }}
               >
-                <Text className="text-body-lg" style={{ color: theme.colors.ink, fontWeight: '600' }}>
+                <Text className="text-body-lg" style={{ color: theme.colors.ink, fontWeight: '700', fontSize: 16.5 }}>
                   {t('medications.addedManually', { name: manualAddedName })}
                 </Text>
               </View>
@@ -776,7 +780,7 @@ export default function DrugLabScreen() {
                   borderColor: theme.colors.hairline,
                 }}
               >
-                <Text className="text-body-lg" style={{ color: theme.colors.ink, fontWeight: '600' }}>
+                <Text className="text-body-lg" style={{ color: theme.colors.ink, fontWeight: '700', fontSize: 16.5 }}>
                   {addedConflicts?.length
                     ? t('medications.addedConflictsFound', { name: addedName })
                     : t('medications.addedNoConflicts', { name: addedName })}
@@ -791,11 +795,11 @@ export default function DrugLabScreen() {
                     <View className="flex-1">
                       <Text
                         className="text-body-lg"
-                        style={{ color: theme.severityText(CONFLICT_SEVERITY[conflict.severity]), fontWeight: '600' }}
+                        style={{ color: theme.severityText(CONFLICT_SEVERITY[conflict.severity]), fontWeight: '700', fontSize: 16 }}
                       >
                         {conflict.medicationName}
                       </Text>
-                      <Text className="text-caption" style={{ color: theme.colors.inkSecondary }}>
+                      <Text className="text-caption" style={{ color: theme.colors.inkSecondary, fontSize: 14.5 }}>
                         {conflict.description}
                       </Text>
                     </View>
@@ -806,23 +810,25 @@ export default function DrugLabScreen() {
 
             {/* ── Motivational Health Banner Matching Reference ── */}
             <View
-              className="flex-row items-center justify-between rounded-3xl p-5 overflow-hidden"
+              className="flex-row items-center justify-between rounded-3xl overflow-hidden"
               style={{
                 backgroundColor: theme.mode === 'dark' ? 'rgba(30, 58, 138, 0.22)' : '#E8F2FC',
                 borderWidth: 1,
                 borderColor: theme.mode === 'dark' ? 'rgba(59, 130, 246, 0.28)' : 'rgba(186, 215, 248, 0.70)',
+                paddingHorizontal: 22,
+                paddingVertical: 20,
                 boxShadow: [
                   { offsetX: 0, offsetY: 4, blurRadius: 14, color: 'rgba(59, 130, 246, 0.08)' },
                 ],
               }}
             >
-              <View className="flex-1 pr-2">
+              <View className="flex-1 pr-3">
                 <Text
                   className="font-extrabold"
                   style={{
                     color: theme.mode === 'dark' ? '#93C5FD' : '#1E3A8A',
-                    fontSize: 16.5,
-                    lineHeight: 22,
+                    fontSize: 19,
+                    lineHeight: 25,
                   }}
                 >
                   {t('medications.motivationalTitle')}
@@ -831,8 +837,8 @@ export default function DrugLabScreen() {
                   className="mt-1.5 font-medium"
                   style={{
                     color: theme.mode === 'dark' ? '#BFDBFE' : '#476585',
-                    fontSize: 12,
-                    lineHeight: 18,
+                    fontSize: 14.5,
+                    lineHeight: 20,
                   }}
                 >
                   {t('medications.motivationalSubtitle')}
@@ -841,7 +847,7 @@ export default function DrugLabScreen() {
 
               <Image
                 source={require('../../assets/branding/medical-shield-banner.png')}
-                style={{ width: 124, height: 86, marginRight: -4 }}
+                style={{ width: 136, height: 96, marginRight: -4 }}
                 resizeMode="contain"
               />
             </View>
