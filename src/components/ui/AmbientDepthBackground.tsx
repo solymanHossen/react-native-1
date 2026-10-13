@@ -11,10 +11,11 @@ import { useTheme } from '../../theme/useTheme';
  *
  * Light mode has no equivalent depth cue by default — a flat canvas reads
  * as empty rather than calm — so instead of glow orbs (which read as dirty
- * smudges on a light, opaque surface) it gets oversized, barely-there
- * medicine-motif silhouettes (the same pill/clock/heartbeat marks as the
- * app icon) at ~3% brand-ink opacity: enough to add depth and on-brand
- * texture without ever competing with foreground text/cards.
+ * smudges on a light, opaque surface) it gets oversized medicine-motif
+ * silhouettes (the same pill/clock/heartbeat marks as the app icon) at
+ * brand-ink opacity, clearly visible as a deliberate watermark pattern in
+ * the gaps between cards without sitting under card text (cards are opaque,
+ * so none of this shows through them).
  */
 export function AmbientDepthBackground() {
   const theme = useTheme();
@@ -67,16 +68,16 @@ export function AmbientDepthBackground() {
   return (
     <View pointerEvents="none" style={StyleSheet.absoluteFill}>
       {/* Top right — oversized, rotated pill, cropped by the screen edge */}
-      <View style={{ position: 'absolute', top: -40, right: -70, opacity: 0.035, transform: [{ rotate: '-18deg' }] }}>
-        <Pill color={tint} size={260} strokeWidth={1.25} />
+      <View style={{ position: 'absolute', top: -40, right: -70, opacity: 0.12, transform: [{ rotate: '-18deg' }] }}>
+        <Pill color={tint} size={260} strokeWidth={1.5} />
       </View>
-      {/* Mid left — faint clock face echoing the app mark */}
-      <View style={{ position: 'absolute', top: 340, left: -90, opacity: 0.03, transform: [{ rotate: '12deg' }] }}>
-        <Clock color={tint} size={240} strokeWidth={1} />
+      {/* Mid left — clock face echoing the app mark */}
+      <View style={{ position: 'absolute', top: 340, left: -90, opacity: 0.1, transform: [{ rotate: '12deg' }] }}>
+        <Clock color={tint} size={240} strokeWidth={1.25} />
       </View>
       {/* Lower right — heartbeat line for a subtle vitals/medical cue */}
-      <View style={{ position: 'absolute', bottom: 60, right: -60, opacity: 0.03, transform: [{ rotate: '-8deg' }] }}>
-        <HeartPulse color={tint} size={220} strokeWidth={1} />
+      <View style={{ position: 'absolute', bottom: 60, right: -60, opacity: 0.1, transform: [{ rotate: '-8deg' }] }}>
+        <HeartPulse color={tint} size={220} strokeWidth={1.25} />
       </View>
     </View>
   );
