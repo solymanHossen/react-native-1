@@ -79,13 +79,11 @@ export function TodayStatusCard({
         backgroundColor,
         borderColor: theme.mode === 'dark' ? `${hue}32` : `${hue}20`,
         borderWidth: 1,
-        overflow: 'hidden',
-        // Hue-tinted soft elevation glow matching reference pill appearance
-        shadowColor: hue,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: theme.mode === 'dark' ? 0.22 : 0.16,
-        shadowRadius: 10,
-        elevation: 2,
+        // Cross-platform boxShadow (Fabric) replaces elevation to eliminate Android's
+        // hardware-layer clipping bug that paints an opaque white box behind inner children.
+        boxShadow: [
+          { offsetX: 0, offsetY: 3, blurRadius: 8, color: `${hue}25` },
+        ],
       }}
     >
       {/* ── Left: solid icon chip + label ────────────────────────────── */}
@@ -101,11 +99,9 @@ export function TodayStatusCard({
             backgroundColor: hue,
             alignItems: 'center',
             justifyContent: 'center',
-            shadowColor: hue,
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: theme.mode === 'dark' ? 0.35 : 0.3,
-            shadowRadius: 4,
-            elevation: 2,
+            boxShadow: [
+              { offsetX: 0, offsetY: 1, blurRadius: 4, color: `${hue}40` },
+            ],
           }}
         >
           <StatusIcon
@@ -130,7 +126,7 @@ export function TodayStatusCard({
       </View>
 
       {/* ── Right: count + chevron ───────────────────────────────────── */}
-      <View className="flex-row items-center gap-1.5">
+      <View className="flex-row items-center gap-1.5" style={{ backgroundColor: 'transparent' }}>
         <Text
           style={{
             color: textColor,

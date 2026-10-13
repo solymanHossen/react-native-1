@@ -147,7 +147,7 @@ export function LargeTextButton({
         // icon and text snug without manual margin math. When no icon is
         // provided the View still renders, but with a single child — no
         // visible change to the button's layout.
-        <View className="flex-row items-center justify-center gap-2">
+        <View className="flex-row items-center justify-center gap-2" style={{ backgroundColor: 'transparent' }}>
           {Icon ? (
             <Icon size={20} color={textColor} strokeWidth={2.5} />
           ) : null}
