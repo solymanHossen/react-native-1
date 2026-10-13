@@ -249,7 +249,7 @@ function ActiveScreen({
     case 'rhythm':
       return <CircadianDashboardScreen />;
     case 'alarms':
-      return <AlarmsScreen />;
+      return <AlarmsScreen onOpenSettings={onOpenSettings} onNavigateToMedications={() => onNavigate('drugLab')} />;
     case 'vitals':
       return <VitalsScreen focusVital={vitalsFocus} />;
   }

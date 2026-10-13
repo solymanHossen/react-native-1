@@ -127,7 +127,13 @@ export const bn: typeof en = {
     },
   },
   alarms: {
+    eyebrow: 'স্বাস্থ্য হোক সহজ',
     title: 'ওষুধের অ্যালার্ম',
+    subtitle: 'কোনো ডোজ মিস করবেন না। প্রতিদিন সুস্থ থাকুন।',
+    scheduleReminderTitle: 'রিমাইন্ডার নির্ধারণ করুন',
+    scheduleReminderSubtitle: 'অ্যালার্মের সময় নির্ধারণ করতে একটি ওষুধ চাপুন',
+    scheduledAlarmsSubtitle: 'আপনার আসন্ন ওষুধ রিমাইন্ডার',
+    addAnotherMedicine: 'আরেকটি ওষুধ যোগ করুন',
     databaseFailed: 'আপনার অ্যালার্ম লোড করতে সমস্যা হয়েছে: {{error}}',
     caregiverSection: 'জরুরি কেয়ারগিভার',
     caregiverDescription:

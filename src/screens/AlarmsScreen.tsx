@@ -7,9 +7,9 @@ import {
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import { Check, Clock, Droplet, Moon, Package, Pencil, Phone, Pill, Plus, ShieldAlert, ShieldCheck, Sun, Sunrise, Sunset, Trash2, X } from 'lucide-react-native';
+import { Calendar, ChartColumn, Check, ChevronRight, Clock, Droplet, Moon, Package, Pencil, Phone, Pill, Plus, ShieldAlert, ShieldCheck, Sun, Sunrise, Sunset, Trash2, User, X } from 'lucide-react-native';
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, type ComponentType } from 'react';
-import { ActivityIndicator, Keyboard, Pressable, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Keyboard, Pressable, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AlarmScheduleCard, AlarmsEmptyState, AlarmsHeroSummary } from '../components/alarms';
 import { LargeTextButton } from '../components/ui';
@@ -565,7 +565,12 @@ const ReminderSheet = forwardRef<ReminderSheetRef, {
  * user-facing list entirely; nothing about ringing your own alarm early is
  * useful to a patient, only to someone testing the alarm engine.
  */
-export default function AlarmsScreen() {
+export interface AlarmsScreenProps {
+  onOpenSettings?: () => void;
+  onNavigateToMedications?: () => void;
+}
+
+export default function AlarmsScreen({ onOpenSettings, onNavigateToMedications }: AlarmsScreenProps) {
   const theme = useTheme();
   const { t } = useTranslation();
   const [initError, setInitError] = useState<string | null>(null);
@@ -679,18 +684,38 @@ export default function AlarmsScreen() {
 
   return (
     <SafeAreaView className="flex-1" edges={['top', 'left', 'right']} style={{ backgroundColor: theme.colors.canvas }}>
-      <View className="border-b px-6 py-6" style={{ borderColor: theme.colors.hairline }}>
-        <Text className="text-title-lg" style={{ color: theme.colors.ink }}>
-          {t('alarms.title')}
-        </Text>
-        {initError ? (
-          <Text className="mt-2 text-caption" style={{ color: theme.statusText('missed') }}>
-            {t('alarms.databaseFailed', { error: initError })}
+      <View className="flex-row items-start justify-between border-b px-6 py-6" style={{ borderColor: theme.colors.hairline }}>
+        <View className="flex-1 pr-3">
+          <Text className="text-caption font-semibold uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
+            {t('alarms.eyebrow')}
           </Text>
-        ) : status ? (
-          <Text className="mt-2 text-caption" style={{ color: theme.statusText('taken') }}>
-            {status}
+          <Text className="mt-0.5 text-title-lg font-extrabold" style={{ color: theme.colors.ink }}>
+            {t('alarms.title')}
           </Text>
+          <Text className="mt-1 text-caption" style={{ color: theme.colors.inkSecondary }}>
+            {t('alarms.subtitle')}
+          </Text>
+          {initError ? (
+            <Text className="mt-2 text-caption" style={{ color: theme.statusText('missed') }}>
+              {t('alarms.databaseFailed', { error: initError })}
+            </Text>
+          ) : status ? (
+            <Text className="mt-2 text-caption" style={{ color: theme.statusText('taken') }}>
+              {status}
+            </Text>
+          ) : null}
+        </View>
+        {onOpenSettings ? (
+          <Pressable
+            onPress={onOpenSettings}
+            accessibilityRole="button"
+            accessibilityLabel={t('home.settings')}
+            hitSlop={6}
+            className="items-center justify-center rounded-full"
+            style={{ width: 40, height: 40, backgroundColor: theme.colors.elevated }}
+          >
+            <User color={theme.colors.inkSecondary} size={19} strokeWidth={2} />
+          </Pressable>
         ) : null}
       </View>
 
@@ -709,7 +734,10 @@ export default function AlarmsScreen() {
             {maskedCaregiverPhone ? (
               <View
                 className="rounded-3xl border p-5 shadow-sm"
-                style={{ backgroundColor: theme.colors.elevated, borderColor: theme.colors.hairline }}
+                style={{
+                  backgroundColor: theme.statusTint('taken'),
+                  borderColor: theme.mode === 'dark' ? 'rgba(16, 185, 129, 0.28)' : theme.colors.hairline,
+                }}
               >
                 <View className="flex-row items-center justify-between">
                   <View className="flex-row items-center gap-3">
@@ -841,65 +869,72 @@ export default function AlarmsScreen() {
 
             <View
               className="gap-4 rounded-3xl border p-6 shadow-md"
-              style={{ backgroundColor: theme.colors.elevated, borderColor: theme.colors.hairline }}
+              style={{
+                backgroundColor: theme.mode === 'dark' ? 'rgba(59, 130, 246, 0.1)' : `${theme.action.base}0D`,
+                borderColor: theme.mode === 'dark' ? 'rgba(59, 130, 246, 0.28)' : theme.colors.hairline,
+              }}
             >
-              <Text className="text-caption uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>
-                {t('alarms.addReminder')}
-              </Text>
+              <View className="flex-row items-center gap-3">
+                <View className="items-center justify-center rounded-2xl" style={{ width: 42, height: 42, backgroundColor: `${theme.action.base}18` }}>
+                  <Calendar color={theme.action.base} size={21} strokeWidth={2.25} />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-body-lg font-bold" style={{ color: theme.colors.ink }}>
+                    {t('alarms.scheduleReminderTitle')}
+                  </Text>
+                  <Text className="text-caption" style={{ color: theme.colors.inkSecondary }}>
+                    {t('alarms.scheduleReminderSubtitle')}
+                  </Text>
+                </View>
+              </View>
               {medications.length === 0 ? (
                 <Text className="text-body-lg" style={{ color: theme.colors.inkSecondary }}>
                   {t('alarms.noMedicationsYet')}
                 </Text>
               ) : (
-                <>
-                  <Text className="text-caption" style={{ color: theme.colors.inkMuted }}>
-                    {t('alarms.pickMedication')}
-                  </Text>
-                  <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    snapToInterval={220}
-                    snapToAlignment="start"
-                    decelerationRate="fast"
-                    contentContainerStyle={{ gap: 12, paddingRight: 12 }}
-                    accessibilityLabel={t('alarms.pickMedication')}
-                  >
-                    {medications.map((medication) => {
-                      const FormIcon = medicationFormIcon(medication.form);
-                      const outOfStock = medication.current_stock <= 0;
-                      const lowStock = !outOfStock && medication.current_stock <= medication.refill_threshold;
-                      return (
-                        <Pressable
-                          key={medication.id}
-                          onPress={() => {
-                            triggerHaptic('selection');
-                            reminderSheetRef.current?.present(medication);
-                          }}
-                          accessibilityRole="button"
-                          accessibilityLabel={medication.name}
-                          className="min-h-hit justify-between rounded-3xl border p-4"
-                          style={{
-                            width: 208,
-                            minHeight: 132,
-                            backgroundColor: theme.colors.surface,
-                            borderColor: theme.colors.hairline,
-                            borderWidth: 1,
-                          }}
+                <View className="flex-row flex-wrap gap-3">
+                  {medications.map((medication) => {
+                    const FormIcon = medicationFormIcon(medication.form);
+                    const outOfStock = medication.current_stock <= 0;
+                    const lowStock = !outOfStock && medication.current_stock <= medication.refill_threshold;
+                    const stockColor = outOfStock ? theme.statusText('missed') : lowStock ? theme.statusText('pending') : theme.action.base;
+                    return (
+                      <Pressable
+                        key={medication.id}
+                        onPress={() => {
+                          triggerHaptic('selection');
+                          reminderSheetRef.current?.present(medication);
+                        }}
+                        accessibilityRole="button"
+                        accessibilityLabel={medication.name}
+                        className="min-h-hit basis-[47%] justify-between gap-3 rounded-2xl border p-4"
+                        style={{
+                          flexGrow: 1,
+                          backgroundColor: theme.colors.surface,
+                          borderColor: theme.colors.hairline,
+                          borderWidth: 1,
+                        }}
+                      >
+                        <View className="flex-row items-center justify-between">
+                          <View className="items-center justify-center rounded-2xl" style={{ width: 38, height: 38, backgroundColor: `${theme.action.base}14` }}>
+                            <FormIcon color={theme.action.base} size={19} strokeWidth={2.25} />
+                          </View>
+                          <ChevronRight color={theme.colors.inkMuted} size={16} strokeWidth={2.5} />
+                        </View>
+                        <View>
+                          <Text className="text-body" numberOfLines={1} style={{ color: theme.colors.ink, fontWeight: '700' }}>
+                            {medication.name}
+                          </Text>
+                          <Text className="text-caption" numberOfLines={1} style={{ color: theme.colors.inkSecondary }}>
+                            {[medication.strength, t(`medications.forms.${medication.form}` as never)].filter(Boolean).join(' · ')}
+                          </Text>
+                        </View>
+                        <View
+                          className="flex-row items-center gap-1 self-start rounded-full px-2.5 py-1"
+                          style={{ backgroundColor: `${stockColor}18`, maxWidth: '100%' }}
                         >
-                          <View className="flex-row items-center justify-between">
-                            <View className="items-center justify-center rounded-2xl" style={{ width: 42, height: 42, backgroundColor: `${theme.action.base}14` }}>
-                              <FormIcon color={theme.action.base} size={21} strokeWidth={2.25} />
-                            </View>
-                          </View>
-                          <View className="mt-3">
-                            <Text className="text-body" numberOfLines={1} style={{ color: theme.colors.ink, fontWeight: '700' }}>
-                              {medication.name}
-                            </Text>
-                            <Text className="text-caption" numberOfLines={1} style={{ color: theme.colors.inkSecondary }}>
-                              {[medication.strength, t(`medications.forms.${medication.form}` as never)].filter(Boolean).join(' · ')}
-                            </Text>
-                          </View>
-                          <Text className="mt-2 text-caption" style={{ color: outOfStock ? theme.statusText('missed') : lowStock ? theme.statusText('pending') : theme.colors.inkMuted }}>
+                          <ChartColumn color={stockColor} size={12} strokeWidth={2.4} />
+                          <Text className="text-caption font-semibold" numberOfLines={2} style={{ color: stockColor, flexShrink: 1, fontSize: 11 }}>
                             {outOfStock
                               ? t('medications.outOfStock')
                               : lowStock
@@ -909,12 +944,28 @@ export default function AlarmsScreen() {
                                     unit: medication.current_stock === 1 ? t('medications.detailsStockUnit') : t('medications.detailsStockUnitsPlural'),
                                   })}
                           </Text>
-                        </Pressable>
-                      );
-                    })}
-                  </ScrollView>
-                </>
+                        </View>
+                      </Pressable>
+                    );
+                  })}
+                </View>
               )}
+              {onNavigateToMedications ? (
+                <Pressable
+                  onPress={() => {
+                    triggerHaptic('selection');
+                    onNavigateToMedications();
+                  }}
+                  accessibilityRole="button"
+                  className="min-h-hit flex-row items-center justify-center gap-2 rounded-2xl border px-5 py-3.5"
+                  style={{ backgroundColor: theme.colors.surface, borderColor: theme.colors.hairline }}
+                >
+                  <Plus color={theme.action.base} size={17} strokeWidth={2.5} />
+                  <Text className="text-body-md font-bold" style={{ color: theme.action.base }}>
+                    {t('alarms.addAnotherMedicine')}
+                  </Text>
+                </Pressable>
+              ) : null}
             </View>
 
             <AlarmsHeroSummary schedules={schedules} />

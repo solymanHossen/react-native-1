@@ -135,7 +135,13 @@ export const en = {
     },
   },
   alarms: {
+    eyebrow: 'Health Made Simple',
     title: 'Medication Alarms',
+    subtitle: 'Never miss a dose. Stay healthier, every day.',
+    scheduleReminderTitle: 'Schedule a Reminder',
+    scheduleReminderSubtitle: 'Tap a medicine to set its alarm time',
+    scheduledAlarmsSubtitle: 'Your upcoming medication reminders',
+    addAnotherMedicine: 'Add Another Medicine',
     databaseFailed: 'Something went wrong loading your alarms: {{error}}',
     caregiverSection: 'Emergency Contact',
     caregiverDescription:

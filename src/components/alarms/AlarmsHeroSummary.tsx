@@ -142,6 +142,10 @@ export function AlarmsHeroSummary({ schedules }: AlarmsHeroSummaryProps) {
         </View>
       </View>
 
+      <Text className="mt-1 text-caption" style={{ color: theme.colors.inkSecondary }}>
+        {t('alarms.scheduledAlarmsSubtitle')}
+      </Text>
+
       {/* Next Upcoming Alarm Spotlight */}
       {nextAlarmInfo ? (
         <View className="mt-4 rounded-2xl border p-4" style={{ backgroundColor: isDark ? 'rgba(0, 0, 0, 0.25)' : theme.colors.surface, borderColor: isDark ? 'rgba(255, 255, 255, 0.06)' : theme.colors.hairline }}>
