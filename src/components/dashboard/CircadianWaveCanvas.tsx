@@ -1,4 +1,5 @@
 import { Canvas, Circle, Group, LinearGradient, Path, Skia } from '@shopify/react-native-skia';
+import { Clock, Moon, Sun, Sunrise, Sunset, type LucideIcon } from 'lucide-react-native';
 import { useEffect, useMemo } from 'react';
 import { Text, View } from 'react-native';
 import { Easing, useDerivedValue, useSharedValue, withRepeat, withTiming, type SharedValue } from 'react-native-reanimated';
@@ -11,9 +12,82 @@ const WAVE_START_HOUR = 5;
 const WAVE_CYCLES = 2;
 const MARKER_RADIUS = 9;
 const PULSE_MAX_RADIUS = 17;
-const LABEL_WIDTH = 88;
-const LABEL_GAP = 16;
-const LABEL_ROW_HEIGHT = 30;
+const LABEL_WIDTH = 104;
+const LABEL_GAP = 14;
+const LABEL_ROW_HEIGHT = 60;
+const ICON_SIZE = 17;
+
+/**
+ * Same icon-per-zone mapping already established in AlarmScheduleCard/
+ * AlarmsScreen (sunrise → sun → sunset → moon, fasting gets a clock) — reused
+ * here rather than invented, so a zone reads the same whether it's in the
+ * alarms list or on this wave. Keyed by the English label because `DoseEntry`
+ * only carries the resolved label strings, not the raw `TimeNode` enum.
+ */
+const ZONE_ICON: Record<string, LucideIcon> = {
+  'Dawn Fasting': Clock,
+  'Post-Breakfast': Sunrise,
+  'Post-Lunch': Sun,
+  'Post-Dinner': Sunset,
+  'Bedtime Recovery': Moon,
+};
+
+const STATE_URGENCY: Record<DoseEntry['state'], number> = { missed: 0, pending: 1, scheduled: 2, taken: 3 };
+
+/**
+ * How far apart (in hours) two doses in the *same* zone can be before they
+ * count as separate times rather than one merged marker. Fixed-width
+ * rounding buckets (e.g. "round to the nearest 20 minutes") don't work here:
+ * doses staggered exactly on that grid — 8:00, 8:20, 8:40 — each round to
+ * themselves and land in three different buckets instead of merging, which
+ * is exactly the staircase manually-added reminders produce (each medicine
+ * keeps its own picked time, not a shared zone time). Chaining by gap
+ * instead (sort by hour, start a new group whenever the step to the next
+ * dose exceeds this threshold) merges any run of doses that are each close
+ * to a neighbor, while still splitting a genuinely early vs. late dose in
+ * the same zone (an early vs. a late Bedtime, say) that are hours apart.
+ */
+const GROUP_GAP_HOURS = 2 / 3;
+
+function groupDoses(doses: DoseEntry[], width: number, centerY: number, amplitude: number) {
+  const byLabel = new Map<string, DoseEntry[]>();
+  for (const dose of doses) {
+    const bucket = byLabel.get(dose.label);
+    if (bucket) bucket.push(dose);
+    else byLabel.set(dose.label, [dose]);
+  }
+
+  const groups: DoseEntry[][] = [];
+  for (const sameLabel of byLabel.values()) {
+    const sorted = [...sameLabel].sort((a, b) => a.hour - b.hour);
+    let current: DoseEntry[] = [];
+    for (const dose of sorted) {
+      const previous = current[current.length - 1];
+      if (previous && dose.hour - previous.hour > GROUP_GAP_HOURS) {
+        groups.push(current);
+        current = [];
+      }
+      current.push(dose);
+    }
+    if (current.length > 0) groups.push(current);
+  }
+
+  return groups.map((group) => {
+    const representative = [...group].sort((a, b) => STATE_URGENCY[a.state] - STATE_URGENCY[b.state])[0];
+    const avgHour = group.reduce((sum, d) => sum + d.hour, 0) / group.length;
+    const progress = hourToProgress(avgHour);
+    return {
+      key: group.map((d) => d.id).join('+'),
+      x: progress * width,
+      y: waveY(progress, centerY, amplitude),
+      label: representative.label,
+      labelBn: representative.labelBn,
+      state: representative.state,
+      time: formatHour(representative.hour),
+      count: group.length,
+    };
+  });
+}
 
 /**
  * Anchors each label below the marker, but close-together zones (this
@@ -50,6 +124,15 @@ function hourToProgress(hour: number): number {
 
 function waveY(progress: number, centerY: number, amplitude: number): number {
   return centerY - amplitude * Math.sin(progress * WAVE_CYCLES * 2 * Math.PI);
+}
+
+function formatHour(hour: number): string {
+  const totalMinutes = Math.round(hour * 60 + 24 * 60) % (24 * 60);
+  const hour24 = Math.floor(totalMinutes / 60);
+  const minute = totalMinutes % 60;
+  const period = hour24 >= 12 ? 'PM' : 'AM';
+  const hour12 = hour24 % 12 === 0 ? 12 : hour24 % 12;
+  return `${hour12}:${String(minute).padStart(2, '0')} ${period}`;
 }
 
 /**
@@ -120,48 +203,46 @@ export function CircadianWaveCanvas({ doses, width, height = 220 }: CircadianWav
     return Skia.Path.MakeFromSVGString(svg) ?? Skia.Path.Make();
   }, [width, height, centerY, amplitude]);
 
-  const markerPositions = useMemo(
-    () =>
-      doses.map((dose) => {
-        const progress = hourToProgress(dose.hour);
-        return { dose, x: progress * width, y: waveY(progress, centerY, amplitude) };
-      }),
-    [doses, width, centerY, amplitude],
-  );
+  const groupedMarkers = useMemo(() => groupDoses(doses, width, centerY, amplitude), [doses, width, centerY, amplitude]);
 
-  const labelTops = useMemo(() => computeLabelTops(markerPositions), [markerPositions]);
+  const labelTops = useMemo(() => computeLabelTops(groupedMarkers), [groupedMarkers]);
 
   if (width <= 0) return null;
 
   return (
-    <View style={{ width, height: height + 84 }}>
+    <View style={{ width, height: height + 180 }}>
       <Canvas style={{ width, height }}>
         <Path path={fillPath}>
           <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 0, y: height }} colors={[`${theme.action.base}40`, `${theme.action.base}00`]} />
         </Path>
         <Path path={wavePath} style="stroke" strokeWidth={3.5} strokeCap="round" strokeJoin="round" color={theme.action.base} opacity={0.85} />
-        {markerPositions.map(({ dose, x, y }) => (
-          <Marker key={dose.id} x={x} y={y} color={theme.status[dose.state].base} pulsing={dose.state === 'pending'} pulse={pulse} />
+        {groupedMarkers.map((marker) => (
+          <Marker key={marker.key} x={marker.x} y={marker.y} color={theme.status[marker.state].base} pulsing={marker.count === 1 && marker.state === 'pending'} pulse={pulse} />
         ))}
       </Canvas>
-      {markerPositions.map(({ dose, x }, index) => (
-        <View
-          key={dose.id}
-          pointerEvents="none"
-          style={{ position: 'absolute', left: x - LABEL_WIDTH / 2, top: labelTops[index], width: LABEL_WIDTH }}
-        >
-          {/* `width` on the Text itself, not just its absolute-positioned
-              parent: a parent sized to content (rather than clipping)
-              lets a Bengali label wider than the box silently overflow into
-              a neighbor's space instead of truncating. */}
-          <Text numberOfLines={1} className="text-caption text-center" style={{ width: LABEL_WIDTH, color: theme.colors.inkSecondary, fontWeight: '600', fontSize: 12 }}>
-            {dose.labelBn}
-          </Text>
-          <Text numberOfLines={1} className="text-caption text-center" style={{ width: LABEL_WIDTH, color: theme.colors.inkMuted, fontSize: 10 }}>
-            {dose.label}
-          </Text>
-        </View>
-      ))}
+      {groupedMarkers.map((marker, index) => {
+        const Icon = ZONE_ICON[marker.label] ?? Sun;
+        return (
+          <View
+            key={marker.key}
+            pointerEvents="none"
+            style={{ position: 'absolute', left: marker.x - LABEL_WIDTH / 2, top: labelTops[index], width: LABEL_WIDTH, alignItems: 'center' }}
+          >
+            <Icon color={theme.colors.inkMuted} size={ICON_SIZE} strokeWidth={2} />
+            {/* `width` on the Text itself, not just its absolute-positioned
+                parent: a parent sized to content (rather than clipping)
+                lets a Bengali label wider than the box silently overflow into
+                a neighbor's space instead of truncating. */}
+            <Text numberOfLines={1} className="text-caption text-center" style={{ width: LABEL_WIDTH, marginTop: 4, color: theme.colors.inkMuted, fontSize: 11 }}>
+              {marker.labelBn}
+            </Text>
+            <Text numberOfLines={1} className="text-caption text-center" style={{ width: LABEL_WIDTH, marginTop: 1, color: theme.colors.ink, fontWeight: '700', fontSize: 13 }}>
+              {marker.time}
+              {marker.count > 1 ? ` +${marker.count - 1}` : ''}
+            </Text>
+          </View>
+        );
+      })}
     </View>
   );
 }

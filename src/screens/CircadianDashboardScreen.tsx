@@ -1,6 +1,6 @@
 import { CalendarDays, Trophy } from 'lucide-react-native';
-import { useCallback, useRef, useState } from 'react';
-import { ScrollView, Text, View, type LayoutChangeEvent } from 'react-native';
+import { useCallback, useRef } from 'react';
+import { ScrollView, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   CircadianWaveCanvas,
@@ -26,13 +26,9 @@ export default function CircadianDashboardScreen() {
   const theme = useTheme();
   const { t } = useTranslation();
   const { doses, skipReasons, adherenceRatio, markTaken, markSkipped } = useLiveDoseSchedule();
-  const [canvasWidth, setCanvasWidth] = useState(0);
+  const { width: windowWidth } = useWindowDimensions();
   const skipSheetRef = useRef<SkipReasonSheetRef>(null);
   const detailSheetRef = useRef<DoseDetailSheetRef>(null);
-
-  const handleMeasureCanvas = useCallback((event: LayoutChangeEvent) => {
-    setCanvasWidth(event.nativeEvent.layout.width);
-  }, []);
 
   const handleRequestSkip = useCallback((dose: DoseEntry) => {
     skipSheetRef.current?.present(dose);
@@ -91,8 +87,15 @@ export default function CircadianDashboardScreen() {
           ) : null}
         </View>
 
-        <View onLayout={handleMeasureCanvas}>
-          {canvasWidth > 0 ? <CircadianWaveCanvas doses={doses} width={canvasWidth} /> : null}
+        {/* -mx-6 cancels the ScrollView's px-6 so the wave spans the full
+            screen width edge-to-edge, matching the reference design, while
+            the rest of the page keeps its normal inset padding. Width comes
+            straight from the window rather than an onLayout measurement on
+            this negative-margined view: a margin-shifted view's first
+            layout pass can hand the Skia Canvas a stale/zero width before
+            settling, and Canvas doesn't recover from that cleanly. */}
+        <View className="-mx-6">
+          <CircadianWaveCanvas doses={doses} width={windowWidth} />
         </View>
 
         <View className="gap-4" style={{ paddingBottom: 32 }}>
