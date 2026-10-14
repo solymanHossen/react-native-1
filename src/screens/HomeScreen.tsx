@@ -22,7 +22,7 @@ function ActionCheckIcon({ color = '#FFFFFF' }: { color?: string; size?: number 
     </View>
   );
 }
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   Extrapolation,
   interpolate,
@@ -134,6 +134,7 @@ export interface HomeScreenProps {
 export default function HomeScreen({ onNavigateToVitals, onOpenSettings }: HomeScreenProps) {
   const theme = useTheme();
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const healthRecordsRef = useRef<HealthRecordsSheetRef>(null);
   const [syncing, setSyncing] = useState(false);
   const [syncStatus, setSyncStatus] = useState<string | null>(null);
@@ -264,19 +265,23 @@ export default function HomeScreen({ onNavigateToVitals, onOpenSettings }: HomeS
   const seeAllPressStyle = useAnimatedStyle(() => ({ transform: [{ scale: seeAllScale.value }] }));
 
   return (
-    <SafeAreaView className="flex-1" edges={['top', 'left', 'right']} style={{ backgroundColor: theme.colors.canvas }}>
+    <SafeAreaView className="flex-1" edges={['left', 'right']} style={{ backgroundColor: theme.colors.canvas }}>
       <AmbientDepthBackground />
 
-      {/* World-class persistent header strictly adhering to Apple HIG & Material You */}
+      {/* World-class persistent header strictly adhering to Apple HIG & Material You.
+          This screen opts out of the top safe-area edge above (unlike every
+          other screen in the app) specifically so this outer wrapper can
+          carry the header's own translucent "glass" background all the way
+          up behind the status bar instead of leaving that strip a flat
+          `theme.colors.canvas` with a visible seam where the header's
+          distinct background used to start below it — `paddingTop: insets.top`
+          here pushes the actual header content back down to the same place
+          it always sat, just with color behind the status bar now too. */}
       <Animated.View
         style={[
           {
-            height: 64,
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            paddingHorizontal: 20,
-            backgroundColor: theme.mode === 'dark' ? 'rgba(11, 15, 25, 0.92)' : theme.colors.canvas,
+            paddingTop: insets.top,
+            backgroundColor: theme.mode === 'dark' ? 'rgba(11, 15, 25, 0.8)' : 'rgba(240, 243, 250, 0.82)',
             borderBottomWidth: 1,
             borderBottomColor: theme.mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : theme.colors.hairline,
             shadowColor: '#000000',
@@ -286,8 +291,17 @@ export default function HomeScreen({ onNavigateToVitals, onOpenSettings }: HomeS
           headerElevationStyle,
         ]}
       >
-        {/* Top-left branding: perfectly proportioned squircle mark cleanly aligned with zero awkward spacing */}
-        <View className="flex-row items-center gap-3">
+        <View
+          style={{
+            height: 64,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            paddingHorizontal: 20,
+          }}
+        >
+          {/* Top-left branding: perfectly proportioned squircle mark cleanly aligned with zero awkward spacing */}
+          <View className="flex-row items-center gap-3">
           <AppLogo size={42} />
           <View className="justify-center">
             <Text
@@ -345,6 +359,7 @@ export default function HomeScreen({ onNavigateToVitals, onOpenSettings }: HomeS
           >
             <Settings color={theme.mode === 'dark' ? theme.colors.inkSecondary : theme.action.base} size={19} strokeWidth={2} />
           </Pressable>
+        </View>
         </View>
       </Animated.View>
 
