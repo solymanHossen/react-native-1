@@ -7,9 +7,10 @@ import {
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import { ChartColumn, Check, ChevronRight, Clock, Droplet, Moon, Package, Pencil, Phone, Pill, PillBottle, Plus, ShieldAlert, ShieldCheck, Sun, Sunrise, Sunset, Trash2, User, X } from 'lucide-react-native';
+import { ChartColumn, Check, ChevronRight, Clock, Droplet, Moon, Package, Pencil, Phone, Pill, PillBottle, Plus, ShieldAlert, Sun, Sunrise, Sunset, Trash2, User, X } from 'lucide-react-native';
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, type ComponentType, type ElementRef } from 'react';
 import { ActivityIndicator, Image, Keyboard, Pressable, Text, View } from 'react-native';
+import Svg, { Path as SvgPath } from 'react-native-svg';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AlarmScheduleCard, AlarmsEmptyState, AlarmsHeroSummary } from '../components/alarms';
 import { LargeTextButton } from '../components/ui';
@@ -34,6 +35,27 @@ interface CaregiverContactSheetRef {
 
 function maskPhone(phone: string): string {
   return `${phone.slice(0, Math.max(0, phone.length - 4)).replace(/\d(?=\d)/g, '•')} ${phone.slice(-4)}`;
+}
+
+/**
+ * A solid-filled shield-check, not lucide's `ShieldCheck` (thin stroke
+ * outline for both the shield and the check) — the reference design wants a
+ * bold, badge-style glyph: solid-color shield, white checkmark. Lucide's
+ * single `color` prop would tint both paths identically and a `fill` prop
+ * would also try to close/fill the open checkmark polyline into an ugly
+ * wedge, so this hand-draws the same two path shapes from shield-check.mjs
+ * with the fill/stroke split applied per path instead.
+ */
+function FilledShieldCheck({ size = 24, fillColor }: { size?: number; fillColor: string }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <SvgPath
+        d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+        fill={fillColor}
+      />
+      <SvgPath d="m9 12 2 2 4-4" stroke="#FFFFFF" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
 }
 
 const CaregiverContactSheet = forwardRef<CaregiverContactSheetRef, {
@@ -735,7 +757,7 @@ export default function AlarmsScreen({ onOpenSettings, onNavigateToMedications }
           <View className="gap-6" style={{ marginBottom: 20 }}>
             {maskedCaregiverPhone ? (
               <View
-                className="rounded-3xl border p-5 shadow-sm"
+                className="rounded-3xl border p-4 shadow-sm"
                 style={{
                   backgroundColor: theme.statusTint('taken'),
                   borderColor: theme.mode === 'dark' ? 'rgba(16, 185, 129, 0.28)' : theme.colors.hairline,
@@ -750,12 +772,12 @@ export default function AlarmsScreen({ onOpenSettings, onNavigateToMedications }
                   accessibilityLabel={t('alarms.editCaregiverAccessibility')}
                   className="flex-row items-center justify-between"
                 >
-                  <View className="flex-row items-center gap-3">
+                  <View className="flex-row items-center gap-2.5">
                     <View
-                      className="items-center justify-center rounded-2xl"
-                      style={{ width: 42, height: 42, backgroundColor: `${theme.statusText('taken')}18` }}
+                      className="items-center justify-center rounded-full"
+                      style={{ width: 36, height: 36, backgroundColor: theme.statusTint('taken') }}
                     >
-                      <ShieldCheck color={theme.statusText('taken')} size={22} strokeWidth={2.25} />
+                      <FilledShieldCheck fillColor={theme.statusText('taken')} size={21} />
                     </View>
                     <View>
                       <Text className="text-body-lg font-bold" style={{ color: theme.colors.ink }}>
@@ -775,29 +797,29 @@ export default function AlarmsScreen({ onOpenSettings, onNavigateToMedications }
                   <ChevronRight color={theme.statusText('taken')} size={18} strokeWidth={2.5} />
                 </Pressable>
 
-                <Text className="mt-3 text-caption leading-relaxed" style={{ color: theme.colors.inkSecondary }}>
+                <Text className="mt-2 text-caption" style={{ color: theme.colors.inkMuted }}>
                   {t('alarms.caregiverDescription')}
                 </Text>
 
                 <View
-                  className="mt-4 flex-row items-center justify-between rounded-2xl border px-4 py-3"
+                  className="mt-3 flex-row items-center justify-between rounded-2xl px-3.5 py-2.5"
                   style={{
                     backgroundColor: theme.colors.surface,
-                    borderColor: theme.colors.hairline,
+                    boxShadow: [{ offsetX: 0, offsetY: 1, blurRadius: 3, color: 'rgba(16, 24, 40, 0.08)' }],
                   }}
                 >
-                  <View className="flex-row items-center gap-3 flex-1 mr-2">
+                  <View className="flex-row items-center gap-2.5 flex-1 mr-2">
                     <View
                       className="items-center justify-center rounded-xl"
-                      style={{ width: 38, height: 38, backgroundColor: `${theme.action.base}14` }}
+                      style={{ width: 32, height: 32, backgroundColor: `${theme.action.base}14` }}
                     >
-                      <Phone color={theme.action.base} size={18} strokeWidth={2.2} />
+                      <Phone color={theme.action.base} size={16} strokeWidth={2.2} />
                     </View>
                     <View className="flex-1">
-                      <Text className="text-caption font-medium" style={{ color: theme.colors.inkMuted }}>
+                      <Text numberOfLines={1} className="text-caption font-semibold" style={{ color: theme.action.base }}>
                         {t('alarms.caregiverSavedContact')}
                       </Text>
-                      <Text className="text-body-lg font-bold" style={{ color: theme.colors.ink }}>
+                      <Text numberOfLines={1} className="text-body font-bold" style={{ color: theme.colors.ink }}>
                         {maskedCaregiverPhone}
                       </Text>
                     </View>
@@ -811,13 +833,13 @@ export default function AlarmsScreen({ onOpenSettings, onNavigateToMedications }
                       }}
                       accessibilityRole="button"
                       accessibilityLabel={t('alarms.editCaregiverAccessibility')}
-                      className="min-h-hit flex-row items-center gap-1.5 rounded-xl px-3.5 py-2 border"
+                      className="min-h-hit flex-row items-center gap-1 rounded-xl px-2.5 py-1.5 border"
                       style={{
                         backgroundColor: `${theme.action.base}12`,
                         borderColor: `${theme.action.base}30`,
                       }}
                     >
-                      <Pencil color={theme.action.base} size={14} strokeWidth={2.2} />
+                      <Pencil color={theme.action.base} size={13} strokeWidth={2.2} />
                       <Text className="text-caption font-bold" style={{ color: theme.action.base }}>
                         {t('alarms.editCaregiver')}
                       </Text>
@@ -827,13 +849,13 @@ export default function AlarmsScreen({ onOpenSettings, onNavigateToMedications }
                       onPress={handleClearCaregiverPhone}
                       accessibilityRole="button"
                       accessibilityLabel={t('alarms.clearCaregiverAccessibility')}
-                      className="min-h-hit min-w-hit items-center justify-center rounded-xl p-2.5 border"
+                      className="min-h-hit min-w-hit items-center justify-center rounded-xl p-2 border"
                       style={{
                         backgroundColor: `${theme.statusText('missed')}10`,
                         borderColor: `${theme.statusText('missed')}25`,
                       }}
                     >
-                      <Trash2 color={theme.statusText('missed')} size={16} strokeWidth={2.2} />
+                      <Trash2 color={theme.statusText('missed')} size={15} strokeWidth={2.2} />
                     </Pressable>
                   </View>
                 </View>
@@ -854,7 +876,7 @@ export default function AlarmsScreen({ onOpenSettings, onNavigateToMedications }
                     <Text className="text-body-lg font-bold" style={{ color: theme.colors.ink }}>
                       {t('alarms.caregiverSection')}
                     </Text>
-                    <Text className="mt-1 text-caption leading-relaxed" style={{ color: theme.colors.inkSecondary }}>
+                    <Text className="mt-1 text-caption leading-relaxed" style={{ color: theme.colors.inkMuted }}>
                       {t('alarms.caregiverDescription')}
                     </Text>
                   </View>
