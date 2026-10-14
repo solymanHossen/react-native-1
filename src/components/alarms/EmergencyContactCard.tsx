@@ -83,15 +83,15 @@ export function EmergencyContactCard({
         <View className="flex-row items-start gap-3">
           <View
             className="items-center justify-center rounded-2xl"
-            style={{ width: 44, height: 44, backgroundColor: theme.alarms.emergency.phoneBadge }}
+            style={{ width: 48, height: 48, backgroundColor: theme.alarms.emergency.phoneBadge }}
           >
-            <ShieldAlert color={theme.action.base} size={22} strokeWidth={2.2} />
+            <ShieldAlert color={theme.action.base} size={24} strokeWidth={2.2} />
           </View>
           <View className="flex-1">
-            <Text className="text-[17px] font-bold" style={{ color: theme.colors.ink }}>
+            <Text className="text-[19px] font-bold tracking-tight" style={{ color: theme.colors.ink }}>
               {t('alarms.caregiverSection')}
             </Text>
-            <Text className="mt-1 text-[13.5px] leading-5" style={{ color: theme.colors.inkMuted }}>
+            <Text className="mt-1.5 text-[15px] leading-[22px]" style={{ color: theme.colors.inkMuted }}>
               {t('alarms.caregiverDescription')}
             </Text>
           </View>
@@ -107,8 +107,8 @@ export function EmergencyContactCard({
           className="mt-4 min-h-hit flex-row items-center justify-center gap-2 rounded-2xl px-5 py-3.5 shadow-sm"
           style={{ backgroundColor: theme.action.base }}
         >
-          <Plus color={theme.action.ink} size={18} strokeWidth={2.5} />
-          <Text className="text-[15px] font-bold" style={{ color: theme.action.ink }}>
+          <Plus color={theme.action.ink} size={19} strokeWidth={2.5} />
+          <Text className="text-[16px] font-bold" style={{ color: theme.action.ink }}>
             {t('alarms.addCaregiver')}
           </Text>
         </Pressable>
@@ -146,18 +146,18 @@ export function EmergencyContactCard({
           <View
             className="items-center justify-center rounded-full"
             style={{
-              width: 46,
-              height: 46,
+              width: 48,
+              height: 48,
               backgroundColor: theme.alarms.emergency.badge,
             }}
           >
-            <FilledShieldCheck fillColor={theme.alarms.emergency.shield} size={24} />
+            <FilledShieldCheck fillColor={theme.alarms.emergency.shield} size={25} />
           </View>
 
           {/* Title and Active indicator */}
           <View className="ml-3 flex-1">
             <Text
-              className="text-[17px] font-bold tracking-tight"
+              className="text-[19px] font-bold tracking-tight"
               style={{ color: theme.alarms.card.title }}
             >
               {t('alarms.caregiverSection')}
@@ -165,10 +165,10 @@ export function EmergencyContactCard({
             <View className="flex-row items-center gap-1.5 mt-0.5">
               <View
                 className="rounded-full"
-                style={{ width: 7, height: 7, backgroundColor: theme.alarms.emergency.dot }}
+                style={{ width: 8, height: 8, backgroundColor: theme.alarms.emergency.dot }}
               />
               <Text
-                className="text-[13px] font-semibold"
+                className="text-[14px] font-semibold"
                 style={{ color: theme.alarms.emergency.statusText }}
               >
                 {t('alarms.caregiverReady')}
@@ -180,14 +180,14 @@ export function EmergencyContactCard({
         {/* Chevron on the right */}
         <ChevronRight
           color={theme.alarms.emergency.chevron}
-          size={20}
+          size={22}
           strokeWidth={2.4}
         />
       </Pressable>
 
       {/* Description text */}
       <Text
-        className="mt-2.5 mb-3.5 text-[13.5px] leading-[19px]"
+        className="mt-2.5 mb-3.5 text-[15px] leading-[22px]"
         style={{ color: theme.alarms.card.subtitle }}
       >
         {t('alarms.caregiverDescription')}
@@ -212,25 +212,25 @@ export function EmergencyContactCard({
           <View
             className="items-center justify-center rounded-full"
             style={{
-              width: 42,
-              height: 42,
+              width: 44,
+              height: 44,
               backgroundColor: theme.alarms.emergency.phoneBadge,
             }}
           >
-            <Phone color={theme.alarms.emergency.phoneIcon} size={18} strokeWidth={2.2} />
+            <Phone color={theme.alarms.emergency.phoneIcon} size={20} strokeWidth={2.2} />
           </View>
 
           <View className="flex-1">
             <Text
               numberOfLines={1}
-              className="text-[12px] font-medium"
+              className="text-[13px] font-medium"
               style={{ color: theme.alarms.card.subtitle }}
             >
               {t('alarms.caregiverSavedContact')}
             </Text>
             <Text
               numberOfLines={1}
-              className="text-[16px] font-bold tracking-tight mt-0.5"
+              className="text-[17.5px] font-bold tracking-tight mt-0.5"
               style={{ color: theme.alarms.card.title }}
             >
               {displayPhone}
@@ -255,7 +255,7 @@ export function EmergencyContactCard({
           >
             <Pencil color={theme.alarms.emergency.editBtnText} size={15} strokeWidth={2.2} />
             <Text
-              className="text-[13.5px] font-bold"
+              className="text-[14px] font-bold"
               style={{ color: theme.alarms.emergency.editBtnText }}
             >
               {t('alarms.editCaregiver')}
