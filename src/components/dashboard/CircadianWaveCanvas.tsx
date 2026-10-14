@@ -14,8 +14,11 @@ const MARKER_RADIUS = 9;
 const PULSE_MAX_RADIUS = 17;
 const LABEL_WIDTH = 104;
 const LABEL_GAP = 14;
-const LABEL_ROW_HEIGHT = 60;
+const LABEL_MIN_SPACING = 8;
 const ICON_SIZE = 17;
+const CONNECTOR_WIDTH = 1.5;
+/** Clearance kept on each end so the connector touches neither the dot's white ring nor the icon above the label. */
+const CONNECTOR_INSET = 5;
 
 /**
  * Same icon-per-zone mapping already established in AlarmScheduleCard/
@@ -90,25 +93,22 @@ function groupDoses(doses: DoseEntry[], width: number, centerY: number, amplitud
 }
 
 /**
- * Anchors each label below the marker, but close-together zones (this
- * schedule's Dawn Fasting/Post-Breakfast and Post-Dinner/Bedtime are only
- * 2.5h apart) get stacked from a *shared* baseline — the lowest marker in
- * the cluster — rather than each offset from its own y. Offsetting from its
- * own y independently doesn't work: a trial with a flat per-marker stagger
- * still collided here, because the wave's height difference between two
- * close markers can roughly cancel a fixed offset delta.
+ * One tidy row along the bottom, like the reference design — not stacked at
+ * each marker's own wave height. Labels tied to wave height read as scattered
+ * and uneven (a trough marker's label sits far below a peak marker's), so
+ * every label shares the same fixed row instead; only its *x* follows the
+ * marker above it. Left-to-right, each label is nudged just far enough right
+ * of its neighbor to not overlap — markers must already be sorted by x.
  */
-function computeLabelTops(markers: { x: number; y: number }[]): number[] {
-  const tops: number[] = [];
-  let clusterStart = 0;
-  for (let i = 0; i < markers.length; i += 1) {
-    if (i > 0 && markers[i].x - markers[i - 1].x >= LABEL_WIDTH) {
-      clusterStart = i;
-    }
-    const clusterMaxY = Math.max(...markers.slice(clusterStart, i + 1).map((marker) => marker.y));
-    tops[i] = clusterMaxY + LABEL_GAP + (i - clusterStart) * LABEL_ROW_HEIGHT;
+function computeLabelLefts(xs: number[], width: number): number[] {
+  const lefts: number[] = [];
+  let prevRight = -Infinity;
+  for (const x of xs) {
+    const left = Math.max(x - LABEL_WIDTH / 2, prevRight + LABEL_MIN_SPACING);
+    lefts.push(left);
+    prevRight = left + LABEL_WIDTH;
   }
-  return tops;
+  return lefts.map((left) => Math.min(Math.max(left, 4), width - LABEL_WIDTH - 4));
 }
 
 interface CircadianWaveCanvasProps {
@@ -203,14 +203,18 @@ export function CircadianWaveCanvas({ doses, width, height = 220 }: CircadianWav
     return Skia.Path.MakeFromSVGString(svg) ?? Skia.Path.Make();
   }, [width, height, centerY, amplitude]);
 
-  const groupedMarkers = useMemo(() => groupDoses(doses, width, centerY, amplitude), [doses, width, centerY, amplitude]);
+  const groupedMarkers = useMemo(
+    () => groupDoses(doses, width, centerY, amplitude).sort((a, b) => a.x - b.x),
+    [doses, width, centerY, amplitude],
+  );
 
-  const labelTops = useMemo(() => computeLabelTops(groupedMarkers), [groupedMarkers]);
+  const labelLefts = useMemo(() => computeLabelLefts(groupedMarkers.map((marker) => marker.x), width), [groupedMarkers, width]);
+  const labelTop = height + LABEL_GAP;
 
   if (width <= 0) return null;
 
   return (
-    <View style={{ width, height: height + 180 }}>
+    <View style={{ width, height: labelTop + 70 }}>
       <Canvas style={{ width, height }}>
         <Path path={fillPath}>
           <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 0, y: height }} colors={[`${theme.action.base}40`, `${theme.action.base}00`]} />
@@ -220,13 +224,33 @@ export function CircadianWaveCanvas({ doses, width, height = 220 }: CircadianWav
           <Marker key={marker.key} x={marker.x} y={marker.y} color={theme.status[marker.state].base} pulsing={marker.count === 1 && marker.state === 'pending'} pulse={pulse} />
         ))}
       </Canvas>
+      {/* A pointer line from each dot down to its label: the label row sits
+          at one fixed height (see computeLabelLefts above) while the dots
+          themselves sit at very different heights on the wave, so without
+          this a peak marker's label reads as floating, disconnected from
+          the dot it belongs to. */}
+      {groupedMarkers.map((marker) => (
+        <View
+          key={`pointer-${marker.key}`}
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            left: marker.x - CONNECTOR_WIDTH / 2,
+            top: marker.y + MARKER_RADIUS + CONNECTOR_INSET,
+            width: CONNECTOR_WIDTH,
+            height: Math.max(0, labelTop - CONNECTOR_INSET - (marker.y + MARKER_RADIUS + CONNECTOR_INSET)),
+            backgroundColor: theme.colors.inkMuted,
+            opacity: 0.4,
+          }}
+        />
+      ))}
       {groupedMarkers.map((marker, index) => {
         const Icon = ZONE_ICON[marker.label] ?? Sun;
         return (
           <View
             key={marker.key}
             pointerEvents="none"
-            style={{ position: 'absolute', left: marker.x - LABEL_WIDTH / 2, top: labelTops[index], width: LABEL_WIDTH, alignItems: 'center' }}
+            style={{ position: 'absolute', left: labelLefts[index], top: labelTop, width: LABEL_WIDTH, alignItems: 'center' }}
           >
             <Icon color={theme.colors.inkMuted} size={ICON_SIZE} strokeWidth={2} />
             {/* `width` on the Text itself, not just its absolute-positioned
