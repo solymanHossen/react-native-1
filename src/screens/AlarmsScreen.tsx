@@ -7,9 +7,9 @@ import {
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import { Calendar, ChartColumn, Check, ChevronRight, Clock, Droplet, Moon, Package, Pencil, Phone, Pill, Plus, ShieldAlert, ShieldCheck, Sun, Sunrise, Sunset, Trash2, User, X } from 'lucide-react-native';
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, type ComponentType } from 'react';
-import { ActivityIndicator, Keyboard, Pressable, Text, View } from 'react-native';
+import { ChartColumn, Check, ChevronRight, Clock, Droplet, Moon, Package, Pencil, Phone, Pill, PillBottle, Plus, ShieldAlert, ShieldCheck, Sun, Sunrise, Sunset, Trash2, User, X } from 'lucide-react-native';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, type ComponentType, type ElementRef } from 'react';
+import { ActivityIndicator, Image, Keyboard, Pressable, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AlarmScheduleCard, AlarmsEmptyState, AlarmsHeroSummary } from '../components/alarms';
 import { LargeTextButton } from '../components/ui';
@@ -580,6 +580,7 @@ export default function AlarmsScreen({ onOpenSettings, onNavigateToMedications }
   const [status, setStatus] = useState<string | null>(null);
   const caregiverSheetRef = useRef<CaregiverContactSheetRef>(null);
   const reminderSheetRef = useRef<ReminderSheetRef>(null);
+  const flashListRef = useRef<ElementRef<typeof FlashList<ScheduleWithMedication>>>(null);
 
   const refresh = useCallback(async (database: MediusDatabase) => {
     const [scheduleRows, medicationRows] = await Promise.all([
@@ -725,6 +726,7 @@ export default function AlarmsScreen({ onOpenSettings, onNavigateToMedications }
           virtualizing it costs nothing when short while staying flat-cost
           if it grows into the hundreds. */}
       <FlashList
+        ref={flashListRef}
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingHorizontal: 24, paddingVertical: 28 }}
         data={schedules}
@@ -739,7 +741,15 @@ export default function AlarmsScreen({ onOpenSettings, onNavigateToMedications }
                   borderColor: theme.mode === 'dark' ? 'rgba(16, 185, 129, 0.28)' : theme.colors.hairline,
                 }}
               >
-                <View className="flex-row items-center justify-between">
+                <Pressable
+                  onPress={() => {
+                    triggerHaptic('selection');
+                    caregiverSheetRef.current?.present(savedCaregiverPhone);
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('alarms.editCaregiverAccessibility')}
+                  className="flex-row items-center justify-between"
+                >
                   <View className="flex-row items-center gap-3">
                     <View
                       className="items-center justify-center rounded-2xl"
@@ -762,7 +772,8 @@ export default function AlarmsScreen({ onOpenSettings, onNavigateToMedications }
                       </View>
                     </View>
                   </View>
-                </View>
+                  <ChevronRight color={theme.statusText('taken')} size={18} strokeWidth={2.5} />
+                </Pressable>
 
                 <Text className="mt-3 text-caption leading-relaxed" style={{ color: theme.colors.inkSecondary }}>
                   {t('alarms.caregiverDescription')}
@@ -867,108 +878,146 @@ export default function AlarmsScreen({ onOpenSettings, onNavigateToMedications }
               </View>
             )}
 
-            <View
-              className="gap-4 rounded-3xl border p-6 shadow-md"
-              style={{
-                backgroundColor: theme.mode === 'dark' ? 'rgba(59, 130, 246, 0.1)' : `${theme.action.base}0D`,
-                borderColor: theme.mode === 'dark' ? 'rgba(59, 130, 246, 0.28)' : theme.colors.hairline,
+            {/* Solid banner introducing the list below. Tapping it is a
+                shortcut, not a dead decoration: with a medication on file it
+                jumps straight into the reminder sheet for the first one
+                (same destination as tapping that row directly below); with
+                none yet, it sends you to add one instead of doing nothing. */}
+            <Pressable
+              onPress={() => {
+                triggerHaptic('selection');
+                if (medications.length > 0) {
+                  reminderSheetRef.current?.present(medications[0]);
+                } else {
+                  onNavigateToMedications?.();
+                }
               }}
+              accessibilityRole="button"
+              accessibilityLabel={t('alarms.scheduleReminderTitle')}
+              className="flex-row items-center gap-3 overflow-hidden rounded-3xl p-5"
+              style={{ backgroundColor: theme.action.base }}
             >
-              <View className="flex-row items-center gap-3">
-                <View className="items-center justify-center rounded-2xl" style={{ width: 42, height: 42, backgroundColor: `${theme.action.base}18` }}>
-                  <Calendar color={theme.action.base} size={21} strokeWidth={2.25} />
-                </View>
-                <View className="flex-1">
-                  <Text className="text-body-lg font-bold" style={{ color: theme.colors.ink }}>
-                    {t('alarms.scheduleReminderTitle')}
-                  </Text>
-                  <Text className="text-caption" style={{ color: theme.colors.inkSecondary }}>
-                    {t('alarms.scheduleReminderSubtitle')}
-                  </Text>
-                </View>
+              <View className="items-center justify-center rounded-2xl" style={{ width: 44, height: 44, backgroundColor: '#FFFFFF' }}>
+                <Plus color={theme.action.base} size={22} strokeWidth={2.5} />
               </View>
+              <View className="flex-1">
+                <Text className="text-body-lg font-bold" style={{ color: theme.action.ink }}>
+                  {t('alarms.scheduleReminderTitle')}
+                </Text>
+                <Text className="text-caption" style={{ color: 'rgba(255, 255, 255, 0.85)' }}>
+                  {t('alarms.scheduleReminderSubtitle')}
+                </Text>
+              </View>
+              <Image
+                source={require('../../assets/branding/capsule-pill.png')}
+                pointerEvents="none"
+                style={{
+                  position: 'absolute',
+                  right: -16,
+                  bottom: -14,
+                  width: 76,
+                  height: 76 * (63 / 64),
+                  opacity: 0.22,
+                  transform: [{ rotate: '-18deg' }],
+                }}
+                resizeMode="contain"
+              />
+            </Pressable>
+
+            <View className="rounded-3xl border p-5 shadow-sm" style={{ backgroundColor: theme.colors.elevated, borderColor: theme.colors.hairline }}>
+              <View className="flex-row items-center justify-between pb-3">
+                <View className="flex-row items-center gap-3">
+                  <View className="items-center justify-center rounded-2xl" style={{ width: 38, height: 38, backgroundColor: `${theme.action.base}14` }}>
+                    <PillBottle color={theme.action.base} size={19} strokeWidth={2.25} />
+                  </View>
+                  <Text className="text-body-lg font-bold" style={{ color: theme.colors.ink }}>
+                    {t('alarms.yourMedicines')}
+                  </Text>
+                </View>
+                {onNavigateToMedications ? (
+                  <Pressable
+                    onPress={() => {
+                      triggerHaptic('selection');
+                      onNavigateToMedications();
+                    }}
+                    accessibilityRole="button"
+                    className="min-h-hit flex-row items-center gap-1.5"
+                  >
+                    <Text className="text-caption font-bold" style={{ color: theme.action.base }}>
+                      {t('alarms.addMedicine')}
+                    </Text>
+                    <View className="items-center justify-center rounded-full" style={{ width: 20, height: 20, backgroundColor: `${theme.action.base}18` }}>
+                      <Plus color={theme.action.base} size={12} strokeWidth={2.75} />
+                    </View>
+                  </Pressable>
+                ) : null}
+              </View>
+
               {medications.length === 0 ? (
-                <Text className="text-body-lg" style={{ color: theme.colors.inkSecondary }}>
+                <Text className="pb-1 text-body-lg" style={{ color: theme.colors.inkSecondary }}>
                   {t('alarms.noMedicationsYet')}
                 </Text>
               ) : (
-                <View className="flex-row flex-wrap gap-3">
-                  {medications.map((medication) => {
-                    const FormIcon = medicationFormIcon(medication.form);
-                    const outOfStock = medication.current_stock <= 0;
-                    const lowStock = !outOfStock && medication.current_stock <= medication.refill_threshold;
-                    const stockColor = outOfStock ? theme.statusText('missed') : lowStock ? theme.statusText('pending') : theme.action.base;
-                    return (
-                      <Pressable
-                        key={medication.id}
-                        onPress={() => {
-                          triggerHaptic('selection');
-                          reminderSheetRef.current?.present(medication);
-                        }}
-                        accessibilityRole="button"
-                        accessibilityLabel={medication.name}
-                        className="min-h-hit basis-[47%] justify-between gap-3 rounded-2xl border p-4"
-                        style={{
-                          flexGrow: 1,
-                          backgroundColor: theme.colors.surface,
-                          borderColor: theme.colors.hairline,
-                          borderWidth: 1,
-                        }}
-                      >
-                        <View className="flex-row items-center justify-between">
-                          <View className="items-center justify-center rounded-2xl" style={{ width: 38, height: 38, backgroundColor: `${theme.action.base}14` }}>
-                            <FormIcon color={theme.action.base} size={19} strokeWidth={2.25} />
+                medications.map((medication, index) => {
+                  const FormIcon = medicationFormIcon(medication.form);
+                  const outOfStock = medication.current_stock <= 0;
+                  const lowStock = !outOfStock && medication.current_stock <= medication.refill_threshold;
+                  const stockColor = outOfStock ? theme.statusText('missed') : lowStock ? theme.statusText('pending') : theme.action.base;
+                  const isLast = index === medications.length - 1;
+                  return (
+                    <Pressable
+                      key={medication.id}
+                      onPress={() => {
+                        triggerHaptic('selection');
+                        reminderSheetRef.current?.present(medication);
+                      }}
+                      accessibilityRole="button"
+                      accessibilityLabel={medication.name}
+                      className="flex-row items-center gap-3 py-3"
+                      style={isLast ? undefined : { borderBottomWidth: 1, borderBottomColor: theme.colors.hairline }}
+                    >
+                      <View className="items-center justify-center rounded-2xl" style={{ width: 42, height: 42, backgroundColor: `${theme.action.base}14` }}>
+                        <FormIcon color={theme.action.base} size={20} strokeWidth={2.25} />
+                      </View>
+                      <View className="flex-1">
+                        <Text className="text-body" numberOfLines={1} style={{ color: theme.colors.ink, fontWeight: '700' }}>
+                          {medication.name}
+                        </Text>
+                        <Text className="text-caption" numberOfLines={1} style={{ color: theme.colors.inkSecondary }}>
+                          {[medication.strength, t(`medications.forms.${medication.form}` as never)].filter(Boolean).join(' · ')}
+                        </Text>
+                      </View>
+                      <View className="flex-row items-center gap-2 rounded-2xl px-3 py-2" style={{ backgroundColor: `${stockColor}14` }}>
+                        <ChartColumn color={stockColor} size={15} strokeWidth={2.4} />
+                        {outOfStock || lowStock ? (
+                          <Text numberOfLines={1} style={{ color: stockColor, fontSize: 12, fontWeight: '800' }}>
+                            {outOfStock ? t('medications.outOfStock') : t('medications.lowStock')}
+                          </Text>
+                        ) : (
+                          <View>
+                            <Text numberOfLines={1} style={{ color: stockColor, fontSize: 12, fontWeight: '800' }}>
+                              {t('medications.detailsStockCount', {
+                                count: Math.max(0, medication.current_stock),
+                                unit: medication.current_stock === 1 ? t('medications.detailsStockUnit') : t('medications.detailsStockUnitsPlural'),
+                              })}
+                            </Text>
+                            <Text numberOfLines={1} style={{ color: theme.colors.inkMuted, fontSize: 10 }}>
+                              {t('medications.remaining')}
+                            </Text>
                           </View>
-                          <ChevronRight color={theme.colors.inkMuted} size={16} strokeWidth={2.5} />
-                        </View>
-                        <View>
-                          <Text className="text-body" numberOfLines={1} style={{ color: theme.colors.ink, fontWeight: '700' }}>
-                            {medication.name}
-                          </Text>
-                          <Text className="text-caption" numberOfLines={1} style={{ color: theme.colors.inkSecondary }}>
-                            {[medication.strength, t(`medications.forms.${medication.form}` as never)].filter(Boolean).join(' · ')}
-                          </Text>
-                        </View>
-                        <View
-                          className="flex-row items-center gap-1 self-start rounded-full px-2.5 py-1"
-                          style={{ backgroundColor: `${stockColor}18`, maxWidth: '100%' }}
-                        >
-                          <ChartColumn color={stockColor} size={12} strokeWidth={2.4} />
-                          <Text className="text-caption font-semibold" numberOfLines={2} style={{ color: stockColor, flexShrink: 1, fontSize: 11 }}>
-                            {outOfStock
-                              ? t('medications.outOfStock')
-                              : lowStock
-                                ? t('medications.lowStock')
-                                : t('medications.detailsStockUnits', {
-                                    count: Math.max(0, medication.current_stock),
-                                    unit: medication.current_stock === 1 ? t('medications.detailsStockUnit') : t('medications.detailsStockUnitsPlural'),
-                                  })}
-                          </Text>
-                        </View>
-                      </Pressable>
-                    );
-                  })}
-                </View>
+                        )}
+                        <ChevronRight color={theme.colors.inkMuted} size={16} strokeWidth={2.5} />
+                      </View>
+                    </Pressable>
+                  );
+                })
               )}
-              {onNavigateToMedications ? (
-                <Pressable
-                  onPress={() => {
-                    triggerHaptic('selection');
-                    onNavigateToMedications();
-                  }}
-                  accessibilityRole="button"
-                  className="min-h-hit flex-row items-center justify-center gap-2 rounded-2xl border px-5 py-3.5"
-                  style={{ backgroundColor: theme.colors.surface, borderColor: theme.colors.hairline }}
-                >
-                  <Plus color={theme.action.base} size={17} strokeWidth={2.5} />
-                  <Text className="text-body-md font-bold" style={{ color: theme.action.base }}>
-                    {t('alarms.addAnotherMedicine')}
-                  </Text>
-                </Pressable>
-              ) : null}
             </View>
 
-            <AlarmsHeroSummary schedules={schedules} />
+            <AlarmsHeroSummary
+              schedules={schedules}
+              onQuickAdd={() => flashListRef.current?.scrollToOffset({ offset: 0, animated: true })}
+            />
           </View>
         }
         ListEmptyComponent={<AlarmsEmptyState />}
