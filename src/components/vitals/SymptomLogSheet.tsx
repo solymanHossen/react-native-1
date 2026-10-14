@@ -46,46 +46,32 @@ const SYMPTOM_IMAGES = {
 interface SymptomConfig {
   key: TranslationKey;
   image: (typeof SYMPTOM_IMAGES)[keyof typeof SYMPTOM_IMAGES];
-  badgeBgLight: string;
-  badgeBgDark: string;
 }
 
 const SYMPTOM_CONFIGS: Record<(typeof COMMON_SYMPTOMS)[number], SymptomConfig> = {
   Nausea: {
     key: 'vitals.symptomSheet.symptoms.Nausea',
     image: SYMPTOM_IMAGES.Nausea,
-    badgeBgLight: '#FEE2E2',
-    badgeBgDark: 'rgba(239, 68, 68, 0.16)',
   },
   Dizziness: {
     key: 'vitals.symptomSheet.symptoms.Dizziness',
     image: SYMPTOM_IMAGES.Dizziness,
-    badgeBgLight: '#DCFCE7',
-    badgeBgDark: 'rgba(16, 185, 129, 0.16)',
   },
   'Acid Reflux': {
     key: 'vitals.symptomSheet.symptoms.Acid Reflux',
     image: SYMPTOM_IMAGES['Acid Reflux'],
-    badgeBgLight: '#FFEDD5',
-    badgeBgDark: 'rgba(249, 115, 22, 0.16)',
   },
   Headache: {
     key: 'vitals.symptomSheet.symptoms.Headache',
     image: SYMPTOM_IMAGES.Headache,
-    badgeBgLight: '#FEE2E2',
-    badgeBgDark: 'rgba(239, 68, 68, 0.16)',
   },
   Fatigue: {
     key: 'vitals.symptomSheet.symptoms.Fatigue',
     image: SYMPTOM_IMAGES.Fatigue,
-    badgeBgLight: '#EDE9FE',
-    badgeBgDark: 'rgba(139, 92, 246, 0.16)',
   },
   Rash: {
     key: 'vitals.symptomSheet.symptoms.Rash',
     image: SYMPTOM_IMAGES.Rash,
-    badgeBgLight: '#DBEAFE',
-    badgeBgDark: 'rgba(37, 99, 235, 0.16)',
   },
 };
 
@@ -93,23 +79,26 @@ const SYMPTOM_CONFIGS: Record<(typeof COMMON_SYMPTOMS)[number], SymptomConfig> =
 function SeverityBars({
   level,
   isSelected,
-  activeColor = '#2563EB',
-  inactiveColor = '#CBD5E1',
+  activeColor = '#395886',
+  inactiveColor = '#A4B8D8',
+  severeColor = '#CD0000',
 }: {
   level: SymptomSeverity;
   isSelected: boolean;
   activeColor?: string;
   inactiveColor?: string;
+  severeColor?: string;
 }) {
   const getBarColors = () => {
+    if (level === 'SEVERE') return [severeColor, severeColor, severeColor];
     if (isSelected) {
       if (level === 'MILD') return [activeColor, inactiveColor, inactiveColor];
       if (level === 'MODERATE') return [activeColor, activeColor, inactiveColor];
-      return ['#EF4444', '#EF4444', '#EF4444'];
+      return [severeColor, severeColor, severeColor];
     }
-    if (level === 'MILD') return ['#94A3B8', inactiveColor, inactiveColor];
-    if (level === 'MODERATE') return ['#94A3B8', '#94A3B8', inactiveColor];
-    return ['#EF4444', '#EF4444', '#EF4444'];
+    if (level === 'MILD') return [activeColor, inactiveColor, inactiveColor];
+    if (level === 'MODERATE') return [activeColor, activeColor, inactiveColor];
+    return [severeColor, severeColor, severeColor];
   };
 
   const colors = getBarColors();
@@ -129,6 +118,7 @@ export interface SymptomLogSheetRef {
 
 export const SymptomLogSheet = forwardRef<SymptomLogSheetRef, Record<string, unknown>>(function SymptomLogSheetImpl(_props, ref) {
   const theme = useTheme();
+  const st = theme.symptoms;
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const modalRef = useRef<BottomSheetModal>(null);
@@ -189,7 +179,7 @@ export const SymptomLogSheet = forwardRef<SymptomLogSheetRef, Record<string, unk
       enablePanDownToClose
       backdropComponent={renderBackdrop}
       backgroundStyle={{ backgroundColor: isDark ? theme.colors.surface : '#FFFFFF' }}
-      handleIndicatorStyle={{ backgroundColor: isDark ? 'rgba(255, 255, 255, 0.2)' : '#CBD5E1', width: 38, height: 4 }}
+      handleIndicatorStyle={{ backgroundColor: isDark ? 'rgba(255, 255, 255, 0.2)' : theme.colors.hairline, width: 38, height: 4 }}
     >
       <BottomSheetScrollView
         contentContainerStyle={{ paddingBottom: bottomPadding }}
@@ -203,7 +193,7 @@ export const SymptomLogSheet = forwardRef<SymptomLogSheetRef, Record<string, unk
               width: 50,
               height: 50,
               borderRadius: 16,
-              backgroundColor: isDark ? 'rgba(37, 99, 235, 0.16)' : '#E8F1FC',
+              backgroundColor: st.headerBadgeBg,
               alignItems: 'center',
               justifyContent: 'center',
             }}
@@ -211,9 +201,9 @@ export const SymptomLogSheet = forwardRef<SymptomLogSheetRef, Record<string, unk
             <Svg width={26} height={26} viewBox="0 0 24 24">
               <Path
                 d="M5 4a2 2 0 0 1 2-2h8l5 5v13a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4Z"
-                fill="#1A56DB"
+                fill={st.headerIconPrimary}
               />
-              <Path d="M15 2v4a1 1 0 0 0 1 1h4" fill="#60A5FA" />
+              <Path d="M15 2v4a1 1 0 0 0 1 1h4" fill={st.headerIconSecondary} />
               <Path
                 d="M12 9.5v5M9.5 12h5"
                 stroke="#FFFFFF"
@@ -230,7 +220,7 @@ export const SymptomLogSheet = forwardRef<SymptomLogSheetRef, Record<string, unk
                 fontSize: 20,
                 fontWeight: '700',
                 letterSpacing: -0.3,
-                color: isDark ? '#FFFFFF' : '#0F172A',
+                color: st.headerTitle,
               }}
             >
               {t('vitals.symptomSheet.title')}
@@ -240,7 +230,7 @@ export const SymptomLogSheet = forwardRef<SymptomLogSheetRef, Record<string, unk
                 fontSize: 13,
                 fontWeight: '400',
                 lineHeight: 18,
-                color: isDark ? '#94A3B8' : '#64748B',
+                color: st.headerSubtitle,
                 marginTop: 3,
               }}
               numberOfLines={2}
@@ -258,12 +248,12 @@ export const SymptomLogSheet = forwardRef<SymptomLogSheetRef, Record<string, unk
               width: 32,
               height: 32,
               borderRadius: 16,
-              backgroundColor: isDark ? '#1E293B' : '#F1F5F9',
+              backgroundColor: st.closeBtnBg,
               alignItems: 'center',
               justifyContent: 'center',
             }}
           >
-            <X size={16} color={isDark ? '#94A3B8' : '#64748B'} strokeWidth={2.2} />
+            <X size={16} color={st.closeBtnIcon} strokeWidth={2.2} />
           </Pressable>
         </View>
 
@@ -276,7 +266,7 @@ export const SymptomLogSheet = forwardRef<SymptomLogSheetRef, Record<string, unk
                 fontWeight: '700',
                 textTransform: 'uppercase',
                 letterSpacing: 0.8,
-                color: isDark ? '#94A3B8' : '#64748B',
+                color: st.sectionHeader,
                 marginTop: 6,
                 marginBottom: 10,
               }}
@@ -308,17 +298,9 @@ export const SymptomLogSheet = forwardRef<SymptomLogSheetRef, Record<string, unk
                           paddingHorizontal: 12,
                           flexDirection: 'row',
                           alignItems: 'center',
-                          backgroundColor: isActive
-                            ? '#2764B8'
-                            : isDark
-                              ? theme.colors.elevated
-                              : '#FFFFFF',
+                          backgroundColor: isActive ? st.cardActiveBg : st.cardBg,
                           borderWidth: 1,
-                          borderColor: isActive
-                            ? '#2764B8'
-                            : isDark
-                              ? 'rgba(255, 255, 255, 0.08)'
-                              : '#E2E8F0',
+                          borderColor: isActive ? st.cardActiveBorder : st.cardBorder,
                         }}
                       >
                         {/* Left Circular Badge */}
@@ -331,9 +313,7 @@ export const SymptomLogSheet = forwardRef<SymptomLogSheetRef, Record<string, unk
                             justifyContent: 'center',
                             backgroundColor: isActive
                               ? 'rgba(255, 255, 255, 0.22)'
-                              : isDark
-                                ? config.badgeBgDark
-                                : config.badgeBgLight,
+                              : st.badgeBg[option],
                           }}
                         >
                           <Image
@@ -350,11 +330,7 @@ export const SymptomLogSheet = forwardRef<SymptomLogSheetRef, Record<string, unk
                             flex: 1,
                             fontSize: 14.5,
                             fontWeight: isActive ? '700' : '600',
-                            color: isActive
-                              ? '#FFFFFF'
-                              : isDark
-                                ? '#F8FAFC'
-                                : '#1E293B',
+                            color: isActive ? st.cardActiveText : st.cardText,
                           }}
                           numberOfLines={1}
                         >
@@ -368,12 +344,12 @@ export const SymptomLogSheet = forwardRef<SymptomLogSheetRef, Record<string, unk
                               width: 22,
                               height: 22,
                               borderRadius: 11,
-                              backgroundColor: '#FFFFFF',
+                              backgroundColor: st.cardActiveCheckBg,
                               alignItems: 'center',
                               justifyContent: 'center',
                             }}
                           >
-                            <Check size={13} color="#2764B8" strokeWidth={3} />
+                            <Check size={13} color={st.cardActiveCheckIcon} strokeWidth={3} />
                           </View>
                         )}
                       </Pressable>
@@ -390,7 +366,7 @@ export const SymptomLogSheet = forwardRef<SymptomLogSheetRef, Record<string, unk
                 fontWeight: '700',
                 textTransform: 'uppercase',
                 letterSpacing: 0.8,
-                color: isDark ? '#94A3B8' : '#64748B',
+                color: st.sectionHeader,
                 marginTop: 20,
                 marginBottom: 10,
               }}
@@ -418,38 +394,23 @@ export const SymptomLogSheet = forwardRef<SymptomLogSheetRef, Record<string, unk
                       flexDirection: 'row',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      backgroundColor: isActive
-                        ? isDark
-                          ? 'rgba(37, 99, 235, 0.16)'
-                          : '#EFF6FF'
-                        : isDark
-                          ? theme.colors.elevated
-                          : '#FFFFFF',
+                      backgroundColor: isActive ? st.severityActiveBg : st.severityInactiveBg,
                       borderWidth: isActive ? 1.5 : 1,
-                      borderColor: isActive
-                        ? '#3B82F6'
-                        : isDark
-                          ? 'rgba(255, 255, 255, 0.08)'
-                          : '#E2E8F0',
+                      borderColor: isActive ? st.severityActiveBorder : st.severityInactiveBorder,
                     }}
                   >
                     <SeverityBars
                       level={level}
                       isSelected={isActive}
-                      activeColor={isDark ? '#60A5FA' : '#2563EB'}
-                      inactiveColor={isDark ? '#475569' : '#CBD5E1'}
+                      activeColor={st.severityBarActive}
+                      inactiveColor={st.severityBarInactive}
+                      severeColor={st.severityBarSevere}
                     />
                     <Text
                       style={{
                         fontSize: 13.5,
                         fontWeight: isActive ? '700' : '600',
-                        color: isActive
-                          ? isDark
-                            ? '#93C5FD'
-                            : '#1D4ED8'
-                          : isDark
-                            ? '#F8FAFC'
-                            : '#1E293B',
+                        color: isActive ? st.severityActiveText : st.severityInactiveText,
                       }}
                     >
                       {t(SEVERITY_KEY[level])}
@@ -461,13 +422,13 @@ export const SymptomLogSheet = forwardRef<SymptomLogSheetRef, Record<string, unk
                           width: 18,
                           height: 18,
                           borderRadius: 9,
-                          backgroundColor: '#2563EB',
+                          backgroundColor: st.severityActiveCheckBg,
                           alignItems: 'center',
                           justifyContent: 'center',
                           marginLeft: 6,
                         }}
                       >
-                        <Check size={11} color="#FFFFFF" strokeWidth={3} />
+                        <Check size={11} color={st.severityActiveCheckIcon} strokeWidth={3} />
                       </View>
                     )}
                   </Pressable>
@@ -482,22 +443,22 @@ export const SymptomLogSheet = forwardRef<SymptomLogSheetRef, Record<string, unk
                 borderRadius: 16,
                 paddingHorizontal: 14,
                 paddingVertical: 12,
-                backgroundColor: isDark ? 'rgba(30, 41, 59, 0.7)' : '#EDF2FA',
+                backgroundColor: st.calloutBg,
                 borderWidth: 1,
-                borderColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(203, 213, 225, 0.4)',
+                borderColor: st.calloutBorder,
                 flexDirection: 'row',
                 alignItems: 'center',
                 gap: 12,
               }}
             >
-              <Shield size={20} color={isDark ? '#60A5FA' : '#2563EB'} strokeWidth={2} />
+              <Shield size={20} color={st.calloutIcon} strokeWidth={2} />
               <Text
                 style={{
                   flex: 1,
                   fontSize: 13,
                   fontWeight: '400',
                   lineHeight: 18,
-                  color: isDark ? '#94A3B8' : '#475569',
+                  color: st.calloutText,
                 }}
               >
                 {t('vitals.symptomSheet.infoCallout')}
@@ -514,24 +475,24 @@ export const SymptomLogSheet = forwardRef<SymptomLogSheetRef, Record<string, unk
                 marginTop: 18,
                 height: 54,
                 borderRadius: 27,
-                backgroundColor: '#2764B8',
+                backgroundColor: st.saveBtnBg,
                 flexDirection: 'row',
                 alignItems: 'center',
                 justifyContent: 'center',
-                opacity: !symptom || saving ? 0.5 : 1,
+                opacity: !symptom || saving ? 0.45 : 1,
               }}
             >
               <Text
                 style={{
                   fontSize: 16.5,
                   fontWeight: '700',
-                  color: '#FFFFFF',
+                  color: st.saveBtnText,
                 }}
               >
                 {t('vitals.symptomSheet.saveSymptom')}
               </Text>
               <View style={{ position: 'absolute', right: 20 }}>
-                <ArrowRight size={20} color="#FFFFFF" strokeWidth={2.4} />
+                <ArrowRight size={20} color={st.saveBtnText} strokeWidth={2.4} />
               </View>
             </Pressable>
           </View>
@@ -541,16 +502,16 @@ export const SymptomLogSheet = forwardRef<SymptomLogSheetRef, Record<string, unk
               style={{
                 padding: 16,
                 borderRadius: 16,
-                backgroundColor: isDark ? 'rgba(37, 99, 235, 0.16)' : '#EFF6FF',
+                backgroundColor: st.successBannerBg,
                 borderWidth: 1,
-                borderColor: isDark ? 'rgba(37, 99, 235, 0.3)' : '#BFDBFE',
+                borderColor: st.successBannerBorder,
               }}
             >
               <Text
                 style={{
                   fontSize: 15.5,
                   fontWeight: '700',
-                  color: isDark ? '#93C5FD' : '#1D4ED8',
+                  color: st.successBannerText,
                 }}
               >
                 {relatedMeds.length === 0
@@ -566,14 +527,14 @@ export const SymptomLogSheet = forwardRef<SymptomLogSheetRef, Record<string, unk
                   borderRadius: 16,
                   borderWidth: 1,
                   padding: 14,
-                  backgroundColor: isDark ? theme.colors.elevated : '#FFFFFF',
-                  borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : '#E2E8F0',
+                  backgroundColor: st.cardBg,
+                  borderColor: st.cardBorder,
                 }}
               >
-                <Text style={{ fontSize: 15, fontWeight: '600', color: isDark ? '#FFFFFF' : '#0F172A' }}>
+                <Text style={{ fontSize: 15, fontWeight: '600', color: st.cardText }}>
                   {med.medicationName}
                 </Text>
-                <Text style={{ fontSize: 13, color: isDark ? '#94A3B8' : '#64748B', marginTop: 2 }}>
+                <Text style={{ fontSize: 13, color: st.headerSubtitle, marginTop: 2 }}>
                   {t('vitals.symptomSheet.takenAt', { time: new Date(med.takenTime).toLocaleTimeString() })}
                 </Text>
               </View>
@@ -587,12 +548,12 @@ export const SymptomLogSheet = forwardRef<SymptomLogSheetRef, Record<string, unk
                 marginTop: 10,
                 height: 52,
                 borderRadius: 26,
-                backgroundColor: isDark ? theme.colors.elevated : '#F1F5F9',
+                backgroundColor: st.saveBtnBg,
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <Text style={{ fontSize: 16, fontWeight: '600', color: isDark ? '#FFFFFF' : '#1E293B' }}>
+              <Text style={{ fontSize: 16, fontWeight: '600', color: st.saveBtnText }}>
                 {t('common.done')}
               </Text>
             </Pressable>

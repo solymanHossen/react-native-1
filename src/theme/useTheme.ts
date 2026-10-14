@@ -7,6 +7,7 @@ import {
   action,
   getAlarmTokens,
   getFormColor,
+  getSymptomTokens,
   palette,
   severity,
   severityText,
@@ -18,6 +19,7 @@ import {
   type ResolvedAlarmTokens,
   type SeverityKey,
   type StatusKey,
+  type SymptomTokens,
   type ThemeMode,
 } from './tokens';
 
@@ -104,6 +106,7 @@ export interface ResolvedTheme {
   severityText: (key: SeverityKey) => string;
   formColor: (form: string) => FormColorTokens;
   alarms: ResolvedAlarmTokens;
+  symptoms: SymptomTokens;
 }
 
 /**
@@ -128,6 +131,7 @@ export function useTheme(): ResolvedTheme {
       severityText: (key: SeverityKey) => severityText(key, mode),
       formColor: (form: string) => getFormColor(form, mode),
       alarms: getAlarmTokens(mode),
+      symptoms: getSymptomTokens(mode),
     }),
     [mode],
   );

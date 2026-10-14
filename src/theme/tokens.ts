@@ -545,3 +545,155 @@ export function getAlarmTokens(mode: ThemeMode): ResolvedAlarmTokens {
   };
 }
 
+/**
+ * Visual design system tokens for Symptom Logging sheet (header, symptom options, severity, callout, button).
+ * Directly derives from the Vitals screen color palette (dark navy #395886, soft periwinkle #D5DEEF,
+ * muted #628ECB, and clinical pastel squircle badge backgrounds).
+ */
+export interface SymptomTokens {
+  badgeBg: {
+    Nausea: string;
+    Dizziness: string;
+    'Acid Reflux': string;
+    Headache: string;
+    Fatigue: string;
+    Rash: string;
+  };
+  headerBadgeBg: string;
+  headerIconPrimary: string;
+  headerIconSecondary: string;
+  headerTitle: string;
+  headerSubtitle: string;
+  closeBtnBg: string;
+  closeBtnIcon: string;
+  sectionHeader: string;
+  cardBg: string;
+  cardBorder: string;
+  cardText: string;
+  cardActiveBg: string;
+  cardActiveBorder: string;
+  cardActiveText: string;
+  cardActiveCheckBg: string;
+  cardActiveCheckIcon: string;
+  severityActiveBg: string;
+  severityActiveBorder: string;
+  severityActiveText: string;
+  severityActiveCheckBg: string;
+  severityActiveCheckIcon: string;
+  severityInactiveBg: string;
+  severityInactiveBorder: string;
+  severityInactiveText: string;
+  severityBarActive: string;
+  severityBarInactive: string;
+  severityBarSevere: string;
+  calloutBg: string;
+  calloutBorder: string;
+  calloutIcon: string;
+  calloutText: string;
+  saveBtnBg: string;
+  saveBtnText: string;
+  successBannerBg: string;
+  successBannerBorder: string;
+  successBannerText: string;
+}
+
+export const symptomTokens = {
+  light: {
+    badgeBg: {
+      Nausea: '#E0F5F2', // Soft mint/teal (matches Blood Sugar card from Vitals screen)
+      Dizziness: '#D5DEEF', // Soft slate blue (from brand scale)
+      'Acid Reflux': '#FEF3E2', // Soft warm amber (matches Body Weight card from Vitals screen)
+      Headache: '#FDECEF', // Soft rose pink (matches Blood Pressure card from Vitals screen)
+      Fatigue: '#EDE9FE', // Soft lavender
+      Rash: '#FFE4E6', // Soft coral pink (matches Body Temperature card from Vitals screen)
+    },
+    headerBadgeBg: '#D5DEEF',
+    headerIconPrimary: '#395886',
+    headerIconSecondary: '#628ECB',
+    headerTitle: '#395886',
+    headerSubtitle: '#546784',
+    closeBtnBg: '#F0F3FA',
+    closeBtnIcon: '#628ECB',
+    sectionHeader: '#628ECB',
+    cardBg: '#FFFFFF',
+    cardBorder: '#D5DEEF',
+    cardText: '#395886',
+    cardActiveBg: '#395886',
+    cardActiveBorder: '#395886',
+    cardActiveText: '#FFFFFF',
+    cardActiveCheckBg: '#FFFFFF',
+    cardActiveCheckIcon: '#395886',
+    severityActiveBg: '#D5DEEF',
+    severityActiveBorder: '#395886',
+    severityActiveText: '#395886',
+    severityActiveCheckBg: '#395886',
+    severityActiveCheckIcon: '#FFFFFF',
+    severityInactiveBg: '#FFFFFF',
+    severityInactiveBorder: '#D5DEEF',
+    severityInactiveText: '#395886',
+    severityBarActive: '#395886',
+    severityBarInactive: '#A4B8D8',
+    severityBarSevere: '#CD0000',
+    calloutBg: '#F0F3FA',
+    calloutBorder: '#D5DEEF',
+    calloutIcon: '#395886',
+    calloutText: '#546784',
+    saveBtnBg: '#395886',
+    saveBtnText: '#FFFFFF',
+    successBannerBg: '#D5DEEF',
+    successBannerBorder: '#B1C9EF',
+    successBannerText: '#395886',
+  },
+  dark: {
+    badgeBg: {
+      Nausea: 'rgba(20, 184, 166, 0.18)',
+      Dizziness: 'rgba(59, 130, 246, 0.18)',
+      'Acid Reflux': 'rgba(245, 158, 11, 0.18)',
+      Headache: 'rgba(239, 68, 68, 0.18)',
+      Fatigue: 'rgba(139, 92, 246, 0.18)',
+      Rash: 'rgba(244, 63, 94, 0.18)',
+    },
+    headerBadgeBg: 'rgba(59, 130, 246, 0.18)',
+    headerIconPrimary: '#3B82F6',
+    headerIconSecondary: '#60A5FA',
+    headerTitle: '#FFFFFF',
+    headerSubtitle: '#94A3B8',
+    closeBtnBg: '#1E293B',
+    closeBtnIcon: '#94A3B8',
+    sectionHeader: '#94A3B8',
+    cardBg: 'rgba(31, 41, 55, 0.75)',
+    cardBorder: 'rgba(255, 255, 255, 0.08)',
+    cardText: '#FFFFFF',
+    cardActiveBg: '#3B82F6',
+    cardActiveBorder: '#3B82F6',
+    cardActiveText: '#FFFFFF',
+    cardActiveCheckBg: '#FFFFFF',
+    cardActiveCheckIcon: '#3B82F6',
+    severityActiveBg: 'rgba(59, 130, 246, 0.22)',
+    severityActiveBorder: '#3B82F6',
+    severityActiveText: '#93C5FD',
+    severityActiveCheckBg: '#3B82F6',
+    severityActiveCheckIcon: '#FFFFFF',
+    severityInactiveBg: 'rgba(31, 41, 55, 0.75)',
+    severityInactiveBorder: 'rgba(255, 255, 255, 0.08)',
+    severityInactiveText: '#F8FAFC',
+    severityBarActive: '#60A5FA',
+    severityBarInactive: '#475569',
+    severityBarSevere: '#EF4444',
+    calloutBg: 'rgba(31, 41, 55, 0.75)',
+    calloutBorder: 'rgba(255, 255, 255, 0.08)',
+    calloutIcon: '#60A5FA',
+    calloutText: '#94A3B8',
+    saveBtnBg: '#3B82F6',
+    saveBtnText: '#FFFFFF',
+    successBannerBg: 'rgba(59, 130, 246, 0.18)',
+    successBannerBorder: 'rgba(59, 130, 246, 0.3)',
+    successBannerText: '#93C5FD',
+  },
+} as const;
+
+export function getSymptomTokens(mode: ThemeMode): SymptomTokens {
+  return symptomTokens[mode];
+}
+
+
