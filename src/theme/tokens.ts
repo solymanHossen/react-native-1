@@ -600,12 +600,12 @@ export interface SymptomTokens {
 export const symptomTokens = {
   light: {
     badgeBg: {
-      Nausea: '#E0F5F2', // Soft mint/teal (matches Blood Sugar card from Vitals screen)
-      Dizziness: '#D5DEEF', // Soft slate blue (from brand scale)
-      'Acid Reflux': '#FEF3E2', // Soft warm amber (matches Body Weight card from Vitals screen)
-      Headache: '#FDECEF', // Soft rose pink (matches Blood Pressure card from Vitals screen)
-      Fatigue: '#EDE9FE', // Soft lavender
-      Rash: '#FFE4E6', // Soft coral pink (matches Body Temperature card from Vitals screen)
+      Nausea: '#FEE2E2', // Soft red (matches red nausea icon)
+      Dizziness: '#DCFCE7', // Soft mint green (matches green dizziness icon)
+      'Acid Reflux': '#FFEDD5', // Soft warm amber (matches orange acid reflux icon)
+      Headache: '#FEE2E2', // Soft red (matches red headache icon)
+      Fatigue: '#EDE9FE', // Soft lavender (matches purple fatigue icon)
+      Rash: '#DBEAFE', // Soft light blue (matches blue rash icon)
     },
     headerBadgeBg: '#D5DEEF',
     headerIconPrimary: '#395886',
@@ -646,12 +646,12 @@ export const symptomTokens = {
   },
   dark: {
     badgeBg: {
-      Nausea: 'rgba(20, 184, 166, 0.18)',
-      Dizziness: 'rgba(59, 130, 246, 0.18)',
-      'Acid Reflux': 'rgba(245, 158, 11, 0.18)',
-      Headache: 'rgba(239, 68, 68, 0.18)',
-      Fatigue: 'rgba(139, 92, 246, 0.18)',
-      Rash: 'rgba(244, 63, 94, 0.18)',
+      Nausea: 'rgba(239, 68, 68, 0.16)',
+      Dizziness: 'rgba(16, 185, 129, 0.16)',
+      'Acid Reflux': 'rgba(249, 115, 22, 0.16)',
+      Headache: 'rgba(239, 68, 68, 0.16)',
+      Fatigue: 'rgba(139, 92, 246, 0.16)',
+      Rash: 'rgba(37, 99, 235, 0.16)',
     },
     headerBadgeBg: 'rgba(59, 130, 246, 0.18)',
     headerIconPrimary: '#3B82F6',

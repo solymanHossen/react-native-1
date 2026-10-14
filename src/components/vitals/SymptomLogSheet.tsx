@@ -318,7 +318,11 @@ export const SymptomLogSheet = forwardRef<SymptomLogSheetRef, Record<string, unk
                         >
                           <Image
                             source={config.image}
-                            style={{ width: 28, height: 28 }}
+                            style={{
+                              width: 28,
+                              height: 28,
+                              tintColor: isActive ? '#FFFFFF' : undefined,
+                            }}
                             resizeMode="contain"
                           />
                         </View>
