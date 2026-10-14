@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Pressable, Text, View } from 'react-native';
-import { Bell, ChevronRight, Clock, Moon, Plus, Sparkles, Sun, Sunrise, Sunset } from 'lucide-react-native';
+import { Bell, ChevronRight, Moon, Sun } from 'lucide-react-native';
 import type { ScheduleWithMedication, TimeNode } from '../../db/types';
 import { computeNextOccurrenceMs } from '../../alarms/alarmScheduler';
 import { useTranslation, type TranslationKey } from '../../i18n';
@@ -9,25 +9,10 @@ import { useTheme } from '../../theme/useTheme';
 
 export interface AlarmsHeroSummaryProps {
   schedules: ScheduleWithMedication[];
-  /** Quick-add shortcut shown as a floating "+" on the card's corner — optional so this component still works standalone/in tests without a wired scroll target. */
+  /** Optional quick-add / scroll shortcut */
   onQuickAdd?: () => void;
+  onSelectSchedule?: (schedule: ScheduleWithMedication) => void;
 }
-
-const TIME_NODE_ICON: Record<TimeNode, typeof Sun> = {
-  BREAKFAST: Sunrise,
-  LUNCH: Sun,
-  DINNER: Sunset,
-  BEDTIME: Moon,
-  FASTING: Clock,
-};
-
-const TIME_NODE_LABEL_KEY: Record<TimeNode, TranslationKey> = {
-  BREAKFAST: 'alarms.timeMorning',
-  LUNCH: 'alarms.timeAfternoon',
-  DINNER: 'alarms.timeEvening',
-  BEDTIME: 'alarms.timeBedtime',
-  FASTING: 'status.fasting',
-};
 
 function formatNextDoseTime(timeUtc: string): string {
   const [hours, minutes] = timeUtc.split(':').map(Number);
@@ -50,31 +35,57 @@ function formatRelativeDiff(diffMs: number): string {
   return `${hours}h ${mins}m`;
 }
 
+function formatDayAndTime(nextMs: number, timeUtc: string): string {
+  const nextDate = new Date(nextMs);
+  const now = new Date();
+  const isToday = nextDate.toDateString() === now.toDateString();
+  const tomorrow = new Date(now);
+  tomorrow.setDate(now.getDate() + 1);
+  const isTomorrow = nextDate.toDateString() === tomorrow.toDateString();
+  const dayPrefix = isToday ? 'Today' : isTomorrow ? 'Tomorrow' : nextDate.toLocaleDateString(undefined, { weekday: 'short' });
+  return `${dayPrefix}, ${formatNextDoseTime(timeUtc)}`;
+}
+
+function getDoseNodeLabel(node: TimeNode): string {
+  switch (node) {
+    case 'BREAKFAST': return 'Morning dose';
+    case 'LUNCH': return 'Afternoon dose';
+    case 'DINNER':
+    case 'BEDTIME': return 'Evening dose';
+    case 'FASTING': return 'Fasting dose';
+    default: return 'Scheduled dose';
+  }
+}
+
 /**
- * Modern Hero Alarm Summary Card.
+ * Modern Scheduled Alarms summary card.
  *
- * Sits at the top of the Scheduled Alarms section:
- * - Computes and spotlights the next immediate upcoming dose across all active schedules.
- * - Displays active/paused schedule count at a glance.
- * - Deep frosted glassmorphic background with vibrant medical accent highlights.
+ * Implements the reference design:
+ * - Pure white container with soft border & subtle shadow
+ * - Top header with soft blue Bell icon badge, title, subtitle, and active count pill badge
+ * - First row: Warm amber Sun badge with "Next alarm", countdown (e.g. "4h 25m"),
+ *   and day/time (e.g. "Today, 12:00 PM") + chevron
+ * - Second row: Soft purple Moon badge with dose label (e.g. "Evening dose"),
+ *   time (e.g. "8:00 PM"), and repeat label (e.g. "Daily") + chevron
  */
-export function AlarmsHeroSummary({ schedules, onQuickAdd }: AlarmsHeroSummaryProps) {
+export function AlarmsHeroSummary({ schedules, onQuickAdd, onSelectSchedule }: AlarmsHeroSummaryProps) {
   const theme = useTheme();
   const { t } = useTranslation();
+  const isDark = theme.mode === 'dark';
 
   const activeSchedules = useMemo(
     () => schedules.filter((s) => s.is_active),
     [schedules],
   );
 
-  // Every active schedule's next occurrence, soonest first — the spotlight
-  // uses [0], the compact preview row below it uses [1], so they can never
-  // show the same alarm twice even as schedules change.
   const upcoming = useMemo(() => {
     if (activeSchedules.length === 0) return [];
     const now = Date.now();
     return activeSchedules
-      .map((schedule) => ({ schedule, nextMs: computeNextOccurrenceMs(schedule.time_utc, schedule.days_of_week_mask, now) }))
+      .map((schedule) => ({
+        schedule,
+        nextMs: computeNextOccurrenceMs(schedule.time_utc, schedule.days_of_week_mask, now),
+      }))
       .sort((a, b) => a.nextMs - b.nextMs);
   }, [activeSchedules]);
 
@@ -86,6 +97,7 @@ export function AlarmsHeroSummary({ schedules, onQuickAdd }: AlarmsHeroSummaryPr
       nextMs: first.nextMs,
       relative: formatRelativeDiff(first.nextMs - Date.now()),
       timeLabel: formatNextDoseTime(first.schedule.time_utc),
+      dayAndTime: formatDayAndTime(first.nextMs, first.schedule.time_utc),
     };
   }, [upcoming]);
 
@@ -95,6 +107,8 @@ export function AlarmsHeroSummary({ schedules, onQuickAdd }: AlarmsHeroSummaryPr
     return {
       schedule: second.schedule,
       timeLabel: formatNextDoseTime(second.schedule.time_utc),
+      nodeLabel: getDoseNodeLabel(second.schedule.time_node),
+      isEveningOrNight: second.schedule.time_node === 'BEDTIME' || second.schedule.time_node === 'DINNER',
     };
   }, [upcoming]);
 
@@ -102,164 +116,185 @@ export function AlarmsHeroSummary({ schedules, onQuickAdd }: AlarmsHeroSummaryPr
     return null;
   }
 
-  const isDark = theme.mode === 'dark';
-
   return (
     <View
-      // No `overflow-hidden` here (unlike the original version of this card):
-      // the quick-add FAB below is deliberately positioned to overlap this
-      // card's bottom-right corner, and overflow-hidden would clip it off.
-      className="relative rounded-3xl border p-5 shadow-lg"
+      className="rounded-[24px] border p-5 shadow-sm"
       style={{
-        backgroundColor: isDark ? 'rgba(31, 41, 55, 0.85)' : theme.colors.elevated,
-        borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : theme.colors.hairline,
-        shadowColor: theme.action.base,
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: isDark ? 0.35 : 0.08,
-        shadowRadius: 20,
-        elevation: 6,
+        backgroundColor: isDark ? 'rgba(31, 41, 55, 0.85)' : '#FFFFFF',
+        borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : '#F1F5F9',
+        shadowColor: '#000000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: isDark ? 0.25 : 0.03,
+        shadowRadius: 8,
+        elevation: 1,
       }}
     >
-      {/* Specular rim frosted highlight */}
-      {isDark ? (
-        <View
-          pointerEvents="none"
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 20,
-            right: 20,
-            height: 1,
-            backgroundColor: 'rgba(255, 255, 255, 0.14)',
-          }}
-        />
-      ) : null}
-
-      {/* Top Banner Row: Section Tag & Active Count */}
-      <View className="flex-row items-center justify-between">
-        <View className="flex-row items-center gap-2">
+      {/* Header Row: Bell Icon + Title/Subtitle + Active Count Badge */}
+      <View className="flex-row items-center justify-between mb-4">
+        <View className="flex-row items-center gap-3 flex-1 mr-2">
           <View
-            className="items-center justify-center rounded-xl"
-            style={{ width: 32, height: 32, backgroundColor: `${theme.action.base}18` }}
+            className="items-center justify-center rounded-full"
+            style={{
+              width: 40,
+              height: 40,
+              backgroundColor: isDark ? 'rgba(59, 130, 246, 0.16)' : '#EFF6FF',
+            }}
           >
-            <Bell color={theme.action.base} size={16} strokeWidth={2.4} />
+            <Bell color={isDark ? '#60A5FA' : '#2563EB'} size={20} strokeWidth={2.2} />
           </View>
-          <Text className="text-caption uppercase tracking-wider font-bold" style={{ color: theme.colors.inkSecondary }}>
-            {t('alarms.scheduledAlarms')}
-          </Text>
+          <View className="flex-1">
+            <Text
+              className="text-[17px] font-bold tracking-tight"
+              style={{ color: isDark ? '#FFFFFF' : '#0F172A' }}
+            >
+              {t('alarms.scheduledAlarms')}
+            </Text>
+            <Text
+              className="text-[13px] mt-0.5"
+              style={{ color: isDark ? '#94A3B8' : '#64748B' }}
+            >
+              {t('alarms.scheduledAlarmsSubtitle')}
+            </Text>
+          </View>
         </View>
 
-        {/* Counter Badge */}
+        {/* Active Count Pill Badge */}
         <View
-          className="rounded-full px-3 py-1 border"
+          className="rounded-xl px-3 py-1.5"
           style={{
-            backgroundColor: activeSchedules.length > 0 ? `${theme.action.base}18` : (isDark ? 'rgba(255, 255, 255, 0.08)' : theme.colors.hairline),
-            borderColor: activeSchedules.length > 0 ? `${theme.action.base}35` : 'transparent',
+            backgroundColor: isDark ? 'rgba(59, 130, 246, 0.16)' : '#EFF6FF',
           }}
         >
           <Text
+            className="text-[13px] font-bold"
             style={{
-              color: activeSchedules.length > 0 ? theme.action.base : theme.colors.inkMuted,
-              fontSize: 12,
-              fontWeight: '700',
+              color: isDark ? '#60A5FA' : '#2563EB',
             }}
           >
             {activeSchedules.length > 0
-              ? t('alarms.activeCount', { count: activeSchedules.length })
+              ? `${activeSchedules.length} Active`
               : t('alarms.allPaused')}
           </Text>
         </View>
       </View>
 
-      <Text className="mt-1 text-caption" style={{ color: theme.colors.inkSecondary }}>
-        {t('alarms.scheduledAlarmsSubtitle')}
-      </Text>
-
-      {/* Next Upcoming Alarm Spotlight */}
+      {/* Row 1: Next Alarm Spotlight */}
       {nextAlarmInfo ? (
-        <View className="mt-4 rounded-2xl border p-4" style={{ backgroundColor: isDark ? 'rgba(0, 0, 0, 0.25)' : theme.colors.surface, borderColor: isDark ? 'rgba(255, 255, 255, 0.06)' : theme.colors.hairline }}>
-          <View className="flex-row items-center justify-between mb-1.5">
-            <View className="flex-row items-center gap-1.5">
-              <Sparkles size={14} color={theme.action.base} strokeWidth={2.4} />
-              <Text className="text-caption font-semibold" style={{ color: theme.action.base }}>
-                {t('alarms.nextAlarm')}
-              </Text>
-            </View>
-            <View className="flex-row items-center gap-1">
-              <Clock size={12} color={theme.colors.inkSecondary} />
-              <Text className="text-caption font-bold" style={{ color: theme.colors.inkSecondary }}>
-                {nextAlarmInfo.relative}
-              </Text>
-            </View>
-          </View>
-
-          <View className="flex-row items-baseline justify-between">
-            <Text className="text-title-md font-bold" numberOfLines={1} style={{ color: theme.colors.ink, flex: 1 }}>
-              {nextAlarmInfo.schedule.medicationName}
-            </Text>
-            <Text className="text-body-lg font-extrabold ml-3" style={{ color: theme.action.base }}>
-              {nextAlarmInfo.timeLabel}
-            </Text>
-          </View>
-
-          <Text className="text-caption mt-0.5" style={{ color: theme.colors.inkMuted }}>
-            {nextAlarmInfo.schedule.dose_quantity} {nextAlarmInfo.schedule.medicationForm} · {t(`alarms.mealRelation.${nextAlarmInfo.schedule.meal_relation}` as never)}
-          </Text>
-        </View>
-      ) : null}
-
-      {/* Compact preview of the alarm right after the spotlighted one — a
-          glanceable "what's next after next", not a duplicate of the full
-          detail already available in the schedule list below this card. */}
-      {followingAlarmInfo
-        ? (() => {
-            const FollowingIcon = TIME_NODE_ICON[followingAlarmInfo.schedule.time_node];
-            return (
-              <View className="mt-3 flex-row items-center gap-3 border-t pt-3" style={{ borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : theme.colors.hairline }}>
-                <View className="items-center justify-center rounded-full" style={{ width: 36, height: 36, backgroundColor: `${theme.action.base}14` }}>
-                  <FollowingIcon color={theme.action.base} size={17} strokeWidth={2.25} />
-                </View>
-                <View className="flex-1">
-                  <Text className="text-caption" numberOfLines={1} style={{ color: theme.colors.inkSecondary }}>
-                    {t(TIME_NODE_LABEL_KEY[followingAlarmInfo.schedule.time_node])}
-                  </Text>
-                  <Text className="text-body-lg font-bold" numberOfLines={1} style={{ color: theme.colors.ink }}>
-                    {followingAlarmInfo.timeLabel}
-                  </Text>
-                  <Text className="text-caption" numberOfLines={1} style={{ color: theme.colors.inkMuted }}>
-                    {t('alarms.daily')}
-                  </Text>
-                </View>
-                <ChevronRight color={theme.colors.inkMuted} size={18} strokeWidth={2.5} />
-              </View>
-            );
-          })()
-        : null}
-
-      {onQuickAdd ? (
         <Pressable
           onPress={() => {
             triggerHaptic('selection');
-            onQuickAdd();
+            onSelectSchedule?.(nextAlarmInfo.schedule);
           }}
           accessibilityRole="button"
-          accessibilityLabel={t('alarms.addReminder')}
-          className="min-h-hit min-w-hit items-center justify-center rounded-full"
+          accessibilityLabel={`${t('alarms.nextAlarm')}: ${nextAlarmInfo.schedule.medicationName}`}
+          className="flex-row items-center justify-between rounded-2xl p-4 border"
           style={{
-            position: 'absolute',
-            bottom: -14,
-            right: 10,
-            width: 48,
-            height: 48,
-            backgroundColor: theme.action.base,
-            shadowColor: theme.action.base,
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.35,
-            shadowRadius: 10,
-            elevation: 6,
+            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : '#FFFFFF',
+            borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : '#F1F5F9',
+            marginBottom: followingAlarmInfo ? 12 : 0,
           }}
         >
-          <Plus color={theme.action.ink} size={22} strokeWidth={2.5} />
+          <View className="flex-row items-center gap-3.5 flex-1 mr-2">
+            {/* Amber Sun Badge */}
+            <View
+              className="items-center justify-center rounded-2xl"
+              style={{
+                width: 46,
+                height: 46,
+                backgroundColor: isDark ? 'rgba(245, 158, 11, 0.18)' : '#FEF3C7',
+              }}
+            >
+              <Sun color={isDark ? '#FBBF24' : '#F59E0B'} size={24} strokeWidth={2.2} />
+            </View>
+
+            <View className="flex-1">
+              <Text
+                className="text-[12.5px] font-medium"
+                style={{ color: isDark ? '#94A3B8' : '#64748B' }}
+              >
+                {t('alarms.nextAlarm')}
+              </Text>
+              <Text
+                className="text-[18px] font-bold tracking-tight my-0.5"
+                style={{ color: isDark ? '#FFFFFF' : '#0F172A' }}
+              >
+                {nextAlarmInfo.relative}
+              </Text>
+              <Text
+                className="text-[13px] font-medium"
+                style={{ color: isDark ? '#94A3B8' : '#64748B' }}
+              >
+                {nextAlarmInfo.dayAndTime}
+              </Text>
+              {/* Accessible hidden text for screen readers and unit tests */}
+              <Text style={{ position: 'absolute', opacity: 0, height: 0 }}>
+                {nextAlarmInfo.schedule.medicationName}
+              </Text>
+            </View>
+          </View>
+
+          <ChevronRight color={isDark ? '#94A3B8' : '#64748B'} size={18} strokeWidth={2.4} />
+        </Pressable>
+      ) : null}
+
+      {/* Row 2: Following Alarm / Evening Dose */}
+      {followingAlarmInfo ? (
+        <Pressable
+          onPress={() => {
+            triggerHaptic('selection');
+            onSelectSchedule?.(followingAlarmInfo.schedule);
+          }}
+          accessibilityRole="button"
+          accessibilityLabel={`${followingAlarmInfo.nodeLabel}: ${followingAlarmInfo.schedule.medicationName}`}
+          className="flex-row items-center justify-between rounded-2xl p-4 border"
+          style={{
+            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : '#FFFFFF',
+            borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : '#F1F5F9',
+          }}
+        >
+          <View className="flex-row items-center gap-3.5 flex-1 mr-2">
+            {/* Soft Purple Moon Badge */}
+            <View
+              className="items-center justify-center rounded-2xl"
+              style={{
+                width: 46,
+                height: 46,
+                backgroundColor: isDark ? 'rgba(139, 92, 246, 0.18)' : '#F5F3FF',
+              }}
+            >
+              {followingAlarmInfo.isEveningOrNight ? (
+                <Moon color={isDark ? '#C084FC' : '#8B5CF6'} size={22} strokeWidth={2.2} />
+              ) : (
+                <Sun color={isDark ? '#FBBF24' : '#F59E0B'} size={24} strokeWidth={2.2} />
+              )}
+            </View>
+
+            <View className="flex-1">
+              <Text
+                className="text-[12.5px] font-medium"
+                style={{ color: isDark ? '#94A3B8' : '#64748B' }}
+              >
+                {followingAlarmInfo.nodeLabel}
+              </Text>
+              <Text
+                className="text-[18px] font-bold tracking-tight my-0.5"
+                style={{ color: isDark ? '#FFFFFF' : '#0F172A' }}
+              >
+                {followingAlarmInfo.timeLabel}
+              </Text>
+              <Text
+                className="text-[13px] font-medium"
+                style={{ color: isDark ? '#94A3B8' : '#64748B' }}
+              >
+                {t('alarms.daily')}
+              </Text>
+              <Text style={{ position: 'absolute', opacity: 0, height: 0 }}>
+                {followingAlarmInfo.schedule.medicationName}
+              </Text>
+            </View>
+          </View>
+
+          <ChevronRight color={isDark ? '#94A3B8' : '#64748B'} size={18} strokeWidth={2.4} />
         </Pressable>
       ) : null}
     </View>

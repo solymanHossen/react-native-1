@@ -163,6 +163,45 @@ function medicationFormIcon(form: Medication['form']) {
   return form === 'tablet' || form === 'capsule' ? Pill : form === 'syrup' || form === 'drop' ? Droplet : Package;
 }
 
+function getMedicationFormStyle(form: Medication['form'], isDark: boolean) {
+  switch (form) {
+    case 'tablet':
+    case 'capsule':
+      return {
+        icon: Pill,
+        iconColor: isDark ? '#60A5FA' : '#2563EB',
+        badgeBg: isDark ? 'rgba(59, 130, 246, 0.16)' : '#EFF6FF',
+        stockBg: isDark ? 'rgba(59, 130, 246, 0.14)' : '#F0F7FF',
+        stockColor: isDark ? '#60A5FA' : '#1D4ED8',
+      };
+    case 'syrup':
+    case 'drop':
+      return {
+        icon: Droplet,
+        iconColor: isDark ? '#C084FC' : '#7C3AED',
+        badgeBg: isDark ? 'rgba(168, 85, 247, 0.16)' : '#F5F3FF',
+        stockBg: isDark ? 'rgba(168, 85, 247, 0.14)' : '#FAF5FF',
+        stockColor: isDark ? '#C084FC' : '#7C3AED',
+      };
+    case 'injection':
+      return {
+        icon: Package,
+        iconColor: isDark ? '#34D399' : '#059669',
+        badgeBg: isDark ? 'rgba(16, 185, 129, 0.16)' : '#ECFDF5',
+        stockBg: isDark ? 'rgba(16, 185, 129, 0.14)' : '#F0FDF4',
+        stockColor: isDark ? '#34D399' : '#059669',
+      };
+    default:
+      return {
+        icon: Package,
+        iconColor: isDark ? '#60A5FA' : '#2563EB',
+        badgeBg: isDark ? 'rgba(59, 130, 246, 0.16)' : '#EFF6FF',
+        stockBg: isDark ? 'rgba(59, 130, 246, 0.14)' : '#F0F7FF',
+        stockColor: isDark ? '#60A5FA' : '#1D4ED8',
+      };
+  }
+}
+
 interface TimeSlot {
   node: TimeNode;
   timeUtc: string;
@@ -570,6 +609,7 @@ export interface AlarmsScreenProps {
 export default function AlarmsScreen({ onOpenSettings, onNavigateToMedications }: AlarmsScreenProps) {
   const theme = useTheme();
   const { t } = useTranslation();
+  const isDark = theme.mode === 'dark';
   const [initError, setInitError] = useState<string | null>(null);
   const [schedules, setSchedules] = useState<ScheduleWithMedication[]>([]);
   const [medications, setMedications] = useState<Medication[]>([]);
@@ -760,17 +800,20 @@ export default function AlarmsScreen({ onOpenSettings, onNavigateToMedications }
               }}
               accessibilityRole="button"
               accessibilityLabel={t('alarms.scheduleReminderTitle')}
-              className="flex-row items-center gap-3 overflow-hidden rounded-3xl p-5"
-              style={{ backgroundColor: theme.action.base }}
+              className="flex-row items-center gap-3.5 overflow-hidden rounded-[24px] p-5 shadow-sm"
+              style={{ backgroundColor: isDark ? '#1E3A8A' : '#3182CE' }}
             >
-              <View className="items-center justify-center rounded-2xl" style={{ width: 44, height: 44, backgroundColor: '#FFFFFF' }}>
-                <Plus color={theme.action.base} size={22} strokeWidth={2.5} />
+              <View
+                className="items-center justify-center rounded-2xl shadow-sm"
+                style={{ width: 44, height: 44, backgroundColor: '#FFFFFF' }}
+              >
+                <Plus color={isDark ? '#1E3A8A' : '#3182CE'} size={22} strokeWidth={2.6} />
               </View>
               <View className="flex-1">
-                <Text className="text-body-lg font-bold" style={{ color: theme.action.ink }}>
+                <Text className="text-[17px] font-bold" style={{ color: '#FFFFFF' }}>
                   {t('alarms.scheduleReminderTitle')}
                 </Text>
-                <Text className="text-caption" style={{ color: 'rgba(255, 255, 255, 0.85)' }}>
+                <Text className="text-[13px] mt-0.5" style={{ color: 'rgba(255, 255, 255, 0.85)' }}>
                   {t('alarms.scheduleReminderSubtitle')}
                 </Text>
               </View>
@@ -790,13 +833,34 @@ export default function AlarmsScreen({ onOpenSettings, onNavigateToMedications }
               />
             </Pressable>
 
-            <View className="rounded-3xl border p-5 shadow-sm" style={{ backgroundColor: theme.colors.elevated, borderColor: theme.colors.hairline }}>
+            <View
+              className="rounded-[24px] border p-5 shadow-sm"
+              style={{
+                backgroundColor: isDark ? 'rgba(31, 41, 55, 0.75)' : '#FFFFFF',
+                borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : '#F1F5F9',
+                shadowColor: '#000000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: isDark ? 0.25 : 0.03,
+                shadowRadius: 8,
+                elevation: 1,
+              }}
+            >
               <View className="flex-row items-center justify-between pb-3">
                 <View className="flex-row items-center gap-3">
-                  <View className="items-center justify-center rounded-2xl" style={{ width: 38, height: 38, backgroundColor: `${theme.action.base}14` }}>
-                    <PillBottle color={theme.action.base} size={19} strokeWidth={2.25} />
+                  <View
+                    className="items-center justify-center rounded-full"
+                    style={{
+                      width: 40,
+                      height: 40,
+                      backgroundColor: isDark ? 'rgba(59, 130, 246, 0.16)' : '#EFF6FF',
+                    }}
+                  >
+                    <PillBottle color={isDark ? '#60A5FA' : '#2563EB'} size={20} strokeWidth={2.2} />
                   </View>
-                  <Text className="text-body-lg font-bold" style={{ color: theme.colors.ink }}>
+                  <Text
+                    className="text-[17px] font-bold tracking-tight"
+                    style={{ color: isDark ? '#FFFFFF' : '#0F172A' }}
+                  >
                     {t('alarms.yourMedicines')}
                   </Text>
                 </View>
@@ -807,13 +871,23 @@ export default function AlarmsScreen({ onOpenSettings, onNavigateToMedications }
                       onNavigateToMedications();
                     }}
                     accessibilityRole="button"
-                    className="min-h-hit flex-row items-center gap-1.5"
+                    className="min-h-hit flex-row items-center gap-2"
                   >
-                    <Text className="text-caption font-bold" style={{ color: theme.action.base }}>
+                    <Text
+                      className="text-[14px] font-bold"
+                      style={{ color: isDark ? '#60A5FA' : '#2563EB' }}
+                    >
                       {t('alarms.addMedicine')}
                     </Text>
-                    <View className="items-center justify-center rounded-full" style={{ width: 20, height: 20, backgroundColor: `${theme.action.base}18` }}>
-                      <Plus color={theme.action.base} size={12} strokeWidth={2.75} />
+                    <View
+                      className="items-center justify-center rounded-full"
+                      style={{
+                        width: 24,
+                        height: 24,
+                        backgroundColor: isDark ? 'rgba(59, 130, 246, 0.16)' : '#EFF6FF',
+                      }}
+                    >
+                      <Plus color={isDark ? '#60A5FA' : '#2563EB'} size={13} strokeWidth={2.6} />
                     </View>
                   </Pressable>
                 ) : null}
@@ -825,11 +899,22 @@ export default function AlarmsScreen({ onOpenSettings, onNavigateToMedications }
                 </Text>
               ) : (
                 medications.map((medication, index) => {
-                  const FormIcon = medicationFormIcon(medication.form);
+                  const formStyle = getMedicationFormStyle(medication.form, isDark);
+                  const FormIcon = formStyle.icon;
                   const outOfStock = medication.current_stock <= 0;
                   const lowStock = !outOfStock && medication.current_stock <= medication.refill_threshold;
-                  const stockColor = outOfStock ? theme.statusText('missed') : lowStock ? theme.statusText('pending') : theme.action.base;
+                  const stockColor = outOfStock
+                    ? (isDark ? '#F87171' : '#EF4444')
+                    : lowStock
+                    ? (isDark ? '#FBBF24' : '#F59E0B')
+                    : formStyle.stockColor;
+                  const stockBg = outOfStock
+                    ? (isDark ? 'rgba(239, 68, 68, 0.16)' : '#FEF2F2')
+                    : lowStock
+                    ? (isDark ? 'rgba(245, 158, 11, 0.16)' : '#FFFBEB')
+                    : formStyle.stockBg;
                   const isLast = index === medications.length - 1;
+
                   return (
                     <Pressable
                       key={medication.id}
@@ -840,39 +925,59 @@ export default function AlarmsScreen({ onOpenSettings, onNavigateToMedications }
                       accessibilityRole="button"
                       accessibilityLabel={medication.name}
                       className="flex-row items-center gap-3 py-3"
-                      style={isLast ? undefined : { borderBottomWidth: 1, borderBottomColor: theme.colors.hairline }}
+                      style={isLast ? undefined : { borderBottomWidth: 1, borderBottomColor: isDark ? 'rgba(255, 255, 255, 0.06)' : '#F8FAFC' }}
                     >
-                      <View className="items-center justify-center rounded-2xl" style={{ width: 42, height: 42, backgroundColor: `${theme.action.base}14` }}>
-                        <FormIcon color={theme.action.base} size={20} strokeWidth={2.25} />
+                      <View
+                        className="items-center justify-center rounded-2xl"
+                        style={{
+                          width: 44,
+                          height: 44,
+                          backgroundColor: formStyle.badgeBg,
+                        }}
+                      >
+                        <FormIcon color={formStyle.iconColor} size={22} strokeWidth={2.2} />
                       </View>
                       <View className="flex-1">
-                        <Text className="text-body" numberOfLines={1} style={{ color: theme.colors.ink, fontWeight: '700' }}>
+                        <Text
+                          className="text-[16px] font-bold tracking-tight"
+                          numberOfLines={1}
+                          style={{ color: isDark ? '#FFFFFF' : '#0F172A' }}
+                        >
                           {medication.name}
                         </Text>
-                        <Text className="text-caption" numberOfLines={1} style={{ color: theme.colors.inkSecondary }}>
-                          {[medication.strength, t(`medications.forms.${medication.form}` as never)].filter(Boolean).join(' · ')}
+                        <Text
+                          className="text-[13px] mt-0.5"
+                          numberOfLines={1}
+                          style={{ color: isDark ? '#94A3B8' : '#64748B' }}
+                        >
+                          {[medication.strength, t(`medications.forms.${medication.form}` as never)].filter(Boolean).join(' • ')}
                         </Text>
                       </View>
-                      <View className="flex-row items-center gap-2 rounded-2xl px-3 py-2" style={{ backgroundColor: `${stockColor}14` }}>
-                        <ChartColumn color={stockColor} size={15} strokeWidth={2.4} />
+
+                      {/* Stock Pill Badge */}
+                      <View
+                        className="flex-row items-center gap-2.5 rounded-2xl px-3.5 py-2"
+                        style={{ backgroundColor: stockBg }}
+                      >
+                        <ChartColumn color={stockColor} size={16} strokeWidth={2.2} />
                         {outOfStock || lowStock ? (
-                          <Text numberOfLines={1} style={{ color: stockColor, fontSize: 12, fontWeight: '800' }}>
+                          <Text numberOfLines={1} style={{ color: stockColor, fontSize: 12.5, fontWeight: '700' }}>
                             {outOfStock ? t('medications.outOfStock') : t('medications.lowStock')}
                           </Text>
                         ) : (
                           <View>
-                            <Text numberOfLines={1} style={{ color: stockColor, fontSize: 12, fontWeight: '800' }}>
+                            <Text numberOfLines={1} style={{ color: stockColor, fontSize: 13, fontWeight: '700' }}>
                               {t('medications.detailsStockCount', {
                                 count: Math.max(0, medication.current_stock),
                                 unit: medication.current_stock === 1 ? t('medications.detailsStockUnit') : t('medications.detailsStockUnitsPlural'),
                               })}
                             </Text>
-                            <Text numberOfLines={1} style={{ color: theme.colors.inkMuted, fontSize: 10 }}>
+                            <Text numberOfLines={1} style={{ color: isDark ? '#94A3B8' : '#64748B', fontSize: 10.5, fontWeight: '500' }}>
                               {t('medications.remaining')}
                             </Text>
                           </View>
                         )}
-                        <ChevronRight color={theme.colors.inkMuted} size={16} strokeWidth={2.5} />
+                        <ChevronRight color={isDark ? '#94A3B8' : '#64748B'} size={16} strokeWidth={2.4} />
                       </View>
                     </Pressable>
                   );
