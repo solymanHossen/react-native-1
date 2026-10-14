@@ -6,9 +6,9 @@ import {
 } from '@gorhom/bottom-sheet';
 import { ArrowRight, Check, Shield, X } from 'lucide-react-native';
 import React, { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Image, Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Svg, { Circle, Path } from 'react-native-svg';
+import Svg, { Path } from 'react-native-svg';
 import { initializeDatabase } from '../../db';
 import type { RecentIntakeContext, SymptomSeverity } from '../../db/types';
 import { useTranslation, type TranslationKey } from '../../i18n';
@@ -34,77 +34,18 @@ const SEVERITY_KEY: Record<SymptomSeverity, TranslationKey> = {
   SEVERE: 'vitals.symptomSheet.severe',
 };
 
-// --- Custom Symptom Icons ---
-
-function RashIcon({ size = 20, color = '#2563EB' }: { size?: number; color?: string }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
-      <Circle cx="12" cy="4" r="1.6" />
-      <Circle cx="17.6" cy="6.3" r="1.6" />
-      <Circle cx="20" cy="12" r="1.6" />
-      <Circle cx="17.6" cy="17.7" r="1.6" />
-      <Circle cx="12" cy="20" r="1.6" />
-      <Circle cx="6.4" cy="17.7" r="1.6" />
-      <Circle cx="4" cy="12" r="1.6" />
-      <Circle cx="6.4" cy="6.3" r="1.6" />
-      <Circle cx="11.2" cy="10.8" r="1.5" />
-      <Circle cx="12.8" cy="13.2" r="1.5" />
-    </Svg>
-  );
-}
-
-function DizzinessIcon({ size = 20, color = '#10B981' }: { size?: number; color?: string }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2.4} strokeLinecap="round">
-      <Path d="M12 12a1.8 1.8 0 0 0-1.8 1.8c0 1.9 1.6 3.5 3.6 3.5 2.8 0 5-2.2 5-5 0-3.6-3-6.5-6.8-6.5-4.4 0-8 3.6-8 8 0 5.2 4.3 9.5 9.5 9.5" />
-    </Svg>
-  );
-}
-
-function FatigueIcon({ size = 20, color = '#8B5CF6' }: { size?: number; color?: string }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
-      <Path d="M13 2.5L4.5 13H11.5L9.5 21.5L19.5 10.5H12.5L13 2.5Z" />
-    </Svg>
-  );
-}
-
-function HeadacheIcon({ size = 20, color = '#EF4444' }: { size?: number; color?: string }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
-      <Path
-        fillRule="evenodd"
-        clipRule="evenodd"
-        d="M13.5 3C8.8 3 5.5 6.2 5.5 10.2c0 2.2.8 4 2.2 5.1l.3.3v2c0 .8.6 1.4 1.4 1.4h1.1v2h5v-2h.5c.8 0 1.5-.6 1.5-1.4v-1.6c1.8-1.5 3-3.7 3-6.4C20.5 5.8 17.5 3 13.5 3ZM12.8 6.5l-2.8 4h2.2l-.8 3.5 3.2-4.5h-2.2l.4-3Z"
-      />
-    </Svg>
-  );
-}
-
-function AcidRefluxIcon({ size = 20, color = '#F97316' }: { size?: number; color?: string }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
-      <Path d="M8.5 2.5c.6 0 1 .4 1 1 0 1.8 1.2 3.5 2.8 4.5 1.8 1.1 3.2 3 3.2 5.5 0 3.6-2.7 6.5-6.5 6.5S4 17.1 4 13.5c0-3.2 1.8-6.5 3.5-8.5.4-.5.8-1 1.2-1.5.3-.6.5-1 .8-1Z" />
-      <Path
-        d="M10 11.5c0 1.2.6 1.8 1.2 2.5.5.6.8 1.2.8 2 0 1.4-1.1 2.5-2.5 2.5s-2.5-1.1-2.5-2.5c0-1.2.8-2 1.5-2.8.3-.3.5-.7.5-1.2 0-.2.2-.4.4-.4.2 0 .4.2.4.4.1.7.4 1.2.7 1.5Z"
-        fill={color === '#FFFFFF' ? '#2764B8' : '#FFFFFF'}
-      />
-    </Svg>
-  );
-}
-
-function NauseaIcon({ size = 20, color = '#EF4444' }: { size?: number; color?: string }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
-      <Path d="M8.5 2.5c.6 0 1 .4 1 1 0 1.8 1.2 3.5 2.8 4.5 1.8 1.1 3.2 3 3.2 5.5 0 3.6-2.7 6.5-6.5 6.5S4 17.1 4 13.5c0-3.2 1.8-6.5 3.5-8.5.4-.5.8-1 1.2-1.5.3-.6.5-1 .8-1Z" />
-    </Svg>
-  );
-}
+const SYMPTOM_IMAGES = {
+  Nausea: require('../../../assets/symptoms/nausea.png'),
+  Dizziness: require('../../../assets/symptoms/dizziness.png'),
+  'Acid Reflux': require('../../../assets/symptoms/acid_reflux.png'),
+  Headache: require('../../../assets/symptoms/headache.png'),
+  Fatigue: require('../../../assets/symptoms/fatigue.png'),
+  Rash: require('../../../assets/symptoms/rash.png'),
+} as const;
 
 interface SymptomConfig {
   key: TranslationKey;
-  icon: (props: { size?: number; color?: string }) => React.JSX.Element;
-  iconColor: string;
+  image: (typeof SYMPTOM_IMAGES)[keyof typeof SYMPTOM_IMAGES];
   badgeBgLight: string;
   badgeBgDark: string;
 }
@@ -112,43 +53,37 @@ interface SymptomConfig {
 const SYMPTOM_CONFIGS: Record<(typeof COMMON_SYMPTOMS)[number], SymptomConfig> = {
   Nausea: {
     key: 'vitals.symptomSheet.symptoms.Nausea',
-    icon: NauseaIcon,
-    iconColor: '#EF4444',
+    image: SYMPTOM_IMAGES.Nausea,
     badgeBgLight: '#FEE2E2',
     badgeBgDark: 'rgba(239, 68, 68, 0.16)',
   },
   Dizziness: {
     key: 'vitals.symptomSheet.symptoms.Dizziness',
-    icon: DizzinessIcon,
-    iconColor: '#10B981',
+    image: SYMPTOM_IMAGES.Dizziness,
     badgeBgLight: '#DCFCE7',
     badgeBgDark: 'rgba(16, 185, 129, 0.16)',
   },
   'Acid Reflux': {
     key: 'vitals.symptomSheet.symptoms.Acid Reflux',
-    icon: AcidRefluxIcon,
-    iconColor: '#F97316',
+    image: SYMPTOM_IMAGES['Acid Reflux'],
     badgeBgLight: '#FFEDD5',
     badgeBgDark: 'rgba(249, 115, 22, 0.16)',
   },
   Headache: {
     key: 'vitals.symptomSheet.symptoms.Headache',
-    icon: HeadacheIcon,
-    iconColor: '#EF4444',
+    image: SYMPTOM_IMAGES.Headache,
     badgeBgLight: '#FEE2E2',
     badgeBgDark: 'rgba(239, 68, 68, 0.16)',
   },
   Fatigue: {
     key: 'vitals.symptomSheet.symptoms.Fatigue',
-    icon: FatigueIcon,
-    iconColor: '#8B5CF6',
+    image: SYMPTOM_IMAGES.Fatigue,
     badgeBgLight: '#EDE9FE',
     badgeBgDark: 'rgba(139, 92, 246, 0.16)',
   },
   Rash: {
     key: 'vitals.symptomSheet.symptoms.Rash',
-    icon: RashIcon,
-    iconColor: '#2563EB',
+    image: SYMPTOM_IMAGES.Rash,
     badgeBgLight: '#DBEAFE',
     badgeBgDark: 'rgba(37, 99, 235, 0.16)',
   },
@@ -356,7 +291,6 @@ export const SymptomLogSheet = forwardRef<SymptomLogSheetRef, Record<string, unk
                   {row.map((option) => {
                     const isActive = symptom === option;
                     const config = SYMPTOM_CONFIGS[option];
-                    const IconComponent = config.icon;
 
                     return (
                       <Pressable
@@ -402,9 +336,10 @@ export const SymptomLogSheet = forwardRef<SymptomLogSheetRef, Record<string, unk
                                 : config.badgeBgLight,
                           }}
                         >
-                          <IconComponent
-                            size={20}
-                            color={isActive ? '#FFFFFF' : isDark ? config.iconColor : config.iconColor}
+                          <Image
+                            source={config.image}
+                            style={{ width: 28, height: 28 }}
+                            resizeMode="contain"
                           />
                         </View>
 
