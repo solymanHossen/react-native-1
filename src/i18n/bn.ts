@@ -280,6 +280,11 @@ export const bn: typeof en = {
       done: 'সম্পন্ন',
       loggedNoMeds: 'লগ করা হয়েছে। গত ৪ ঘণ্টায় কোনো ওষুধ গ্রহণ করা হয়নি।',
       loggedWithMeds: 'লগ করা হয়েছে। গত ৪ ঘণ্টায় গৃহীত:',
+      showingRecentMeds: 'আপনার সাম্প্রতিক ওষুধগুলো দেখানো হচ্ছে',
+      today: 'আজ',
+      yesterday: 'গতকাল',
+      entriesCount: '{{count}} টি এন্ট্রি',
+      entryCount: '১ টি এন্ট্রি',
       takenAt: '{{time}} এ গৃহীত',
       symptoms: {
         Nausea: 'বমি বমি ভাব',

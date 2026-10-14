@@ -288,6 +288,11 @@ export const en = {
       done: 'Done',
       loggedNoMeds: 'Logged. No medications were taken in the last 4 hours.',
       loggedWithMeds: 'Logged. Taken in the last 4 hours:',
+      showingRecentMeds: 'Showing your recent medications',
+      today: 'Today',
+      yesterday: 'Yesterday',
+      entriesCount: '{{count}} entries',
+      entryCount: '1 entry',
       takenAt: 'Taken at {{time}}',
       symptoms: {
         Nausea: 'Nausea',

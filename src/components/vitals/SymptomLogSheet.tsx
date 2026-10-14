@@ -4,7 +4,7 @@ import {
   BottomSheetModal,
   BottomSheetScrollView,
 } from '@gorhom/bottom-sheet';
-import { ArrowRight, Check, ChevronRight, Shield, X } from 'lucide-react-native';
+import { ArrowRight, Check, ChevronRight, Clock, Pill, Shield, X } from 'lucide-react-native';
 import React, { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { Image, Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -112,6 +112,33 @@ function SeverityBars({
   );
 }
 
+const MED_COLOR_PALETTES = [
+  { bg: '#DBEAFE', icon: '#2563EB', darkBg: 'rgba(37, 99, 235, 0.18)', darkIcon: '#60A5FA' }, // Blue
+  { bg: '#DCFCE7', icon: '#16A34A', darkBg: 'rgba(22, 163, 74, 0.18)', darkIcon: '#4ADE80' }, // Green
+  { bg: '#EDE9FE', icon: '#7C3AED', darkBg: 'rgba(124, 58, 237, 0.18)', darkIcon: '#A78BFA' }, // Purple
+  { bg: '#FFEDD5', icon: '#EA580C', darkBg: 'rgba(234, 88, 12, 0.18)', darkIcon: '#FB923C' }, // Amber
+  { bg: '#FEE2E2', icon: '#DC2626', darkBg: 'rgba(220, 38, 38, 0.18)', darkIcon: '#F87171' }, // Red
+  { bg: '#E0E7FF', icon: '#4F46E5', darkBg: 'rgba(79, 70, 229, 0.18)', darkIcon: '#818CF8' }, // Indigo
+];
+
+function getMedicationColors(name: string, isDark: boolean) {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
+  }
+  const palette = MED_COLOR_PALETTES[hash % MED_COLOR_PALETTES.length];
+  return {
+    bg: isDark ? palette.darkBg : palette.bg,
+    icon: isDark ? palette.darkIcon : palette.icon,
+  };
+}
+
+interface MedGroup {
+  dateKey: string;
+  title: string;
+  entries: RecentIntakeContext[];
+}
+
 export interface SymptomLogSheetRef {
   present: () => void;
 }
@@ -130,6 +157,40 @@ export const SymptomLogSheet = forwardRef<SymptomLogSheetRef, Record<string, unk
   const [severity, setSeverity] = useState<SymptomSeverity>('MODERATE');
   const [relatedMeds, setRelatedMeds] = useState<RecentIntakeContext[] | null>(null);
   const [saving, setSaving] = useState(false);
+
+  const medGroups = useMemo<MedGroup[]>(() => {
+    if (!relatedMeds || relatedMeds.length === 0) return [];
+
+    const now = new Date();
+    const todayStr = now.toDateString();
+
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toDateString();
+
+    const map = new Map<string, MedGroup>();
+
+    for (const item of relatedMeds) {
+      const d = new Date(item.takenTime);
+      const dateKey = d.toDateString();
+
+      let title: string;
+      if (dateKey === todayStr) {
+        title = t('vitals.symptomSheet.today');
+      } else if (dateKey === yesterdayStr) {
+        title = t('vitals.symptomSheet.yesterday');
+      } else {
+        title = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+      }
+
+      if (!map.has(dateKey)) {
+        map.set(dateKey, { dateKey, title, entries: [] });
+      }
+      map.get(dateKey)!.entries.push(item);
+    }
+
+    return Array.from(map.values());
+  }, [relatedMeds, t]);
 
   useImperativeHandle(
     ref,
@@ -518,63 +579,228 @@ export const SymptomLogSheet = forwardRef<SymptomLogSheetRef, Record<string, unk
             </Pressable>
           </View>
         ) : (
-          <View style={{ paddingHorizontal: 20, paddingTop: 10, gap: 14 }}>
+          <View style={{ paddingHorizontal: 20, paddingTop: 4, gap: 16 }}>
+            {/* Banner: Logged. Taken in the last 4 hours */}
             <View
               style={{
-                padding: 16,
+                flexDirection: 'row',
+                alignItems: 'center',
+                padding: 14,
                 borderRadius: 16,
-                backgroundColor: st.successBannerBg,
+                backgroundColor: st.calloutBg,
                 borderWidth: 1,
-                borderColor: st.successBannerBorder,
+                borderColor: st.calloutBorder,
+                gap: 12,
               }}
             >
-              <Text
+              <View
                 style={{
-                  fontSize: 15.5,
-                  fontWeight: '700',
-                  color: st.successBannerText,
+                  width: 38,
+                  height: 38,
+                  borderRadius: 12,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: st.headerBadgeBg,
                 }}
               >
-                {relatedMeds.length === 0
-                  ? t('vitals.symptomSheet.loggedNoMeds')
-                  : t('vitals.symptomSheet.loggedWithMeds')}
-              </Text>
+                <Clock size={20} color={st.calloutIcon} strokeWidth={2.2} />
+              </View>
+              <View style={{ flex: 1, gap: 2 }}>
+                <Text
+                  style={{
+                    fontSize: 14,
+                    fontWeight: '700',
+                    color: st.cardText,
+                  }}
+                >
+                  {relatedMeds.length === 0
+                    ? t('vitals.symptomSheet.loggedNoMeds')
+                    : t('vitals.symptomSheet.loggedWithMeds')}
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 12,
+                    fontWeight: '400',
+                    color: st.calloutText,
+                  }}
+                >
+                  {t('vitals.symptomSheet.showingRecentMeds')}
+                </Text>
+              </View>
             </View>
 
-            {relatedMeds.map((med, index) => (
-              <View
-                key={`${med.medicationName}-${index}`}
-                style={{
-                  borderRadius: 16,
-                  borderWidth: 1,
-                  padding: 14,
-                  backgroundColor: st.cardBg,
-                  borderColor: st.cardBorder,
-                }}
-              >
-                <Text style={{ fontSize: 15, fontWeight: '600', color: st.cardText }}>
-                  {med.medicationName}
-                </Text>
-                <Text style={{ fontSize: 13, color: st.headerSubtitle, marginTop: 2 }}>
-                  {t('vitals.symptomSheet.takenAt', { time: new Date(med.takenTime).toLocaleTimeString() })}
-                </Text>
+            {/* Date Groups with Timeline */}
+            {medGroups.map((group) => (
+              <View key={group.dateKey} style={{ gap: 6 }}>
+                {/* Group Header: Date (Today/Yesterday) + Entries count */}
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    paddingHorizontal: 4,
+                    marginBottom: 2,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 15,
+                      fontWeight: '700',
+                      color: st.cardText,
+                    }}
+                  >
+                    {group.title}
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: 12,
+                      fontWeight: '500',
+                      color: st.headerSubtitle,
+                    }}
+                  >
+                    {group.entries.length === 1
+                      ? t('vitals.symptomSheet.entryCount')
+                      : t('vitals.symptomSheet.entriesCount', { count: group.entries.length })}
+                  </Text>
+                </View>
+
+                {/* Timeline Items */}
+                {group.entries.map((med, index) => {
+                  const medColors = getMedicationColors(med.medicationName, isDark);
+                  const isFirst = index === 0;
+                  const isLast = index === group.entries.length - 1;
+                  const formattedTime = new Date(med.takenTime).toLocaleTimeString([], {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    second: '2-digit',
+                  });
+
+                  return (
+                    <View
+                      key={`${med.medicationName}-${index}`}
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        paddingVertical: 4,
+                      }}
+                    >
+                      {/* Timeline Connector Column */}
+                      <View
+                        style={{
+                          width: 24,
+                          alignSelf: 'stretch',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        {/* Top Line to previous item */}
+                        <View
+                          style={{
+                            position: 'absolute',
+                            top: 0,
+                            bottom: '50%',
+                            width: 2,
+                            backgroundColor: !isFirst ? st.cardBorder : 'transparent',
+                          }}
+                        />
+                        {/* Bottom Line to next item */}
+                        <View
+                          style={{
+                            position: 'absolute',
+                            top: '50%',
+                            bottom: 0,
+                            width: 2,
+                            backgroundColor: !isLast ? st.cardBorder : 'transparent',
+                          }}
+                        />
+                        {/* Dot */}
+                        <View
+                          style={{
+                            width: 8,
+                            height: 8,
+                            borderRadius: 4,
+                            backgroundColor: st.headerIconSecondary,
+                          }}
+                        />
+                      </View>
+
+                      {/* Medication Card */}
+                      <View
+                        style={{
+                          flex: 1,
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          borderRadius: 16,
+                          borderWidth: 1,
+                          borderColor: st.cardBorder,
+                          backgroundColor: st.cardBg,
+                          paddingHorizontal: 12,
+                          paddingVertical: 10,
+                          gap: 10,
+                        }}
+                      >
+                        {/* Squircle Pill Icon Badge */}
+                        <View
+                          style={{
+                            width: 36,
+                            height: 36,
+                            borderRadius: 12,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            backgroundColor: medColors.bg,
+                          }}
+                        >
+                          <Pill size={18} color={medColors.icon} strokeWidth={2.2} />
+                        </View>
+
+                        {/* Name & Time */}
+                        <View style={{ flex: 1, justifyContent: 'center', gap: 2 }}>
+                          <Text
+                            style={{
+                              fontSize: 14.5,
+                              fontWeight: '700',
+                              color: st.cardText,
+                            }}
+                            numberOfLines={1}
+                          >
+                            {med.medicationName}
+                          </Text>
+                          <Text
+                            style={{
+                              fontSize: 12,
+                              fontWeight: '400',
+                              color: st.headerSubtitle,
+                            }}
+                            numberOfLines={1}
+                          >
+                            {t('vitals.symptomSheet.takenAt', { time: formattedTime })}
+                          </Text>
+                        </View>
+
+                        {/* Chevron Right */}
+                        <ChevronRight size={16} color={st.closeBtnIcon} strokeWidth={2.2} />
+                      </View>
+                    </View>
+                  );
+                })}
               </View>
             ))}
 
+            {/* Done Button */}
             <Pressable
               onPress={() => modalRef.current?.dismiss()}
               accessibilityRole="button"
               accessibilityLabel={t('common.done')}
               style={{
-                marginTop: 10,
-                height: 52,
-                borderRadius: 26,
+                marginTop: 8,
+                height: 50,
+                borderRadius: 25,
                 backgroundColor: st.saveBtnBg,
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <Text style={{ fontSize: 16, fontWeight: '600', color: st.saveBtnText }}>
+              <Text style={{ fontSize: 16, fontWeight: '700', color: st.saveBtnText }}>
                 {t('common.done')}
               </Text>
             </Pressable>
