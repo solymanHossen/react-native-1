@@ -30,6 +30,8 @@ export const en = {
     rhythm: 'Rhythm',
     alarms: 'Alarms',
     vitals: 'Vitals',
+    more: 'More',
+    moreSheetTitle: 'More',
   },
   status: {
     fasting: 'Fasting',

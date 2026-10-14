@@ -27,6 +27,8 @@ export const bn: typeof en = {
     rhythm: 'ছন্দ',
     alarms: 'অ্যালার্ম',
     vitals: 'ভাইটালস',
+    more: 'আরও',
+    moreSheetTitle: 'আরও',
   },
   status: {
     fasting: 'খালি পেটে',

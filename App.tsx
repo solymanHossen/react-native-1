@@ -5,9 +5,15 @@
  * @format
  */
 
-import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
-import { AlarmClock, Camera, HeartPulse, Home, Pill, Waves } from 'lucide-react-native';
-import { useEffect, useRef, useState, type ComponentType } from 'react';
+import {
+  BottomSheetBackdrop,
+  type BottomSheetBackdropProps,
+  BottomSheetModal,
+  BottomSheetModalProvider,
+  BottomSheetView,
+} from '@gorhom/bottom-sheet';
+import { AlarmClock, Camera, ChevronRight, Ellipsis, HeartPulse, Home, Pill, Waves } from 'lucide-react-native';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, type ComponentType } from 'react';
 import { Image, Pressable, StatusBar, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
@@ -33,6 +39,21 @@ type Tab = 'home' | 'drugLab' | 'scanRx' | 'rhythm' | 'alarms' | 'vitals';
 
 const TAB_ORDER: Tab[] = ['home', 'drugLab', 'scanRx', 'rhythm', 'alarms', 'vitals'];
 
+// Apple HIG and Material Design both call for the same fix once a tab bar
+// passes 5 items: keep the most-used destinations as direct tabs and fold
+// the rest into a single "More" tab (iOS's own UITabBarController does this
+// automatically past 5; Android has no built-in equivalent, so it's built
+// by hand here). Home/Meds/Alarms/Vitals are this app's core daily-use loop
+// (check in, manage medications, set/react to reminders, track vitals);
+// Scan Rx (an occasional "add a medication via camera" utility) and Rhythm
+// (a secondary visualization of the same schedule Alarms already manages)
+// are the two that move into "More" — nothing is removed, just regrouped.
+const PRIMARY_TABS: Tab[] = ['home', 'drugLab', 'alarms', 'vitals'];
+const OVERFLOW_TABS: Tab[] = ['scanRx', 'rhythm'];
+const MORE_SEGMENT = 'more' as const;
+type TabBarSegment = Tab | typeof MORE_SEGMENT;
+const TAB_BAR_SEGMENTS: TabBarSegment[] = [...PRIMARY_TABS, MORE_SEGMENT];
+
 const TAB_ICON: Record<Tab, ComponentType<{ size?: number; color?: string; strokeWidth?: number }>> = {
   home: Home,
   drugLab: Pill,
@@ -43,7 +64,7 @@ const TAB_ICON: Record<Tab, ComponentType<{ size?: number; color?: string; strok
 };
 
 // `drugLab`'s key is shortened for this bar specifically ("Meds" not
-// "Medications"): six stacked icon+label columns leaves too little width per
+// "Medications"): five stacked icon+label columns leaves too little width per
 // tab for the full word (the screen itself still titles itself that in full
 // — see DrugLabScreen).
 const TAB_LABEL_KEY: Record<Tab, TranslationKey> = {
@@ -60,36 +81,107 @@ const PILL_HEIGHT = 34;
 const PILL_TOP = 7;
 const PILL_SPRING = { damping: 20, stiffness: 260, mass: 0.7 };
 
+interface MoreSheetRef {
+  present: () => void;
+}
+
+/** The two tabs folded out of the primary bar — same `ActiveScreen` destinations, just reached through one extra tap instead of a direct tab. */
+const MoreSheet = forwardRef<MoreSheetRef, { onSelect: (tab: Tab) => void }>(function MoreSheetImpl({ onSelect }, ref) {
+  const theme = useTheme();
+  const { t } = useTranslation();
+  const modalRef = useRef<BottomSheetModal>(null);
+
+  useImperativeHandle(ref, () => ({ present: () => modalRef.current?.present() }), []);
+
+  const renderBackdrop = useCallback(
+    (props: BottomSheetBackdropProps) => <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} opacity={0.5} pressBehavior="close" />,
+    [],
+  );
+
+  return (
+    <BottomSheetModal
+      ref={modalRef}
+      enableDynamicSizing
+      enablePanDownToClose
+      backdropComponent={renderBackdrop}
+      backgroundStyle={{ backgroundColor: theme.colors.surface }}
+      handleIndicatorStyle={{ backgroundColor: theme.colors.hairline }}
+    >
+      <BottomSheetView style={{ paddingHorizontal: 24, paddingTop: 4, paddingBottom: 24, gap: 4 }}>
+        <Text className="text-title-lg font-bold" style={{ color: theme.colors.ink, marginBottom: 8 }}>
+          {t('tabs.moreSheetTitle')}
+        </Text>
+        {OVERFLOW_TABS.map((value) => {
+          const Icon = TAB_ICON[value];
+          return (
+            <Pressable
+              key={value}
+              onPress={() => {
+                triggerHaptic('selection');
+                modalRef.current?.dismiss();
+                onSelect(value);
+              }}
+              accessibilityRole="button"
+              className="min-h-hit flex-row items-center gap-3 rounded-2xl px-2 py-3"
+            >
+              <View className="items-center justify-center rounded-2xl" style={{ width: 42, height: 42, backgroundColor: `${theme.action.base}14` }}>
+                <Icon color={theme.action.base} size={21} strokeWidth={2.25} />
+              </View>
+              <Text className="flex-1 text-body-lg font-semibold" style={{ color: theme.colors.ink }}>
+                {t(TAB_LABEL_KEY[value])}
+              </Text>
+              <ChevronRight color={theme.colors.inkMuted} size={18} strokeWidth={2.5} />
+            </Pressable>
+          );
+        })}
+      </BottomSheetView>
+    </BottomSheetModal>
+  );
+});
+
 /**
  * World-class bottom navigation bar:
  * Seamless sticky bottom bar with frosted glass effect, glowing active indicator,
  * and minimal monochrome icons strictly adhering to Apple HIG & Material You aesthetics.
+ * Caps at 5 visible segments (4 primary tabs + "More") per Apple HIG/Material
+ * guidance for tab bars past 5 items — see PRIMARY_TABS/OVERFLOW_TABS above.
  */
 function BottomTabBar({ tab, onChange }: { tab: Tab; onChange: (tab: Tab) => void }) {
   const theme = useTheme();
   const { t } = useTranslation();
-  const segmentLayouts = useRef<Partial<Record<Tab, { x: number; width: number }>>>({});
+  const segmentLayouts = useRef<Partial<Record<TabBarSegment, { x: number; width: number }>>>({});
   const pillX = useSharedValue(0);
+  const moreSheetRef = useRef<MoreSheetRef>(null);
 
-  const isHome = tab === 'home';
+  // Which of the 5 rendered segments should look active: the 4 primary tabs
+  // map 1:1, but `scanRx`/`rhythm` aren't rendered as their own segment
+  // anymore — they roll up to "More" so it doesn't look unselected while
+  // you're actually on one of its two screens.
+  const activeSegment: TabBarSegment = OVERFLOW_TABS.includes(tab) ? MORE_SEGMENT : tab;
+  const isHome = activeSegment === 'home';
 
-  const handleSegmentLayout = (value: Tab) => (event: LayoutChangeEvent) => {
+  const handleSegmentLayout = (value: TabBarSegment) => (event: LayoutChangeEvent) => {
     const { x, width } = event.nativeEvent.layout;
     segmentLayouts.current[value] = { x, width };
-    if (value === tab && pillX.value === 0) {
+    if (value === activeSegment && pillX.value === 0) {
       pillX.value = x + width / 2 - PILL_WIDTH / 2;
     }
   };
 
   useEffect(() => {
-    const layout = segmentLayouts.current[tab];
+    const layout = segmentLayouts.current[activeSegment];
     if (!layout) return;
     pillX.value = withSpring(layout.x + layout.width / 2 - PILL_WIDTH / 2, PILL_SPRING);
-  }, [tab, pillX]);
+  }, [activeSegment, pillX]);
 
   const pillStyle = useAnimatedStyle(() => ({ transform: [{ translateX: pillX.value }] }));
 
-  const handlePress = (value: Tab) => {
+  const handlePress = (value: TabBarSegment) => {
+    if (value === MORE_SEGMENT) {
+      triggerHaptic('selection');
+      moreSheetRef.current?.present();
+      return;
+    }
     if (value !== tab) triggerHaptic('selection');
     onChange(value);
   };
@@ -159,10 +251,10 @@ function BottomTabBar({ tab, onChange }: { tab: Tab; onChange: (tab: Tab) => voi
             pillStyle,
           ]}
         />
-        {TAB_ORDER.map((value) => {
-          const isActive = tab === value;
-          const Icon = TAB_ICON[value];
-          const label = t(TAB_LABEL_KEY[value]);
+        {TAB_BAR_SEGMENTS.map((value) => {
+          const isActive = activeSegment === value;
+          const Icon = value === MORE_SEGMENT ? Ellipsis : TAB_ICON[value];
+          const label = value === MORE_SEGMENT ? t('tabs.more') : t(TAB_LABEL_KEY[value]);
 
           // Minimal monochrome icons in dark mode (#FFFFFF active, #94A3B8
           // inactive); light mode keeps the original theme-driven colors.
@@ -196,6 +288,7 @@ function BottomTabBar({ tab, onChange }: { tab: Tab; onChange: (tab: Tab) => voi
           );
         })}
       </View>
+      <MoreSheet ref={moreSheetRef} onSelect={onChange} />
     </SafeAreaView>
   );
 }
