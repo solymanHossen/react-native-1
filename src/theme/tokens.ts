@@ -276,3 +276,258 @@ export const spacing = {
   section: 36,
   page: 24,
 } as const;
+
+export interface FormColorTokens {
+  iconColor: string;
+  badgeBg: string;
+  stockBg: string;
+  stockColor: string;
+}
+
+/**
+ * Visual tokens for clinical dosage forms (tablet, capsule, syrup, drop, injection).
+ * Used consistently across the Medication and Alarms screens.
+ */
+export const formColors = {
+  tablet: {
+    light: {
+      iconColor: '#2563EB',
+      badgeBg: '#EFF6FF',
+      stockBg: '#F0F7FF',
+      stockColor: '#1D4ED8',
+    },
+    dark: {
+      iconColor: '#60A5FA',
+      badgeBg: 'rgba(59, 130, 246, 0.16)',
+      stockBg: 'rgba(59, 130, 246, 0.14)',
+      stockColor: '#60A5FA',
+    },
+  },
+  capsule: {
+    light: {
+      iconColor: '#2563EB',
+      badgeBg: '#EFF6FF',
+      stockBg: '#F0F7FF',
+      stockColor: '#1D4ED8',
+    },
+    dark: {
+      iconColor: '#60A5FA',
+      badgeBg: 'rgba(59, 130, 246, 0.16)',
+      stockBg: 'rgba(59, 130, 246, 0.14)',
+      stockColor: '#60A5FA',
+    },
+  },
+  syrup: {
+    light: {
+      iconColor: '#7C3AED',
+      badgeBg: '#F5F3FF',
+      stockBg: '#FAF5FF',
+      stockColor: '#7C3AED',
+    },
+    dark: {
+      iconColor: '#C084FC',
+      badgeBg: 'rgba(168, 85, 247, 0.16)',
+      stockBg: 'rgba(168, 85, 247, 0.14)',
+      stockColor: '#C084FC',
+    },
+  },
+  drop: {
+    light: {
+      iconColor: '#7C3AED',
+      badgeBg: '#F5F3FF',
+      stockBg: '#FAF5FF',
+      stockColor: '#7C3AED',
+    },
+    dark: {
+      iconColor: '#C084FC',
+      badgeBg: 'rgba(168, 85, 247, 0.16)',
+      stockBg: 'rgba(168, 85, 247, 0.14)',
+      stockColor: '#C084FC',
+    },
+  },
+  injection: {
+    light: {
+      iconColor: '#059669',
+      badgeBg: '#ECFDF5',
+      stockBg: '#F0FDF4',
+      stockColor: '#059669',
+    },
+    dark: {
+      iconColor: '#34D399',
+      badgeBg: 'rgba(16, 185, 129, 0.16)',
+      stockBg: 'rgba(16, 185, 129, 0.14)',
+      stockColor: '#34D399',
+    },
+  },
+} as const;
+
+export function getFormColor(form: string, mode: ThemeMode): FormColorTokens {
+  const mapping = formColors[form as keyof typeof formColors] ?? formColors.tablet;
+  return mapping[mode];
+}
+
+/**
+ * Visual design system tokens for Alarms screen cards (Sun, Moon, Bell, Emergency Contact, Banner, and Cards).
+ */
+export interface AlarmSunTokens {
+  icon: string;
+  badge: string;
+}
+
+export interface AlarmMoonTokens {
+  icon: string;
+  badge: string;
+}
+
+export interface AlarmBellTokens {
+  icon: string;
+  badge: string;
+  pillText: string;
+}
+
+export interface AlarmEmergencyTokens {
+  shield: string;
+  badge: string;
+  dot: string;
+  statusText: string;
+  cardBg: string;
+  cardBorder: string;
+  phoneIcon: string;
+  phoneBadge: string;
+  editBtnBg: string;
+  editBtnText: string;
+  deleteBtnBg: string;
+  deleteBtnIcon: string;
+  chevron: string;
+}
+
+export interface AlarmBannerTokens {
+  bg: string;
+  icon: string;
+  boxBg: string;
+  text: string;
+  subtitle: string;
+}
+
+export interface AlarmCardTokens {
+  bg: string;
+  border: string;
+  innerBg: string;
+  innerBorder: string;
+  title: string;
+  subtitle: string;
+  chevron: string;
+  rowDivider: string;
+  shadowColor: string;
+  shadowOpacity: number;
+}
+
+export interface ResolvedAlarmTokens {
+  sun: AlarmSunTokens;
+  moon: AlarmMoonTokens;
+  bell: AlarmBellTokens;
+  emergency: AlarmEmergencyTokens;
+  banner: AlarmBannerTokens;
+  card: AlarmCardTokens;
+}
+
+export const alarmTokens = {
+  sun: {
+    light: { icon: '#F59E0B', badge: '#FEF3C7' },
+    dark: { icon: '#FBBF24', badge: 'rgba(245, 158, 11, 0.18)' },
+  },
+  moon: {
+    light: { icon: '#8B5CF6', badge: '#F5F3FF' },
+    dark: { icon: '#C084FC', badge: 'rgba(139, 92, 246, 0.18)' },
+  },
+  bell: {
+    light: { icon: '#2563EB', badge: '#EFF6FF', pillText: '#2563EB' },
+    dark: { icon: '#60A5FA', badge: 'rgba(59, 130, 246, 0.16)', pillText: '#60A5FA' },
+  },
+  emergency: {
+    light: {
+      shield: '#059669',
+      badge: '#D1F4E2',
+      dot: '#059669',
+      statusText: '#059669',
+      cardBg: '#F2FAF6',
+      cardBorder: '#E2F4EB',
+      phoneIcon: '#2563EB',
+      phoneBadge: '#EFF6FF',
+      editBtnBg: '#EFF6FF',
+      editBtnText: '#2563EB',
+      deleteBtnBg: '#FEF2F2',
+      deleteBtnIcon: '#EF4444',
+      chevron: '#334155',
+    },
+    dark: {
+      shield: '#10B981',
+      badge: 'rgba(16, 185, 129, 0.2)',
+      dot: '#34D399',
+      statusText: '#34D399',
+      cardBg: 'rgba(6, 78, 59, 0.28)',
+      cardBorder: 'rgba(16, 185, 129, 0.28)',
+      phoneIcon: '#60A5FA',
+      phoneBadge: 'rgba(59, 130, 246, 0.16)',
+      editBtnBg: 'rgba(59, 130, 246, 0.16)',
+      editBtnText: '#60A5FA',
+      deleteBtnBg: 'rgba(239, 68, 68, 0.16)',
+      deleteBtnIcon: '#F87171',
+      chevron: '#94A3B8',
+    },
+  },
+  banner: {
+    light: {
+      bg: '#3182CE',
+      icon: '#3182CE',
+      boxBg: '#FFFFFF',
+      text: '#FFFFFF',
+      subtitle: 'rgba(255, 255, 255, 0.85)',
+    },
+    dark: {
+      bg: '#1E3A8A',
+      icon: '#1E3A8A',
+      boxBg: '#FFFFFF',
+      text: '#FFFFFF',
+      subtitle: 'rgba(255, 255, 255, 0.85)',
+    },
+  },
+  card: {
+    light: {
+      bg: '#FFFFFF',
+      border: '#F1F5F9',
+      innerBg: '#FFFFFF',
+      innerBorder: '#F1F5F9',
+      title: '#0F172A',
+      subtitle: '#64748B',
+      chevron: '#64748B',
+      rowDivider: '#F8FAFC',
+      shadowColor: '#000000',
+      shadowOpacity: 0.03,
+    },
+    dark: {
+      bg: 'rgba(31, 41, 55, 0.85)',
+      border: 'rgba(255, 255, 255, 0.08)',
+      innerBg: 'rgba(255, 255, 255, 0.04)',
+      innerBorder: 'rgba(255, 255, 255, 0.08)',
+      title: '#FFFFFF',
+      subtitle: '#94A3B8',
+      chevron: '#94A3B8',
+      rowDivider: 'rgba(255, 255, 255, 0.06)',
+      shadowColor: '#000000',
+      shadowOpacity: 0.25,
+    },
+  },
+} as const;
+
+export function getAlarmTokens(mode: ThemeMode): ResolvedAlarmTokens {
+  return {
+    sun: alarmTokens.sun[mode],
+    moon: alarmTokens.moon[mode],
+    bell: alarmTokens.bell[mode],
+    emergency: alarmTokens.emergency[mode],
+    banner: alarmTokens.banner[mode],
+    card: alarmTokens.card[mode],
+  };
+}
+

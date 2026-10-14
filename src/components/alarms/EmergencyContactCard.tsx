@@ -70,23 +70,22 @@ export function EmergencyContactCard({
 }: EmergencyContactCardProps) {
   const theme = useTheme();
   const { t } = useTranslation();
-  const isDark = theme.mode === 'dark';
 
   if (!phone) {
     return (
       <View
         className="rounded-[24px] border p-5 shadow-sm"
         style={{
-          backgroundColor: isDark ? 'rgba(31, 41, 55, 0.75)' : '#FFFFFF',
-          borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : theme.colors.hairline,
+          backgroundColor: theme.colors.surface,
+          borderColor: theme.colors.hairline,
         }}
       >
         <View className="flex-row items-start gap-3">
           <View
             className="items-center justify-center rounded-2xl"
-            style={{ width: 44, height: 44, backgroundColor: isDark ? 'rgba(59, 130, 246, 0.15)' : `${theme.action.base}14` }}
+            style={{ width: 44, height: 44, backgroundColor: theme.alarms.emergency.phoneBadge }}
           >
-            <ShieldAlert color={isDark ? '#60A5FA' : theme.action.base} size={22} strokeWidth={2.2} />
+            <ShieldAlert color={theme.action.base} size={22} strokeWidth={2.2} />
           </View>
           <View className="flex-1">
             <Text className="text-[17px] font-bold" style={{ color: theme.colors.ink }}>
@@ -106,10 +105,10 @@ export function EmergencyContactCard({
           accessibilityRole="button"
           accessibilityLabel={t('alarms.addCaregiverAccessibility')}
           className="mt-4 min-h-hit flex-row items-center justify-center gap-2 rounded-2xl px-5 py-3.5 shadow-sm"
-          style={{ backgroundColor: isDark ? '#3B82F6' : theme.action.base }}
+          style={{ backgroundColor: theme.action.base }}
         >
-          <Plus color="#FFFFFF" size={18} strokeWidth={2.5} />
-          <Text className="text-[15px] font-bold" style={{ color: '#FFFFFF' }}>
+          <Plus color={theme.action.ink} size={18} strokeWidth={2.5} />
+          <Text className="text-[15px] font-bold" style={{ color: theme.action.ink }}>
             {t('alarms.addCaregiver')}
           </Text>
         </Pressable>
@@ -123,11 +122,11 @@ export function EmergencyContactCard({
     <View
       className="rounded-[24px] border p-4"
       style={{
-        backgroundColor: isDark ? 'rgba(6, 78, 59, 0.28)' : '#F2FAF6',
-        borderColor: isDark ? 'rgba(16, 185, 129, 0.28)' : '#E2F4EB',
-        shadowColor: '#000000',
+        backgroundColor: theme.alarms.emergency.cardBg,
+        borderColor: theme.alarms.emergency.cardBorder,
+        shadowColor: theme.alarms.card.shadowColor,
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: isDark ? 0.2 : 0.03,
+        shadowOpacity: theme.alarms.card.shadowOpacity,
         shadowRadius: 8,
         elevation: 1,
       }}
@@ -149,28 +148,28 @@ export function EmergencyContactCard({
             style={{
               width: 46,
               height: 46,
-              backgroundColor: isDark ? 'rgba(16, 185, 129, 0.2)' : '#D1F4E2',
+              backgroundColor: theme.alarms.emergency.badge,
             }}
           >
-            <FilledShieldCheck fillColor={isDark ? '#10B981' : '#059669'} size={24} />
+            <FilledShieldCheck fillColor={theme.alarms.emergency.shield} size={24} />
           </View>
 
           {/* Title and Active indicator */}
           <View className="ml-3 flex-1">
             <Text
               className="text-[17px] font-bold tracking-tight"
-              style={{ color: isDark ? '#FFFFFF' : '#0F172A' }}
+              style={{ color: theme.alarms.card.title }}
             >
               {t('alarms.caregiverSection')}
             </Text>
             <View className="flex-row items-center gap-1.5 mt-0.5">
               <View
                 className="rounded-full"
-                style={{ width: 7, height: 7, backgroundColor: isDark ? '#34D399' : '#059669' }}
+                style={{ width: 7, height: 7, backgroundColor: theme.alarms.emergency.dot }}
               />
               <Text
                 className="text-[13px] font-semibold"
-                style={{ color: isDark ? '#34D399' : '#059669' }}
+                style={{ color: theme.alarms.emergency.statusText }}
               >
                 {t('alarms.caregiverReady')}
               </Text>
@@ -178,9 +177,9 @@ export function EmergencyContactCard({
           </View>
         </View>
 
-        {/* Slate chevron on the right */}
+        {/* Chevron on the right */}
         <ChevronRight
-          color={isDark ? '#94A3B8' : '#334155'}
+          color={theme.alarms.emergency.chevron}
           size={20}
           strokeWidth={2.4}
         />
@@ -189,7 +188,7 @@ export function EmergencyContactCard({
       {/* Description text */}
       <Text
         className="mt-2.5 mb-3.5 text-[13.5px] leading-[19px]"
-        style={{ color: isDark ? '#94A3B8' : '#475569' }}
+        style={{ color: theme.alarms.card.subtitle }}
       >
         {t('alarms.caregiverDescription')}
       </Text>
@@ -198,12 +197,12 @@ export function EmergencyContactCard({
       <View
         className="flex-row items-center justify-between rounded-2xl px-3.5 py-3"
         style={{
-          backgroundColor: isDark ? 'rgba(31, 41, 55, 0.85)' : '#FFFFFF',
-          borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : '#F1F5F9',
+          backgroundColor: theme.alarms.card.innerBg,
+          borderColor: theme.alarms.card.innerBorder,
           borderWidth: 1,
-          shadowColor: '#000000',
+          shadowColor: theme.alarms.card.shadowColor,
           shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: isDark ? 0.3 : 0.04,
+          shadowOpacity: theme.alarms.card.shadowOpacity,
           shadowRadius: 6,
           elevation: 1,
         }}
@@ -215,24 +214,24 @@ export function EmergencyContactCard({
             style={{
               width: 42,
               height: 42,
-              backgroundColor: isDark ? 'rgba(59, 130, 246, 0.16)' : '#EFF6FF',
+              backgroundColor: theme.alarms.emergency.phoneBadge,
             }}
           >
-            <Phone color={isDark ? '#60A5FA' : '#2563EB'} size={18} strokeWidth={2.2} />
+            <Phone color={theme.alarms.emergency.phoneIcon} size={18} strokeWidth={2.2} />
           </View>
 
           <View className="flex-1">
             <Text
               numberOfLines={1}
               className="text-[12px] font-medium"
-              style={{ color: isDark ? '#94A3B8' : '#64748B' }}
+              style={{ color: theme.alarms.card.subtitle }}
             >
               {t('alarms.caregiverSavedContact')}
             </Text>
             <Text
               numberOfLines={1}
               className="text-[16px] font-bold tracking-tight mt-0.5"
-              style={{ color: isDark ? '#FFFFFF' : '#0F172A' }}
+              style={{ color: theme.alarms.card.title }}
             >
               {displayPhone}
             </Text>
@@ -251,13 +250,13 @@ export function EmergencyContactCard({
             accessibilityLabel={t('alarms.editCaregiverAccessibility')}
             className="flex-row items-center gap-1.5 rounded-xl px-3.5 py-2"
             style={{
-              backgroundColor: isDark ? 'rgba(59, 130, 246, 0.16)' : '#EFF6FF',
+              backgroundColor: theme.alarms.emergency.editBtnBg,
             }}
           >
-            <Pencil color={isDark ? '#60A5FA' : '#2563EB'} size={15} strokeWidth={2.2} />
+            <Pencil color={theme.alarms.emergency.editBtnText} size={15} strokeWidth={2.2} />
             <Text
               className="text-[13.5px] font-bold"
-              style={{ color: isDark ? '#60A5FA' : '#2563EB' }}
+              style={{ color: theme.alarms.emergency.editBtnText }}
             >
               {t('alarms.editCaregiver')}
             </Text>
@@ -273,10 +272,10 @@ export function EmergencyContactCard({
             accessibilityLabel={t('alarms.clearCaregiverAccessibility')}
             className="items-center justify-center rounded-xl p-2.5"
             style={{
-              backgroundColor: isDark ? 'rgba(239, 68, 68, 0.16)' : '#FEF2F2',
+              backgroundColor: theme.alarms.emergency.deleteBtnBg,
             }}
           >
-            <Trash2 color={isDark ? '#F87171' : '#EF4444'} size={17} strokeWidth={2.0} />
+            <Trash2 color={theme.alarms.emergency.deleteBtnIcon} size={17} strokeWidth={2.0} />
           </Pressable>
         </View>
       </View>

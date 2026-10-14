@@ -71,7 +71,6 @@ function getDoseNodeLabel(node: TimeNode): string {
 export function AlarmsHeroSummary({ schedules, onQuickAdd, onSelectSchedule }: AlarmsHeroSummaryProps) {
   const theme = useTheme();
   const { t } = useTranslation();
-  const isDark = theme.mode === 'dark';
 
   const activeSchedules = useMemo(
     () => schedules.filter((s) => s.is_active),
@@ -120,11 +119,11 @@ export function AlarmsHeroSummary({ schedules, onQuickAdd, onSelectSchedule }: A
     <View
       className="rounded-[24px] border p-5 shadow-sm"
       style={{
-        backgroundColor: isDark ? 'rgba(31, 41, 55, 0.85)' : '#FFFFFF',
-        borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : '#F1F5F9',
-        shadowColor: '#000000',
+        backgroundColor: theme.alarms.card.bg,
+        borderColor: theme.alarms.card.border,
+        shadowColor: theme.alarms.card.shadowColor,
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: isDark ? 0.25 : 0.03,
+        shadowOpacity: theme.alarms.card.shadowOpacity,
         shadowRadius: 8,
         elevation: 1,
       }}
@@ -137,21 +136,21 @@ export function AlarmsHeroSummary({ schedules, onQuickAdd, onSelectSchedule }: A
             style={{
               width: 40,
               height: 40,
-              backgroundColor: isDark ? 'rgba(59, 130, 246, 0.16)' : '#EFF6FF',
+              backgroundColor: theme.alarms.bell.badge,
             }}
           >
-            <Bell color={isDark ? '#60A5FA' : '#2563EB'} size={20} strokeWidth={2.2} />
+            <Bell color={theme.alarms.bell.icon} size={20} strokeWidth={2.2} />
           </View>
           <View className="flex-1">
             <Text
               className="text-[17px] font-bold tracking-tight"
-              style={{ color: isDark ? '#FFFFFF' : '#0F172A' }}
+              style={{ color: theme.alarms.card.title }}
             >
               {t('alarms.scheduledAlarms')}
             </Text>
             <Text
               className="text-[13px] mt-0.5"
-              style={{ color: isDark ? '#94A3B8' : '#64748B' }}
+              style={{ color: theme.alarms.card.subtitle }}
             >
               {t('alarms.scheduledAlarmsSubtitle')}
             </Text>
@@ -162,13 +161,13 @@ export function AlarmsHeroSummary({ schedules, onQuickAdd, onSelectSchedule }: A
         <View
           className="rounded-xl px-3 py-1.5"
           style={{
-            backgroundColor: isDark ? 'rgba(59, 130, 246, 0.16)' : '#EFF6FF',
+            backgroundColor: theme.alarms.bell.badge,
           }}
         >
           <Text
             className="text-[13px] font-bold"
             style={{
-              color: isDark ? '#60A5FA' : '#2563EB',
+              color: theme.alarms.bell.pillText,
             }}
           >
             {activeSchedules.length > 0
@@ -189,8 +188,8 @@ export function AlarmsHeroSummary({ schedules, onQuickAdd, onSelectSchedule }: A
           accessibilityLabel={`${t('alarms.nextAlarm')}: ${nextAlarmInfo.schedule.medicationName}`}
           className="flex-row items-center justify-between rounded-2xl p-4 border"
           style={{
-            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : '#FFFFFF',
-            borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : '#F1F5F9',
+            backgroundColor: theme.alarms.card.innerBg,
+            borderColor: theme.alarms.card.innerBorder,
             marginBottom: followingAlarmInfo ? 12 : 0,
           }}
         >
@@ -201,28 +200,28 @@ export function AlarmsHeroSummary({ schedules, onQuickAdd, onSelectSchedule }: A
               style={{
                 width: 46,
                 height: 46,
-                backgroundColor: isDark ? 'rgba(245, 158, 11, 0.18)' : '#FEF3C7',
+                backgroundColor: theme.alarms.sun.badge,
               }}
             >
-              <Sun color={isDark ? '#FBBF24' : '#F59E0B'} size={24} strokeWidth={2.2} />
+              <Sun color={theme.alarms.sun.icon} size={24} strokeWidth={2.2} />
             </View>
 
             <View className="flex-1">
               <Text
                 className="text-[12.5px] font-medium"
-                style={{ color: isDark ? '#94A3B8' : '#64748B' }}
+                style={{ color: theme.alarms.card.subtitle }}
               >
                 {t('alarms.nextAlarm')}
               </Text>
               <Text
                 className="text-[18px] font-bold tracking-tight my-0.5"
-                style={{ color: isDark ? '#FFFFFF' : '#0F172A' }}
+                style={{ color: theme.alarms.card.title }}
               >
                 {nextAlarmInfo.relative}
               </Text>
               <Text
                 className="text-[13px] font-medium"
-                style={{ color: isDark ? '#94A3B8' : '#64748B' }}
+                style={{ color: theme.alarms.card.subtitle }}
               >
                 {nextAlarmInfo.dayAndTime}
               </Text>
@@ -233,7 +232,7 @@ export function AlarmsHeroSummary({ schedules, onQuickAdd, onSelectSchedule }: A
             </View>
           </View>
 
-          <ChevronRight color={isDark ? '#94A3B8' : '#64748B'} size={18} strokeWidth={2.4} />
+          <ChevronRight color={theme.alarms.card.chevron} size={18} strokeWidth={2.4} />
         </Pressable>
       ) : null}
 
@@ -248,8 +247,8 @@ export function AlarmsHeroSummary({ schedules, onQuickAdd, onSelectSchedule }: A
           accessibilityLabel={`${followingAlarmInfo.nodeLabel}: ${followingAlarmInfo.schedule.medicationName}`}
           className="flex-row items-center justify-between rounded-2xl p-4 border"
           style={{
-            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : '#FFFFFF',
-            borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : '#F1F5F9',
+            backgroundColor: theme.alarms.card.innerBg,
+            borderColor: theme.alarms.card.innerBorder,
           }}
         >
           <View className="flex-row items-center gap-3.5 flex-1 mr-2">
@@ -259,32 +258,34 @@ export function AlarmsHeroSummary({ schedules, onQuickAdd, onSelectSchedule }: A
               style={{
                 width: 46,
                 height: 46,
-                backgroundColor: isDark ? 'rgba(139, 92, 246, 0.18)' : '#F5F3FF',
+                backgroundColor: followingAlarmInfo.isEveningOrNight
+                  ? theme.alarms.moon.badge
+                  : theme.alarms.sun.badge,
               }}
             >
               {followingAlarmInfo.isEveningOrNight ? (
-                <Moon color={isDark ? '#C084FC' : '#8B5CF6'} size={22} strokeWidth={2.2} />
+                <Moon color={theme.alarms.moon.icon} size={22} strokeWidth={2.2} />
               ) : (
-                <Sun color={isDark ? '#FBBF24' : '#F59E0B'} size={24} strokeWidth={2.2} />
+                <Sun color={theme.alarms.sun.icon} size={24} strokeWidth={2.2} />
               )}
             </View>
 
             <View className="flex-1">
               <Text
                 className="text-[12.5px] font-medium"
-                style={{ color: isDark ? '#94A3B8' : '#64748B' }}
+                style={{ color: theme.alarms.card.subtitle }}
               >
                 {followingAlarmInfo.nodeLabel}
               </Text>
               <Text
                 className="text-[18px] font-bold tracking-tight my-0.5"
-                style={{ color: isDark ? '#FFFFFF' : '#0F172A' }}
+                style={{ color: theme.alarms.card.title }}
               >
                 {followingAlarmInfo.timeLabel}
               </Text>
               <Text
                 className="text-[13px] font-medium"
-                style={{ color: isDark ? '#94A3B8' : '#64748B' }}
+                style={{ color: theme.alarms.card.subtitle }}
               >
                 {t('alarms.daily')}
               </Text>
@@ -294,7 +295,7 @@ export function AlarmsHeroSummary({ schedules, onQuickAdd, onSelectSchedule }: A
             </View>
           </View>
 
-          <ChevronRight color={isDark ? '#94A3B8' : '#64748B'} size={18} strokeWidth={2.4} />
+          <ChevronRight color={theme.alarms.card.chevron} size={18} strokeWidth={2.4} />
         </Pressable>
       ) : null}
     </View>

@@ -5,6 +5,8 @@ import { create } from 'zustand';
 import { storage } from '../lib/storage';
 import {
   action,
+  getAlarmTokens,
+  getFormColor,
   palette,
   severity,
   severityText,
@@ -12,6 +14,8 @@ import {
   status,
   statusText,
   statusTint,
+  type FormColorTokens,
+  type ResolvedAlarmTokens,
   type SeverityKey,
   type StatusKey,
   type ThemeMode,
@@ -98,6 +102,8 @@ export interface ResolvedTheme {
   severity: typeof severity;
   severityTint: (key: SeverityKey) => string;
   severityText: (key: SeverityKey) => string;
+  formColor: (form: string) => FormColorTokens;
+  alarms: ResolvedAlarmTokens;
 }
 
 /**
@@ -120,6 +126,8 @@ export function useTheme(): ResolvedTheme {
       severity,
       severityTint,
       severityText: (key: SeverityKey) => severityText(key, mode),
+      formColor: (form: string) => getFormColor(form, mode),
+      alarms: getAlarmTokens(mode),
     }),
     [mode],
   );
