@@ -454,7 +454,7 @@ export const bn: typeof en = {
   },
   settings: {
     title: 'সেটিংস',
-    subtitle: 'অ্যাপ-ব্যাপী পছন্দসমূহ।',
+    subtitle: 'অ্যাপ-ব্যাপী পছন্দসমূহ',
     language: 'ভাষা',
     languageDescription: 'অ্যাপের প্রতিটি স্ক্রিন সাথে সাথে পরিবর্তন করে।',
     english: 'English',
@@ -467,6 +467,7 @@ export const bn: typeof en = {
     voiceAlarm: 'ভয়েস অ্যালার্ম',
     voiceAlarmDescription: 'অ্যালার্ম বাজলে উপরে বেছে নেওয়া ভাষায় ওষুধের নাম ও মাত্রা জোরে পড়ে শোনাবে।',
     voiceAlarmAccessibility: 'রিমাইন্ডার জোরে পড়ে শোনান',
+    voiceInfo: 'ওষুধের রিমাইন্ডার স্পষ্ট শোনাতে এটি ডিভাইসের টেক্সট-টু-স্পিচ ব্যবহার করে।',
     testVoice: 'ভয়েস পরীক্ষণ করুন',
     testVoiceMessage: 'এটি আপনার ওষুধ রিমাইন্ডারের কণ্ঠস্বরের একটি পরীক্ষা।',
   },

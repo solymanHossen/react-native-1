@@ -462,7 +462,7 @@ export const en = {
   },
   settings: {
     title: 'Settings',
-    subtitle: 'App-wide preferences.',
+    subtitle: 'App-wide preferences',
     language: 'Language',
     languageDescription: 'Changes every screen in the app immediately.',
     english: 'English',
@@ -475,6 +475,7 @@ export const en = {
     voiceAlarm: 'Voice Alarm',
     voiceAlarmDescription: 'Speak the medicine name and dose aloud when an alarm rings, in your chosen language above.',
     voiceAlarmAccessibility: 'Speak reminders aloud',
+    voiceInfo: "Uses your device's text-to-speech to announce medicine reminders clearly.",
     testVoice: 'Test Voice',
     testVoiceMessage: 'This is a test of your medicine reminder voice.',
   },
