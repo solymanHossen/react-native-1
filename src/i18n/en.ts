@@ -278,10 +278,12 @@ export const en = {
     symptomSheet: {
       title: 'Log a Symptom',
       subtitle: "Tap what you're feeling — we'll check which medications you took in the last 4 hours.",
+      commonSymptoms: 'Common Symptoms',
       severity: 'Severity',
       mild: 'Mild',
       moderate: 'Moderate',
       severe: 'Severe',
+      infoCallout: 'This helps us provide better insights and medication safety checks.',
       saveSymptom: 'Save Symptom',
       done: 'Done',
       loggedNoMeds: 'Logged. No medications were taken in the last 4 hours.',
