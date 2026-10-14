@@ -49,29 +49,29 @@ export function AlarmsHeroSummary({ schedules }: AlarmsHeroSummaryProps) {
   }
 
   return (
-    <View className="flex-row items-center justify-between mb-3 mt-1">
+    <View className="flex-row items-center justify-between pt-1">
       {/* Header Left: Bell Icon in circular badge + Title & Subtitle */}
       <View className="flex-row items-center gap-3 flex-1 mr-2">
         <View
           className="items-center justify-center rounded-full"
           style={{
-            width: 42,
-            height: 42,
+            width: 40,
+            height: 40,
             backgroundColor: theme.alarms.bell.badge,
           }}
         >
-          <Bell color={theme.alarms.bell.icon} size={20} strokeWidth={2.2} />
+          <Bell color={theme.alarms.bell.icon} size={20} strokeWidth={2.4} />
         </View>
         <View className="flex-1">
           <Text
-            className="text-[17px] font-bold tracking-tight"
-            style={{ color: theme.alarms.card.title }}
+            className="text-[17.5px] font-bold tracking-tight"
+            style={{ color: theme.alarms.bell.title }}
           >
             {t('alarms.scheduledAlarms')}
           </Text>
           <Text
-            className="text-[13px] mt-0.5"
-            style={{ color: theme.alarms.card.subtitle }}
+            className="text-[13px] font-medium mt-0.5"
+            style={{ color: theme.alarms.bell.subtitle }}
           >
             {t('alarms.scheduledAlarmsSubtitle')}
           </Text>
@@ -80,7 +80,7 @@ export function AlarmsHeroSummary({ schedules }: AlarmsHeroSummaryProps) {
 
       {/* Header Right: Active Count Pill Badge */}
       <View
-        className="rounded-full px-3 py-1.5"
+        className="rounded-full px-3.5 py-1.5"
         style={{
           backgroundColor: theme.alarms.bell.badge,
         }}
@@ -92,7 +92,7 @@ export function AlarmsHeroSummary({ schedules }: AlarmsHeroSummaryProps) {
           }}
         >
           {activeSchedules.length > 0
-            ? `${activeSchedules.length} Active`
+            ? t('alarms.activeCount', { count: activeSchedules.length })
             : t('alarms.allPaused')}
         </Text>
       </View>

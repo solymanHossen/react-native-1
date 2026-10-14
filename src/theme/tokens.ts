@@ -383,6 +383,8 @@ export interface AlarmBellTokens {
   icon: string;
   badge: string;
   pillText: string;
+  title: string;
+  subtitle: string;
 }
 
 export interface AlarmEmergencyTokens {
@@ -441,8 +443,20 @@ export const alarmTokens = {
     dark: { icon: '#C084FC', badge: 'rgba(139, 92, 246, 0.18)' },
   },
   bell: {
-    light: { icon: '#2563EB', badge: '#EFF6FF', pillText: '#2563EB' },
-    dark: { icon: '#60A5FA', badge: 'rgba(59, 130, 246, 0.16)', pillText: '#60A5FA' },
+    light: {
+      icon: '#145EB2',
+      badge: '#E5EEFB',
+      pillText: '#0552AC',
+      title: '#091431',
+      subtitle: '#546784',
+    },
+    dark: {
+      icon: '#60A5FA',
+      badge: 'rgba(59, 130, 246, 0.16)',
+      pillText: '#60A5FA',
+      title: '#FFFFFF',
+      subtitle: '#94A3B8',
+    },
   },
   emergency: {
     light: {

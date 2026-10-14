@@ -729,7 +729,7 @@ export default function AlarmsScreen({ onOpenSettings, onNavigateToMedications }
         data={schedules}
         keyExtractor={(schedule) => String(schedule.id)}
         ListHeaderComponent={
-          <View className="gap-6" style={{ marginBottom: 20 }}>
+          <View className="gap-6" style={{ marginBottom: 14 }}>
             <EmergencyContactCard
               phone={savedCaregiverPhone}
               maskedPhone={maskedCaregiverPhone}
