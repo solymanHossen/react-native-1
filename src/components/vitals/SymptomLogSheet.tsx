@@ -4,7 +4,7 @@ import {
   BottomSheetModal,
   BottomSheetScrollView,
 } from '@gorhom/bottom-sheet';
-import { ArrowRight, Check, Shield, X } from 'lucide-react-native';
+import { ArrowRight, Check, ChevronRight, Shield, X } from 'lucide-react-native';
 import React, { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { Image, Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -274,7 +274,7 @@ export const SymptomLogSheet = forwardRef<SymptomLogSheetRef, Record<string, unk
               {t('vitals.symptomSheet.commonSymptoms')}
             </Text>
 
-            {/* 2-Column Symptom Grid (3 rows) */}
+            {/* 2-Column Symptom Grid (3 rows) - Exact same-to-same design as Vitals cards */}
             <View style={{ gap: 10 }}>
               {SYMPTOM_GRID.map((row, rowIndex) => (
                 <View key={`row-${rowIndex}`} style={{ flexDirection: 'row', gap: 10 }}>
@@ -293,22 +293,23 @@ export const SymptomLogSheet = forwardRef<SymptomLogSheetRef, Record<string, unk
                         accessibilityState={{ selected: isActive }}
                         style={{
                           flex: 1,
-                          height: 58,
-                          borderRadius: 16,
-                          paddingHorizontal: 12,
                           flexDirection: 'row',
                           alignItems: 'center',
+                          borderRadius: 18,
+                          paddingVertical: 10,
+                          paddingHorizontal: 12,
+                          gap: 10,
                           backgroundColor: isActive ? st.cardActiveBg : st.cardBg,
                           borderWidth: 1,
                           borderColor: isActive ? st.cardActiveBorder : st.cardBorder,
                         }}
                       >
-                        {/* Left Circular Badge */}
+                        {/* Squircle Icon Badge */}
                         <View
                           style={{
                             width: 38,
                             height: 38,
-                            borderRadius: 19,
+                            borderRadius: 12,
                             alignItems: 'center',
                             justifyContent: 'center',
                             backgroundColor: isActive
@@ -319,43 +320,59 @@ export const SymptomLogSheet = forwardRef<SymptomLogSheetRef, Record<string, unk
                           <Image
                             source={config.image}
                             style={{
-                              width: 28,
-                              height: 28,
+                              width: 24,
+                              height: 24,
                               tintColor: isActive ? '#FFFFFF' : undefined,
                             }}
                             resizeMode="contain"
                           />
                         </View>
 
-                        {/* Symptom Label */}
-                        <Text
-                          style={{
-                            marginLeft: 10,
-                            flex: 1,
-                            fontSize: 14.5,
-                            fontWeight: isActive ? '700' : '600',
-                            color: isActive ? st.cardActiveText : st.cardText,
-                          }}
-                          numberOfLines={1}
-                        >
-                          {t(config.key)}
-                        </Text>
+                        {/* Title, Subtitle & Indicator */}
+                        <View style={{ flex: 1, justifyContent: 'center', gap: 2 }}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <Text
+                              style={{
+                                flex: 1,
+                                marginRight: 4,
+                                fontSize: 13.5,
+                                fontWeight: '700',
+                                color: isActive ? st.cardActiveText : st.cardText,
+                              }}
+                              numberOfLines={1}
+                            >
+                              {t(config.key)}
+                            </Text>
 
-                        {/* Active Selection Checkmark Badge */}
-                        {isActive && (
-                          <View
-                            style={{
-                              width: 22,
-                              height: 22,
-                              borderRadius: 11,
-                              backgroundColor: st.cardActiveCheckBg,
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                            }}
-                          >
-                            <Check size={13} color={st.cardActiveCheckIcon} strokeWidth={3} />
+                            {isActive ? (
+                              <View
+                                style={{
+                                  width: 18,
+                                  height: 18,
+                                  borderRadius: 9,
+                                  backgroundColor: st.cardActiveCheckBg,
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                }}
+                              >
+                                <Check size={11} color={st.cardActiveCheckIcon} strokeWidth={3} />
+                              </View>
+                            ) : (
+                              <ChevronRight size={15} color={st.closeBtnIcon} strokeWidth={2.4} />
+                            )}
                           </View>
-                        )}
+
+                          <Text
+                            style={{
+                              fontSize: 11,
+                              fontWeight: '400',
+                              color: isActive ? 'rgba(255, 255, 255, 0.78)' : st.headerSubtitle,
+                            }}
+                            numberOfLines={1}
+                          >
+                            {t('vitals.tapToLog')}
+                          </Text>
+                        </View>
                       </Pressable>
                     );
                   })}

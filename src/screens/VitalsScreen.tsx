@@ -311,21 +311,23 @@ export default function VitalsScreen({ focusVital = null }: VitalsScreenProps) {
                 onPress={() => openEntry(type)}
                 accessibilityRole="button"
                 accessibilityLabel={t('vitals.logVitalAccessibility', { vital: label })}
-                className="min-h-hit flex-1 basis-[46%] gap-3 rounded-3xl border p-5"
+                className="min-h-hit flex-1 basis-[46%] flex-row items-center gap-3 rounded-2xl border p-3.5"
                 style={{ minWidth: '46%', backgroundColor: theme.colors.elevated, borderColor: theme.colors.hairline }}
               >
-                <View className="flex-row items-start justify-between">
-                  <View className="items-center justify-center rounded-2xl" style={{ width: 42, height: 42, backgroundColor: `${color}18` }}>
-                    <Icon color={color} size={22} strokeWidth={2.25} />
-                  </View>
-                  <ChevronRight color={theme.colors.inkMuted} size={18} strokeWidth={2.5} />
+                <View className="items-center justify-center rounded-xl" style={{ width: 40, height: 40, backgroundColor: `${color}18` }}>
+                  <Icon color={color} size={22} strokeWidth={2.25} />
                 </View>
-                <Text className="text-body-lg" style={{ color: theme.colors.ink, fontWeight: '700' }}>
-                  {label}
-                </Text>
-                <Text className="text-caption" style={{ color: theme.colors.inkSecondary }}>
-                  {t('vitals.tapToLog')}
-                </Text>
+                <View className="flex-1 justify-center gap-0.5">
+                  <View className="flex-row items-center justify-between">
+                    <Text className="text-body-md" numberOfLines={1} style={{ color: theme.colors.ink, fontWeight: '700', flex: 1, marginRight: 4 }}>
+                      {label}
+                    </Text>
+                    <ChevronRight color={theme.colors.inkMuted} size={16} strokeWidth={2.5} />
+                  </View>
+                  <Text className="text-caption" numberOfLines={1} style={{ color: theme.colors.inkSecondary }}>
+                    {t('vitals.tapToLog')}
+                  </Text>
+                </View>
               </Pressable>
             ))}
           </View>
@@ -344,7 +346,7 @@ export default function VitalsScreen({ focusVital = null }: VitalsScreenProps) {
                   onPress={() => setTrendType(option.type)}
                   accessibilityRole="button"
                   accessibilityState={{ selected: isActive }}
-                  className="min-h-hit flex-1 basis-[31%] items-center justify-center rounded-full border px-5"
+                  className="min-h-hit flex-1 basis-[22%] items-center justify-center rounded-full border px-2.5"
                   style={{ backgroundColor: isActive ? theme.action.base : theme.colors.elevated, borderColor: isActive ? theme.action.base : theme.colors.hairline }}
                 >
                   <Text className="text-caption" numberOfLines={1} style={{ color: isActive ? theme.action.ink : theme.colors.ink, fontWeight: '600' }}>
