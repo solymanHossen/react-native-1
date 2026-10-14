@@ -1,0 +1,285 @@
+import { ChevronRight, Pencil, Phone, Plus, ShieldAlert, Trash2 } from 'lucide-react-native';
+import { Pressable, Text, View } from 'react-native';
+import Svg, { Path as SvgPath } from 'react-native-svg';
+import { useTranslation } from '../../i18n';
+import { triggerHaptic } from '../../lib/haptics';
+import { useTheme } from '../../theme/useTheme';
+
+export interface EmergencyContactCardProps {
+  /** Raw stored caregiver phone number or null if unconfigured */
+  phone: string | null;
+  /** Optional custom masked string. If omitted, `maskPhone(phone)` is used. */
+  maskedPhone?: string | null;
+  onEdit: () => void;
+  onDelete: () => void;
+  onAdd?: () => void;
+}
+
+/**
+ * Masks a phone number to hide all leading digits with bullets ('•') while
+ * keeping the last digit of the prefix and the final 4 digits visible,
+ * matching the reference design: `•••••••2 3423`.
+ */
+export function maskPhone(phone: string): string {
+  const trimmed = phone.trim();
+  const digits = trimmed.replace(/\D/g, '');
+  if (digits.length <= 4) return trimmed;
+  const prefix = digits.slice(0, digits.length - 4);
+  const suffix = digits.slice(-4);
+  const maskedPrefix = prefix.replace(/\d(?=\d)/g, '•');
+  return `${maskedPrefix} ${suffix}`;
+}
+
+/**
+ * Solid-filled shield badge with an embedded white checkmark, drawn to match
+ * the reference design's vivid green medical security glyph.
+ */
+export function FilledShieldCheck({ size = 24, fillColor = '#059669' }: { size?: number; fillColor?: string }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <SvgPath
+        d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+        fill={fillColor}
+      />
+      <SvgPath d="m9 12 2 2 4-4" stroke="#FFFFFF" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+/**
+ * Emergency Contact section card.
+ *
+ * Implements the exact reference design:
+ * - Mint-tinted rounded card container
+ * - Circular badge with emerald filled shield and crisp white checkmark
+ * - Dark navy bold "Emergency Contact" title with active green status dot
+ * - Slate chevron navigation affordance
+ * - Explanatory helper text: "If you miss a dose by 15 minutes, we’ll send a quick alert to this person."
+ * - Inner pure white card with:
+ *   - Soft ice-blue circular phone icon badge
+ *   - "Alert recipient" label + masked phone number
+ *   - Light blue "Edit" pill button with pencil icon
+ *   - Soft pink/red "Delete" icon button with trash icon
+ */
+export function EmergencyContactCard({
+  phone,
+  maskedPhone,
+  onEdit,
+  onDelete,
+  onAdd,
+}: EmergencyContactCardProps) {
+  const theme = useTheme();
+  const { t } = useTranslation();
+  const isDark = theme.mode === 'dark';
+
+  if (!phone) {
+    return (
+      <View
+        className="rounded-[24px] border p-5 shadow-sm"
+        style={{
+          backgroundColor: isDark ? 'rgba(31, 41, 55, 0.75)' : '#FFFFFF',
+          borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : theme.colors.hairline,
+        }}
+      >
+        <View className="flex-row items-start gap-3">
+          <View
+            className="items-center justify-center rounded-2xl"
+            style={{ width: 44, height: 44, backgroundColor: isDark ? 'rgba(59, 130, 246, 0.15)' : `${theme.action.base}14` }}
+          >
+            <ShieldAlert color={isDark ? '#60A5FA' : theme.action.base} size={22} strokeWidth={2.2} />
+          </View>
+          <View className="flex-1">
+            <Text className="text-[17px] font-bold" style={{ color: theme.colors.ink }}>
+              {t('alarms.caregiverSection')}
+            </Text>
+            <Text className="mt-1 text-[13.5px] leading-5" style={{ color: theme.colors.inkMuted }}>
+              {t('alarms.caregiverDescription')}
+            </Text>
+          </View>
+        </View>
+
+        <Pressable
+          onPress={() => {
+            triggerHaptic('selection');
+            onAdd?.();
+          }}
+          accessibilityRole="button"
+          accessibilityLabel={t('alarms.addCaregiverAccessibility')}
+          className="mt-4 min-h-hit flex-row items-center justify-center gap-2 rounded-2xl px-5 py-3.5 shadow-sm"
+          style={{ backgroundColor: isDark ? '#3B82F6' : theme.action.base }}
+        >
+          <Plus color="#FFFFFF" size={18} strokeWidth={2.5} />
+          <Text className="text-[15px] font-bold" style={{ color: '#FFFFFF' }}>
+            {t('alarms.addCaregiver')}
+          </Text>
+        </Pressable>
+      </View>
+    );
+  }
+
+  const displayPhone = maskedPhone ?? maskPhone(phone);
+
+  return (
+    <View
+      className="rounded-[24px] border p-4"
+      style={{
+        backgroundColor: isDark ? 'rgba(6, 78, 59, 0.28)' : '#F2FAF6',
+        borderColor: isDark ? 'rgba(16, 185, 129, 0.28)' : '#E2F4EB',
+        shadowColor: '#000000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: isDark ? 0.2 : 0.03,
+        shadowRadius: 8,
+        elevation: 1,
+      }}
+    >
+      {/* Top Header Row */}
+      <Pressable
+        onPress={() => {
+          triggerHaptic('selection');
+          onEdit();
+        }}
+        accessibilityRole="button"
+        accessibilityLabel={t('alarms.editCaregiverAccessibility')}
+        className="flex-row items-center justify-between"
+      >
+        <View className="flex-row items-center flex-1 mr-2">
+          {/* Circular green badge */}
+          <View
+            className="items-center justify-center rounded-full"
+            style={{
+              width: 46,
+              height: 46,
+              backgroundColor: isDark ? 'rgba(16, 185, 129, 0.2)' : '#D1F4E2',
+            }}
+          >
+            <FilledShieldCheck fillColor={isDark ? '#10B981' : '#059669'} size={24} />
+          </View>
+
+          {/* Title and Active indicator */}
+          <View className="ml-3 flex-1">
+            <Text
+              className="text-[17px] font-bold tracking-tight"
+              style={{ color: isDark ? '#FFFFFF' : '#0F172A' }}
+            >
+              {t('alarms.caregiverSection')}
+            </Text>
+            <View className="flex-row items-center gap-1.5 mt-0.5">
+              <View
+                className="rounded-full"
+                style={{ width: 7, height: 7, backgroundColor: isDark ? '#34D399' : '#059669' }}
+              />
+              <Text
+                className="text-[13px] font-semibold"
+                style={{ color: isDark ? '#34D399' : '#059669' }}
+              >
+                {t('alarms.caregiverReady')}
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Slate chevron on the right */}
+        <ChevronRight
+          color={isDark ? '#94A3B8' : '#334155'}
+          size={20}
+          strokeWidth={2.4}
+        />
+      </Pressable>
+
+      {/* Description text */}
+      <Text
+        className="mt-2.5 mb-3.5 text-[13.5px] leading-[19px]"
+        style={{ color: isDark ? '#94A3B8' : '#475569' }}
+      >
+        {t('alarms.caregiverDescription')}
+      </Text>
+
+      {/* Inner White Card */}
+      <View
+        className="flex-row items-center justify-between rounded-2xl px-3.5 py-3"
+        style={{
+          backgroundColor: isDark ? 'rgba(31, 41, 55, 0.85)' : '#FFFFFF',
+          borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : '#F1F5F9',
+          borderWidth: 1,
+          shadowColor: '#000000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: isDark ? 0.3 : 0.04,
+          shadowRadius: 6,
+          elevation: 1,
+        }}
+      >
+        {/* Left Side: Phone Icon in light blue circle + Contact Details */}
+        <View className="flex-row items-center flex-1 mr-2 gap-3">
+          <View
+            className="items-center justify-center rounded-full"
+            style={{
+              width: 42,
+              height: 42,
+              backgroundColor: isDark ? 'rgba(59, 130, 246, 0.16)' : '#EFF6FF',
+            }}
+          >
+            <Phone color={isDark ? '#60A5FA' : '#2563EB'} size={18} strokeWidth={2.2} />
+          </View>
+
+          <View className="flex-1">
+            <Text
+              numberOfLines={1}
+              className="text-[12px] font-medium"
+              style={{ color: isDark ? '#94A3B8' : '#64748B' }}
+            >
+              {t('alarms.caregiverSavedContact')}
+            </Text>
+            <Text
+              numberOfLines={1}
+              className="text-[16px] font-bold tracking-tight mt-0.5"
+              style={{ color: isDark ? '#FFFFFF' : '#0F172A' }}
+            >
+              {displayPhone}
+            </Text>
+          </View>
+        </View>
+
+        {/* Right Side: Edit Pill Button & Delete Square Button */}
+        <View className="flex-row items-center gap-2">
+          {/* Edit Button */}
+          <Pressable
+            onPress={() => {
+              triggerHaptic('selection');
+              onEdit();
+            }}
+            accessibilityRole="button"
+            accessibilityLabel={t('alarms.editCaregiverAccessibility')}
+            className="flex-row items-center gap-1.5 rounded-xl px-3.5 py-2"
+            style={{
+              backgroundColor: isDark ? 'rgba(59, 130, 246, 0.16)' : '#EFF6FF',
+            }}
+          >
+            <Pencil color={isDark ? '#60A5FA' : '#2563EB'} size={15} strokeWidth={2.2} />
+            <Text
+              className="text-[13.5px] font-bold"
+              style={{ color: isDark ? '#60A5FA' : '#2563EB' }}
+            >
+              {t('alarms.editCaregiver')}
+            </Text>
+          </Pressable>
+
+          {/* Delete Button */}
+          <Pressable
+            onPress={() => {
+              triggerHaptic('selection');
+              onDelete();
+            }}
+            accessibilityRole="button"
+            accessibilityLabel={t('alarms.clearCaregiverAccessibility')}
+            className="items-center justify-center rounded-xl p-2.5"
+            style={{
+              backgroundColor: isDark ? 'rgba(239, 68, 68, 0.16)' : '#FEF2F2',
+            }}
+          >
+            <Trash2 color={isDark ? '#F87171' : '#EF4444'} size={17} strokeWidth={2.0} />
+          </Pressable>
+        </View>
+      </View>
+    </View>
+  );
+}

@@ -12,7 +12,7 @@ import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRe
 import { ActivityIndicator, Image, Keyboard, Pressable, Text, View } from 'react-native';
 import Svg, { Path as SvgPath } from 'react-native-svg';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { AlarmScheduleCard, AlarmsEmptyState, AlarmsHeroSummary } from '../components/alarms';
+import { AlarmScheduleCard, AlarmsEmptyState, AlarmsHeroSummary, EmergencyContactCard, maskPhone } from '../components/alarms';
 import { LargeTextButton } from '../components/ui';
 import {
   deleteSchedule,
@@ -31,31 +31,6 @@ import { useTheme } from '../theme/useTheme';
 
 interface CaregiverContactSheetRef {
   present: (phone: string | null) => void;
-}
-
-function maskPhone(phone: string): string {
-  return `${phone.slice(0, Math.max(0, phone.length - 4)).replace(/\d(?=\d)/g, '•')} ${phone.slice(-4)}`;
-}
-
-/**
- * A solid-filled shield-check, not lucide's `ShieldCheck` (thin stroke
- * outline for both the shield and the check) — the reference design wants a
- * bold, badge-style glyph: solid-color shield, white checkmark. Lucide's
- * single `color` prop would tint both paths identically and a `fill` prop
- * would also try to close/fill the open checkmark polyline into an ugly
- * wedge, so this hand-draws the same two path shapes from shield-check.mjs
- * with the fill/stroke split applied per path instead.
- */
-function FilledShieldCheck({ size = 24, fillColor }: { size?: number; fillColor: string }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <SvgPath
-        d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
-        fill={fillColor}
-      />
-      <SvgPath d="m9 12 2 2 4-4" stroke="#FFFFFF" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-    </Svg>
-  );
 }
 
 const CaregiverContactSheet = forwardRef<CaregiverContactSheetRef, {
@@ -755,150 +730,19 @@ export default function AlarmsScreen({ onOpenSettings, onNavigateToMedications }
         keyExtractor={(schedule) => String(schedule.id)}
         ListHeaderComponent={
           <View className="gap-6" style={{ marginBottom: 20 }}>
-            {maskedCaregiverPhone ? (
-              <View
-                className="rounded-3xl border p-4 shadow-sm"
-                style={{
-                  backgroundColor: theme.statusTint('taken'),
-                  borderColor: theme.mode === 'dark' ? 'rgba(16, 185, 129, 0.28)' : theme.colors.hairline,
-                }}
-              >
-                <Pressable
-                  onPress={() => {
-                    triggerHaptic('selection');
-                    caregiverSheetRef.current?.present(savedCaregiverPhone);
-                  }}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('alarms.editCaregiverAccessibility')}
-                  className="flex-row items-center justify-between"
-                >
-                  <View className="flex-row items-center gap-2.5">
-                    <View
-                      className="items-center justify-center rounded-full"
-                      style={{ width: 36, height: 36, backgroundColor: theme.statusTint('taken') }}
-                    >
-                      <FilledShieldCheck fillColor={theme.statusText('taken')} size={21} />
-                    </View>
-                    <View>
-                      <Text className="text-body-lg font-bold" style={{ color: theme.colors.ink }}>
-                        {t('alarms.caregiverSection')}
-                      </Text>
-                      <View className="flex-row items-center gap-1.5 mt-0.5">
-                        <View
-                          className="rounded-full"
-                          style={{ width: 7, height: 7, backgroundColor: theme.statusText('taken') }}
-                        />
-                        <Text className="text-caption font-semibold" style={{ color: theme.statusText('taken') }}>
-                          {t('alarms.caregiverReady')}
-                        </Text>
-                      </View>
-                    </View>
-                  </View>
-                  <ChevronRight color={theme.statusText('taken')} size={18} strokeWidth={2.5} />
-                </Pressable>
-
-                <Text className="mt-2 text-caption" style={{ color: theme.colors.inkMuted }}>
-                  {t('alarms.caregiverDescription')}
-                </Text>
-
-                <View
-                  className="mt-3 flex-row items-center justify-between rounded-2xl px-3.5 py-2.5"
-                  style={{
-                    backgroundColor: theme.colors.surface,
-                    boxShadow: [{ offsetX: 0, offsetY: 1, blurRadius: 3, color: 'rgba(16, 24, 40, 0.08)' }],
-                  }}
-                >
-                  <View className="flex-row items-center gap-2.5 flex-1 mr-2">
-                    <View
-                      className="items-center justify-center rounded-xl"
-                      style={{ width: 32, height: 32, backgroundColor: `${theme.action.base}14` }}
-                    >
-                      <Phone color={theme.action.base} size={16} strokeWidth={2.2} />
-                    </View>
-                    <View className="flex-1">
-                      <Text numberOfLines={1} className="text-caption font-semibold" style={{ color: theme.action.base }}>
-                        {t('alarms.caregiverSavedContact')}
-                      </Text>
-                      <Text numberOfLines={1} className="text-body font-bold" style={{ color: theme.colors.ink }}>
-                        {maskedCaregiverPhone}
-                      </Text>
-                    </View>
-                  </View>
-
-                  <View className="flex-row items-center gap-2">
-                    <Pressable
-                      onPress={() => {
-                        triggerHaptic('selection');
-                        caregiverSheetRef.current?.present(savedCaregiverPhone);
-                      }}
-                      accessibilityRole="button"
-                      accessibilityLabel={t('alarms.editCaregiverAccessibility')}
-                      className="min-h-hit flex-row items-center gap-1 rounded-xl px-2.5 py-1.5 border"
-                      style={{
-                        backgroundColor: `${theme.action.base}12`,
-                        borderColor: `${theme.action.base}30`,
-                      }}
-                    >
-                      <Pencil color={theme.action.base} size={13} strokeWidth={2.2} />
-                      <Text className="text-caption font-bold" style={{ color: theme.action.base }}>
-                        {t('alarms.editCaregiver')}
-                      </Text>
-                    </Pressable>
-
-                    <Pressable
-                      onPress={handleClearCaregiverPhone}
-                      accessibilityRole="button"
-                      accessibilityLabel={t('alarms.clearCaregiverAccessibility')}
-                      className="min-h-hit min-w-hit items-center justify-center rounded-xl p-2 border"
-                      style={{
-                        backgroundColor: `${theme.statusText('missed')}10`,
-                        borderColor: `${theme.statusText('missed')}25`,
-                      }}
-                    >
-                      <Trash2 color={theme.statusText('missed')} size={15} strokeWidth={2.2} />
-                    </Pressable>
-                  </View>
-                </View>
-              </View>
-            ) : (
-              <View
-                className="rounded-3xl border p-5 shadow-sm"
-                style={{ backgroundColor: theme.colors.elevated, borderColor: theme.colors.hairline }}
-              >
-                <View className="flex-row items-start gap-3">
-                  <View
-                    className="items-center justify-center rounded-2xl"
-                    style={{ width: 42, height: 42, backgroundColor: `${theme.action.base}18` }}
-                  >
-                    <ShieldAlert color={theme.action.base} size={22} strokeWidth={2.25} />
-                  </View>
-                  <View className="flex-1">
-                    <Text className="text-body-lg font-bold" style={{ color: theme.colors.ink }}>
-                      {t('alarms.caregiverSection')}
-                    </Text>
-                    <Text className="mt-1 text-caption leading-relaxed" style={{ color: theme.colors.inkMuted }}>
-                      {t('alarms.caregiverDescription')}
-                    </Text>
-                  </View>
-                </View>
-
-                <Pressable
-                  onPress={() => {
-                    triggerHaptic('selection');
-                    caregiverSheetRef.current?.present(null);
-                  }}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('alarms.addCaregiverAccessibility')}
-                  className="mt-4 min-h-hit flex-row items-center justify-center gap-2 rounded-2xl px-5 py-3.5 shadow-sm"
-                  style={{ backgroundColor: theme.action.base }}
-                >
-                  <Plus color={theme.action.ink} size={18} strokeWidth={2.5} />
-                  <Text className="text-body-md font-bold" style={{ color: theme.action.ink }}>
-                    {t('alarms.addCaregiver')}
-                  </Text>
-                </Pressable>
-              </View>
-            )}
+            <EmergencyContactCard
+              phone={savedCaregiverPhone}
+              maskedPhone={maskedCaregiverPhone}
+              onEdit={() => {
+                triggerHaptic('selection');
+                caregiverSheetRef.current?.present(savedCaregiverPhone);
+              }}
+              onDelete={handleClearCaregiverPhone}
+              onAdd={() => {
+                triggerHaptic('selection');
+                caregiverSheetRef.current?.present(null);
+              }}
+            />
 
             {/* Solid banner introducing the list below. Tapping it is a
                 shortcut, not a dead decoration: with a medication on file it

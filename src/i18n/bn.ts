@@ -145,7 +145,7 @@ export const bn: typeof en = {
     caregiverSaved: 'জরুরি যোগাযোগ সংরক্ষিত হয়েছে।',
     caregiverCleared: 'জরুরি যোগাযোগ মুছে ফেলা হয়েছে।',
     caregiverInvalid: 'সঠিক ফোন নম্বর দিন (৭ থেকে ১৫ সংখ্যা)।',
-    caregiverReady: 'সক্রিয় • ডোজ মিস সতর্কবার্তা চালু',
+    caregiverReady: 'সক্রিয় · ডোজ মিস সতর্কবার্তা চালু',
     caregiverNotConfigured: 'কোনো জরুরি নম্বর যোগ করা হয়নি',
     caregiverSavedContact: 'সতর্কবার্তা প্রাপক',
     clearCaregiverAccessibility: 'সংরক্ষিত যোগাযোগ মুছুন',
