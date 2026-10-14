@@ -1,6 +1,6 @@
 import { ComponentType, useMemo } from 'react';
 import { Alert, Pressable, Switch, Text, View } from 'react-native';
-import { Camera, Clock, Droplet, Nfc, Package, Pill, Trash2 } from 'lucide-react-native';
+import { Camera, Clock, Droplet, Moon, Nfc, Package, Pill, Sun, Sunrise, Trash2, Utensils } from 'lucide-react-native';
 import type { Medication, ScheduleWithMedication } from '../../db/types';
 import { computeNextOccurrenceMs } from '../../alarms/alarmScheduler';
 import { useTranslation, type TranslationKey } from '../../i18n';
@@ -11,34 +11,12 @@ export interface AlarmScheduleCardProps {
   schedule: ScheduleWithMedication;
   onToggle: (schedule: ScheduleWithMedication, nextActive: boolean) => void;
   onDelete: (schedule: ScheduleWithMedication) => void;
-  /** `depth` is 0 (breakfast) to 3 (bedtime), or -1 for fasting (not a time of day — see badge color computation below). */
-  timeNodeStyle: {
+  /** `depth` is 0 (breakfast) to 3 (bedtime), or -1 for fasting */
+  timeNodeStyle?: {
     icon: ComponentType<{ size?: number; color?: string; strokeWidth?: number }>;
     depth: number;
   };
 }
-
-/** Alpha strength per day/night depth (0–2); depth 3 (bedtime) renders as a solid fill instead — see `badgeColors` below. Deepens from breakfast to bedtime so the four badges still read as a progression through the day, the quality the old hardcoded pomegranate-red badges had, while staying within the app's single blue brand hue (`theme.action.base`) instead of an unrelated color family that didn't adapt to light/dark mode. */
-const DEPTH_TINT_ALPHA = ['14', '29', '4D'];
-
-/**
- * A static lookup, not a derived string (`` `alarms.time${timeNode...}` ``):
- * the `time_node` enum (BREAKFAST/LUNCH/DINNER/BEDTIME/FASTING) and the
- * existing translation keys (timeMorning/timeAfternoon/timeEvening/
- * timeBedtime) don't actually share a naming scheme — the derived-string
- * approach silently produced `alarms.timeBreakfast`, `alarms.timeLunch`,
- * `alarms.timeDinner`, none of which exist, so the raw untranslated key
- * string rendered straight into the card for 3 of the 5 time nodes. FASTING
- * has no `alarms.*` label of its own; it reuses `status.fasting` (the same
- * "Fasting" text already shown for the Fasting status pill elsewhere).
- */
-const TIME_NODE_LABEL_KEY: Record<ScheduleWithMedication['time_node'], TranslationKey> = {
-  BREAKFAST: 'alarms.timeMorning',
-  LUNCH: 'alarms.timeAfternoon',
-  DINNER: 'alarms.timeEvening',
-  BEDTIME: 'alarms.timeBedtime',
-  FASTING: 'status.fasting',
-};
 
 function medicationFormIcon(form: Medication['form']) {
   return form === 'tablet' || form === 'capsule' ? Pill : form === 'syrup' || form === 'drop' ? Droplet : Package;
@@ -71,15 +49,21 @@ function formatTimeRemaining(timeUtc: string, daysOfWeekMask: number): string | 
 }
 
 /**
- * Modern world-class Medication Alarm Card.
+ * Modern Medication Alarm Card.
  *
- * Designed with clinical clarity, digital clock hierarchy, rich glassmorphism,
- * and high-contrast accessibility:
- * - Prominent display clock with decoupled AM/PM badge and time-of-day colored icon.
- * - Dynamic countdown indicator ("In 2h 15m") when active.
- * - Medication name, strength, dosage form icon, and meal relationship tags.
- * - Verification method badge (NFC Tag vs Vision Camera).
- * - Tactile on/off toggle and safe alarm deletion with haptic feedback.
+ * Implements the exact reference design:
+ * - Pure white container with soft border & subtle shadow
+ * - Top Row:
+ *   - Squircle time-of-day badge (Sunrise for Morning, Sun for Afternoon, Moon for Evening)
+ *   - Bold digital time with AM/PM
+ *   - Neutral pill badge with Clock icon + "in 18h" countdown on the same baseline
+ *   - "Morning · Daily" subtitle
+ *   - Modern Switch toggle on the far right
+ * - Hairline horizontal divider
+ * - Medication name with soft pink/red Trash2 delete button on the right
+ * - Bottom Tags:
+ *   - Row 1: "[ 💊 1 tablet ]" and "[ 🍴 With food ]"
+ *   - Row 2: "[ 📷 Camera confirm ]" / "[ 📶 NFC confirm ]" in warm amber
  */
 export function AlarmScheduleCard({
   schedule,
@@ -89,32 +73,69 @@ export function AlarmScheduleCard({
 }: AlarmScheduleCardProps) {
   const theme = useTheme();
   const { t } = useTranslation();
+  const isDark = theme.mode === 'dark';
+  const isActive = schedule.is_active;
 
   const { displayTime, period } = useMemo(() => formatTimeParts(schedule.time_utc), [schedule.time_utc]);
   const FormIcon = useMemo(() => medicationFormIcon(schedule.medicationForm), [schedule.medicationForm]);
-  const NodeIcon = timeNodeStyle.icon;
 
-  // Fasting isn't a time of day, so it keeps its own `fasting` status color
-  // (the same cyan used for the Fasting pill elsewhere, e.g. Home's Blood
-  // Sugar card) instead of a slot in the breakfast→bedtime depth
-  // progression. Every real time slot derives its badge from the single
-  // brand blue at increasing strength as the day goes on, solid by bedtime.
-  const isFasting = timeNodeStyle.depth < 0;
-  const badgeBase = isFasting ? (theme.status.fasting.baseDark ?? theme.status.fasting.base) : theme.action.base;
-  const badgeBg = isFasting
-    ? theme.statusTint('fasting')
-    : timeNodeStyle.depth >= 3
-      ? theme.action.base
-      : `${theme.action.base}${DEPTH_TINT_ALPHA[timeNodeStyle.depth] ?? DEPTH_TINT_ALPHA[0]}`;
-  const badgeIconColor = isFasting ? theme.statusText('fasting') : timeNodeStyle.depth >= 3 ? theme.action.ink : theme.action.base;
+  // Resolve time-of-day style matching the reference design
+  const nodeConfig = useMemo(() => {
+    switch (schedule.time_node) {
+      case 'BREAKFAST':
+        return {
+          icon: Sunrise,
+          badgeBg: isDark ? 'rgba(59, 130, 246, 0.16)' : '#EEF4FB',
+          iconColor: isDark ? '#60A5FA' : '#395886',
+          label: t('alarms.timeMorning'),
+        };
+      case 'LUNCH':
+        return {
+          icon: Sun,
+          badgeBg: theme.alarms.sun.badge,
+          iconColor: theme.alarms.sun.icon,
+          label: t('alarms.timeAfternoon'),
+        };
+      case 'DINNER':
+        return {
+          icon: Moon,
+          badgeBg: theme.alarms.moon.badge,
+          iconColor: theme.alarms.moon.icon,
+          label: t('alarms.timeEvening'),
+        };
+      case 'BEDTIME':
+        return {
+          icon: Moon,
+          badgeBg: theme.alarms.moon.badge,
+          iconColor: theme.alarms.moon.icon,
+          label: t('alarms.timeBedtime'),
+        };
+      case 'FASTING':
+        return {
+          icon: Clock,
+          badgeBg: theme.statusTint('fasting'),
+          iconColor: theme.statusText('fasting'),
+          label: t('status.fasting'),
+        };
+      default:
+        return {
+          icon: Sun,
+          badgeBg: theme.alarms.sun.badge,
+          iconColor: theme.alarms.sun.icon,
+          label: t('alarms.timeMorning'),
+        };
+    }
+  }, [isDark, schedule.time_node, t, theme]);
+
+  const NodeIcon = timeNodeStyle?.icon ?? nodeConfig.icon;
+  const badgeBg = nodeConfig.badgeBg;
+  const badgeIconColor = nodeConfig.iconColor;
+  const nodeLabel = nodeConfig.label;
 
   const timeRemaining = useMemo(() => {
     if (!schedule.is_active) return null;
     return formatTimeRemaining(schedule.time_utc, schedule.days_of_week_mask);
   }, [schedule.days_of_week_mask, schedule.is_active, schedule.time_utc]);
-
-  const confirmTint = schedule.nfcTagUid ? theme.statusTint('taken') : theme.statusTint('pending');
-  const confirmText = schedule.nfcTagUid ? theme.statusText('taken') : theme.statusText('pending');
 
   const handleDeletePress = () => {
     triggerHaptic('impactLight');
@@ -138,87 +159,63 @@ export function AlarmScheduleCard({
     );
   };
 
-  const isDark = theme.mode === 'dark';
-  const isActive = schedule.is_active;
-
   return (
     <View
-      className="relative overflow-hidden rounded-3xl border p-5"
+      className="rounded-[24px] border p-5 shadow-sm"
       style={{
         marginBottom: 16,
         backgroundColor: isActive
           ? isDark
             ? 'rgba(31, 41, 55, 0.75)'
-            : theme.colors.elevated
+            : '#FFFFFF'
           : isDark
             ? 'rgba(20, 26, 36, 0.55)'
             : '#F8FAFC',
         borderColor: isActive
           ? isDark
             ? 'rgba(255, 255, 255, 0.08)'
-            : theme.colors.hairline
+            : '#F1F5F9'
           : isDark
             ? 'rgba(255, 255, 255, 0.04)'
             : theme.colors.hairline,
         opacity: isActive ? 1 : 0.65,
-        shadowColor: isActive ? '#000000' : 'transparent',
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: isActive ? (isDark ? 0.35 : 0.08) : 0,
-        shadowRadius: 16,
-        elevation: isActive ? 5 : 1,
+        shadowColor: '#000000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: isDark ? 0.25 : 0.03,
+        shadowRadius: 8,
+        elevation: 1,
       }}
     >
-      {/* Frosted specular top highlight on active cards in dark mode */}
-      {isDark && isActive ? (
-        <View
-          pointerEvents="none"
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 20,
-            right: 20,
-            height: 1,
-            backgroundColor: 'rgba(255, 255, 255, 0.1)',
-          }}
-        />
-      ) : null}
-
-      {/* Top Header: Big Digital Clock, Icon & Active Switch */}
+      {/* Top Header: Time, AM/PM, in Xh badge, Morning · Daily, and Switch */}
       <View className="flex-row items-center justify-between">
-        <View className="flex-row items-center gap-3">
-          {/* Time-of-day colored icon */}
+        <View className="flex-row items-center gap-3.5 flex-1 mr-2">
+          {/* Time-of-day colored icon badge */}
           <View
-            className="items-center justify-center rounded-2xl"
+            className="items-center justify-center rounded-2xl overflow-hidden"
             style={{
               width: 46,
               height: 46,
               backgroundColor: isActive ? badgeBg : (isDark ? 'rgba(255, 255, 255, 0.08)' : theme.colors.hairline),
-              shadowColor: isActive ? badgeBase : 'transparent',
-              shadowOffset: { width: 0, height: 3 },
-              shadowOpacity: isActive ? 0.4 : 0,
-              shadowRadius: 8,
-              elevation: isActive ? 4 : 0,
             }}
           >
             <NodeIcon color={isActive ? badgeIconColor : theme.colors.inkMuted} size={24} strokeWidth={2.2} />
           </View>
 
-          {/* Clock Display */}
-          <View>
-            <View className="flex-row items-baseline gap-1.5">
+          {/* Clock Display + Countdown */}
+          <View className="flex-1">
+            <View className="flex-row items-baseline">
               <Text
-                className="text-3xl font-extrabold tracking-tight"
+                className="text-[22px] font-extrabold tracking-tight"
                 style={{
                   color: isActive ? theme.colors.ink : theme.colors.inkMuted,
-                  letterSpacing: -0.5,
                 }}
               >
                 {displayTime}
               </Text>
               <Text
-                className="text-body font-bold"
+                className="text-[15px] font-bold ml-1.5"
                 style={{
-                  color: isActive ? theme.action.base : theme.colors.inkMuted,
+                  color: isActive ? theme.colors.ink : theme.colors.inkMuted,
                 }}
               >
                 {period}
@@ -227,18 +224,16 @@ export function AlarmScheduleCard({
               {/* Time Remaining / Countdown badge or OFF badge */}
               {isActive && timeRemaining ? (
                 <View
-                  className="ml-1.5 flex-row items-center gap-1 rounded-full px-2 py-0.5"
+                  className="ml-2.5 flex-row items-center gap-1 rounded-full px-2.5 py-0.5"
                   style={{
-                    backgroundColor: `${theme.action.base}18`,
-                    borderWidth: 1,
-                    borderColor: `${theme.action.base}33`,
+                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : '#F1F5F9',
                   }}
                 >
-                  <Clock size={10} color={theme.action.base} strokeWidth={2.4} />
+                  <Clock size={11} color={isDark ? '#94A3B8' : '#64748B'} strokeWidth={2.4} />
                   <Text
                     style={{
-                      color: theme.action.base,
-                      fontSize: 10,
+                      color: isDark ? '#94A3B8' : '#475569',
+                      fontSize: 11.5,
                       fontWeight: '700',
                     }}
                   >
@@ -247,18 +242,18 @@ export function AlarmScheduleCard({
                 </View>
               ) : !isActive ? (
                 <View
-                  className="ml-1.5 rounded-full px-2 py-0.5"
+                  className="ml-2.5 rounded-full px-2.5 py-0.5"
                   style={{ backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : theme.colors.hairline }}
                 >
-                  <Text style={{ color: theme.colors.inkMuted, fontSize: 10, fontWeight: '700' }}>
+                  <Text style={{ color: theme.colors.inkMuted, fontSize: 11, fontWeight: '700' }}>
                     {t('alarms.off')}
                   </Text>
                 </View>
               ) : null}
             </View>
 
-            <Text className="text-caption font-medium" style={{ color: theme.colors.inkSecondary }}>
-              {t(TIME_NODE_LABEL_KEY[schedule.time_node])} · {t('alarms.daily')}
+            <Text className="text-[13px] font-medium mt-0.5" style={{ color: theme.colors.inkSecondary }}>
+              {nodeLabel} · {t('alarms.daily')}
             </Text>
           </View>
         </View>
@@ -268,8 +263,8 @@ export function AlarmScheduleCard({
           value={isActive}
           onValueChange={(next) => onToggle(schedule, next)}
           trackColor={{
-            false: isDark ? 'rgba(255, 255, 255, 0.12)' : theme.colors.hairline,
-            true: theme.action.base,
+            false: isDark ? 'rgba(255, 255, 255, 0.12)' : '#E2E8F0',
+            true: isDark ? '#3B82F6' : '#395886',
           }}
           thumbColor="#FFFFFF"
           accessibilityLabel={
@@ -280,82 +275,97 @@ export function AlarmScheduleCard({
         />
       </View>
 
-      {/* Medication Regimen Info Section */}
-      <View className="mt-4 border-t pt-3" style={{ borderColor: isDark ? 'rgba(255, 255, 255, 0.06)' : theme.colors.hairline }}>
-        {schedule.title ? (
-          <Text
-            className="text-caption font-bold tracking-wider uppercase mb-0.5"
-            numberOfLines={1}
-            style={{ color: theme.action.base }}
-          >
-            {schedule.title}
-          </Text>
-        ) : null}
+      {/* Hairline Divider */}
+      <View
+        className="my-3.5 border-t"
+        style={{ borderColor: isDark ? 'rgba(255, 255, 255, 0.06)' : '#F1F5F9' }}
+      />
 
-        <View className="flex-row items-center justify-between">
+      {/* Medication Name & Delete Action Row */}
+      <View className="flex-row items-center justify-between">
+        <View className="flex-1 mr-2">
+          {schedule.title ? (
+            <Text
+              className="text-[12px] font-bold tracking-wider uppercase mb-0.5"
+              numberOfLines={1}
+              style={{ color: theme.action.base }}
+            >
+              {schedule.title}
+            </Text>
+          ) : null}
           <Text
-            className="text-title-md font-bold"
+            className="text-[17px] font-bold tracking-tight"
             numberOfLines={1}
-            style={{ color: theme.colors.ink, flex: 1 }}
+            style={{ color: theme.colors.ink }}
           >
             {schedule.medicationName}
           </Text>
-
-          {/* Delete Action Button */}
-          <Pressable
-            onPress={handleDeletePress}
-            accessibilityRole="button"
-            accessibilityLabel={t('alarms.deleteAlarm')}
-            className="items-center justify-center rounded-xl p-2 ml-2"
-            style={{
-              backgroundColor: isDark ? 'rgba(239, 68, 68, 0.1)' : 'rgba(239, 68, 68, 0.08)',
-            }}
-          >
-            <Trash2 color={theme.statusText('missed')} size={15} strokeWidth={2.2} />
-          </Pressable>
         </View>
-      </View>
 
-      {/* Bottom Info Pills: Dosage, Meal Guidance & Verification Tag */}
-      <View className="mt-3 flex-row flex-wrap items-center gap-2">
-        {/* Dose & Form chip */}
-        <View
-          className="flex-row items-center gap-1.5 rounded-full px-2.5 py-1 border"
+        {/* Delete Action Button */}
+        <Pressable
+          onPress={handleDeletePress}
+          accessibilityRole="button"
+          accessibilityLabel={t('alarms.deleteAlarm')}
+          className="items-center justify-center rounded-xl p-2"
           style={{
-            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : theme.colors.surface,
-            borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : theme.colors.hairline,
+            backgroundColor: isDark ? 'rgba(239, 68, 68, 0.16)' : '#FEF2F2',
           }}
         >
-          <FormIcon color={theme.colors.inkSecondary} size={12} strokeWidth={2.2} />
-          <Text className="text-caption font-medium" style={{ color: theme.colors.inkSecondary }}>
+          <Trash2 color={isDark ? '#F87171' : '#EF4444'} size={15} strokeWidth={2.0} />
+        </Pressable>
+      </View>
+
+      {/* Bottom Info Pills: Row 1 (Dose + Meal Guidance) */}
+      <View className="mt-2.5 flex-row flex-wrap items-center gap-2">
+        {/* Dose & Form chip */}
+        <View
+          className="flex-row items-center gap-1.5 rounded-full px-3 py-1 border"
+          style={{
+            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : '#FFFFFF',
+            borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : '#E2E8F0',
+          }}
+        >
+          <FormIcon color={isDark ? '#94A3B8' : '#475569'} size={13} strokeWidth={2.2} />
+          <Text className="text-[12.5px] font-semibold" style={{ color: isDark ? '#CBD5E1' : '#334155' }}>
             {schedule.dose_quantity} {schedule.medicationForm}
           </Text>
         </View>
 
-        {/* Meal guidance chip */}
+        {/* Meal guidance chip with Utensils icon */}
         <View
-          className="rounded-full px-2.5 py-1 border"
+          className="flex-row items-center gap-1.5 rounded-full px-3 py-1 border"
           style={{
-            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : theme.colors.surface,
-            borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : theme.colors.hairline,
+            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : '#FFFFFF',
+            borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : '#E2E8F0',
           }}
         >
-          <Text className="text-caption font-medium" style={{ color: theme.colors.inkSecondary }}>
+          <Utensils color={isDark ? '#94A3B8' : '#475569'} size={13} strokeWidth={2.2} />
+          <Text className="text-[12.5px] font-semibold" style={{ color: isDark ? '#CBD5E1' : '#334155' }}>
             {t(`alarms.mealRelation.${schedule.meal_relation}` as TranslationKey)}
           </Text>
         </View>
+      </View>
 
-        {/* Security verification tag (NFC or Camera) */}
-        <View className="flex-row items-center gap-1 rounded-full px-2.5 py-1" style={{ backgroundColor: confirmTint }}>
-          {schedule.nfcTagUid ? (
-            <Nfc color={confirmText} size={12} strokeWidth={2.5} />
-          ) : (
-            <Camera color={confirmText} size={12} strokeWidth={2.5} />
-          )}
-          <Text className="text-caption font-semibold" numberOfLines={1} style={{ color: confirmText }}>
-            {schedule.nfcTagUid ? t('alarms.nfcRegistered') : t('alarms.nfcFallback')}
-          </Text>
-        </View>
+      {/* Row 2: Verification Tag (Camera / NFC Confirm) */}
+      <View
+        className="mt-2 flex-row items-center gap-1.5 rounded-full px-3 py-1 self-start"
+        style={{
+          backgroundColor: isDark ? 'rgba(245, 158, 11, 0.16)' : '#FEF3C7',
+        }}
+      >
+        {schedule.nfcTagUid ? (
+          <Nfc color={isDark ? '#FBBF24' : '#B45309'} size={13} strokeWidth={2.2} />
+        ) : (
+          <Camera color={isDark ? '#FBBF24' : '#B45309'} size={13} strokeWidth={2.2} />
+        )}
+        <Text
+          className="text-[12px] font-semibold"
+          numberOfLines={1}
+          style={{ color: isDark ? '#FBBF24' : '#B45309' }}
+        >
+          {schedule.nfcTagUid ? t('alarms.nfcRegistered') : t('alarms.nfcFallback')}
+        </Text>
       </View>
     </View>
   );
