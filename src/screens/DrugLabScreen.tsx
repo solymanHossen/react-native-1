@@ -3,11 +3,16 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, Image, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ManualMedicationSheet, type ManualMedicationInput, type ManualMedicationSheetRef } from '../components/medications/ManualMedicationSheet';
+import {
+  ManualMedicationSheet,
+  type ManualMedicationInput,
+  type ManualMedicationSaveResult,
+  type ManualMedicationSheetRef,
+} from '../components/medications/ManualMedicationSheet';
 import { MedicationDetailsSheet, type MedicationDetailsSheetRef } from '../components/medications/MedicationDetailsSheet';
 import { MedicationHistorySheet, type MedicationHistorySheetRef } from '../components/medications/MedicationHistorySheet';
 import { DOSAGE_FORM_ASSETS } from '../components/dashboard';
-import { cancelAlarm } from '../alarms';
+import { cancelAlarm, rescheduleAllActiveAlarms } from '../alarms';
 import { DuplicateMedicationError, initializeDatabase, type DrugConflict, type DrugSearchResult, type Medication, type MediusDatabase, type Schedule } from '../db';
 import { useTranslation } from '../i18n';
 import { triggerHaptic } from '../lib/haptics';
@@ -378,7 +383,6 @@ export default function DrugLabScreen() {
   const [addedName, setAddedName] = useState<string | null>(null);
   const [addedConflicts, setAddedConflicts] = useState<DrugConflict[] | null>(null);
   const [duplicateName, setDuplicateName] = useState<string | null>(null);
-  const [manualAddedName, setManualAddedName] = useState<string | null>(null);
   const [removeError, setRemoveError] = useState<string | null>(null);
   const manualSheetRef = useRef<ManualMedicationSheetRef>(null);
   const detailsSheetRef = useRef<MedicationDetailsSheetRef>(null);
@@ -438,7 +442,6 @@ export default function DrugLabScreen() {
       setAddedName(null);
       setAddedConflicts(null);
       setDuplicateName(null);
-      setManualAddedName(null);
       try {
         const database = await initializeDatabase();
         await database.medications.create({
@@ -482,16 +485,15 @@ export default function DrugLabScreen() {
   // interactions found" when no check actually ran would be a false
   // reassurance in a medical app, so this path gets its own honest
   // confirmation message instead of reusing the search-add conflict panel.
+  // Success/duplicate feedback lives inside the wizard's own Review/Added
+  // steps now (see ManualMedicationSheet) rather than an external banner —
+  // this just reports back whether the write succeeded.
   const addManualMedication = useCallback(
-    async (input: ManualMedicationInput) => {
-      if (!mediusDb) return;
-      setAddedName(null);
-      setAddedConflicts(null);
-      setDuplicateName(null);
-      setManualAddedName(null);
+    async (input: ManualMedicationInput): Promise<ManualMedicationSaveResult> => {
+      if (!mediusDb) return { ok: false };
       try {
         const database = await initializeDatabase();
-        await database.medications.create({
+        const medication = await database.medications.create({
           name: input.name,
           generic_id: null,
           strength: input.strength,
@@ -505,16 +507,29 @@ export default function DrugLabScreen() {
           course_start_date: input.courseStartDate,
           course_end_date: input.courseEndDate,
         });
-        triggerHaptic('notificationSuccess');
-        setManualAddedName(input.name);
+        if (input.setReminder) {
+          // A sensible default (morning, after food, every day) rather than
+          // making the wizard collect a time too — Alarms already lets this
+          // be refined once the medication exists.
+          await database.schedules.create({
+            medication_id: medication.id,
+            time_utc: '08:00',
+            time_node: 'BREAKFAST',
+            meal_relation: 'AFTER',
+            dose_quantity: 1,
+            days_of_week_mask: 127,
+            is_active: true,
+            title: null,
+          });
+          await rescheduleAllActiveAlarms();
+        }
         setQuery('');
         setResults([]);
         await refreshMedications(database);
+        return { ok: true };
       } catch (error) {
         if (error instanceof DuplicateMedicationError) {
-          triggerHaptic('notificationWarning');
-          setDuplicateName(input.name);
-          return;
+          return { ok: false, reason: 'duplicate' };
         }
         throw error;
       }
@@ -758,17 +773,6 @@ export default function DrugLabScreen() {
 
               <ManualMedicationButton onPress={() => manualSheetRef.current?.present(query.trim())} />
             </View>
-
-            {manualAddedName ? (
-              <View
-                className="gap-1 rounded-3xl border p-5"
-                style={{ backgroundColor: theme.colors.elevated, borderColor: theme.colors.hairline }}
-              >
-                <Text className="text-body-lg" style={{ color: theme.colors.ink, fontWeight: '700', fontSize: 16.5 }}>
-                  {t('medications.addedManually', { name: manualAddedName })}
-                </Text>
-              </View>
-            ) : null}
 
             {addedName ? (
               <View

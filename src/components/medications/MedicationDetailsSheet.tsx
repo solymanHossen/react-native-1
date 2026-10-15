@@ -1,8 +1,8 @@
 import { BottomSheetModal, BottomSheetScrollView, BottomSheetTextInput } from '@gorhom/bottom-sheet';
-import { CalendarDays, Clock3, History, Package, Pill, X } from 'lucide-react-native';
+import { CalendarDays, Camera, Clock3, History, ImagePlus, Package, Pill, X } from 'lucide-react-native';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Image, Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, Pressable, Text, View } from 'react-native';
 import { initializeDatabase, type Medication, type Schedule } from '../../db';
 import { runSentinelCheckForMedication } from '../../alarms/sentinel';
 import { useTranslation } from '../../i18n';
@@ -98,6 +98,23 @@ export const MedicationDetailsSheet = forwardRef<MedicationDetailsSheetRef, Medi
     }
   }, [medication, onMedicationUpdated, photoBusy]);
 
+  // One tappable photo + a floating camera badge, rather than two permanent
+  // "Take Photo"/"Choose Photo" buttons sitting under it always — Alert's
+  // native action sheet is the same pattern this screen already uses for
+  // "Remove medication" (see DrugLabScreen's remove confirm), so this isn't
+  // a new interaction style, just this card catching up to it.
+  const handleEditPhoto = useCallback(() => {
+    if (!medication || photoBusy) return;
+    Alert.alert(t('medications.photoActionTitle'), undefined, [
+      { text: t('medications.takePhoto'), onPress: () => choosePhoto('camera') },
+      { text: t('medications.choosePhoto'), onPress: () => choosePhoto('library') },
+      ...(medication.photo_uri
+        ? [{ text: t('medications.removePhoto'), style: 'destructive' as const, onPress: () => removePhoto() }]
+        : []),
+      { text: t('common.cancel'), style: 'cancel' as const },
+    ]);
+  }, [medication, photoBusy, t, choosePhoto, removePhoto]);
+
   const saveStock = useCallback(async () => {
     if (!medication || stockBusy) return;
     const units = Number(stockDraft.trim());
@@ -167,14 +184,31 @@ export const MedicationDetailsSheet = forwardRef<MedicationDetailsSheetRef, Medi
             </Pressable>
           </View>
 
-          <View className="gap-3 rounded-3xl border p-4" style={{ backgroundColor: theme.colors.elevated, borderColor: theme.colors.hairline }}>
-              <View className="overflow-hidden rounded-2xl" style={{ backgroundColor: theme.colors.surface }}>
+          <View className="gap-2 rounded-3xl border p-4" style={{ backgroundColor: theme.colors.elevated, borderColor: theme.colors.hairline }}>
+            <Pressable
+              onPress={handleEditPhoto}
+              disabled={photoBusy}
+              accessibilityRole="button"
+              accessibilityLabel={t('medications.editPhotoAccessibility')}
+            >
+              <View
+                className="overflow-hidden rounded-2xl"
+                style={{
+                  backgroundColor: theme.colors.surface,
+                  borderWidth: medication.photo_uri ? 0 : 1.5,
+                  borderStyle: 'dashed',
+                  borderColor: theme.colors.hairline,
+                }}
+              >
                 {medication.photo_uri ? (
-                  <Image source={{ uri: medication.photo_uri }} className="h-36 w-full" resizeMode="cover" accessibilityLabel={t('medications.photoPreview')} />
+                  <Image source={{ uri: medication.photo_uri }} className="h-40 w-full" resizeMode="cover" accessibilityLabel={t('medications.photoPreview')} />
                 ) : (
-                  <View className="h-28 items-center justify-center">
-                    <Pill color={theme.colors.inkMuted} size={30} />
-                    <Text className="mt-2 text-caption" style={{ color: theme.colors.inkMuted }}>{t('medications.photoEmpty')}</Text>
+                  <View className="h-36 items-center justify-center gap-2">
+                    <View className="items-center justify-center rounded-full" style={{ width: 48, height: 48, backgroundColor: `${theme.action.base}14` }}>
+                      <ImagePlus color={theme.action.base} size={24} strokeWidth={2.25} />
+                    </View>
+                    <Text className="text-body text-center font-semibold" style={{ color: theme.colors.ink }}>{t('medications.photoEmptyTitle')}</Text>
+                    <Text className="text-caption text-center px-6" style={{ color: theme.colors.inkMuted }}>{t('medications.photoEmptyHint')}</Text>
                   </View>
                 )}
                 {photoBusy ? (
@@ -183,24 +217,35 @@ export const MedicationDetailsSheet = forwardRef<MedicationDetailsSheetRef, Medi
                   </View>
                 ) : null}
               </View>
-              <View className="flex-row gap-3">
-                <Pressable onPress={() => choosePhoto('camera')} disabled={photoBusy} accessibilityRole="button" className="min-h-hit flex-1 items-center justify-center rounded-2xl" style={{ backgroundColor: theme.action.base }}>
-                  <Text className="text-body" style={{ color: theme.action.ink, fontWeight: '700' }}>{t('medications.takePhoto')}</Text>
-                </Pressable>
-                <Pressable onPress={() => choosePhoto('library')} disabled={photoBusy} accessibilityRole="button" className="min-h-hit flex-1 items-center justify-center rounded-2xl border" style={{ borderColor: theme.colors.hairline, backgroundColor: theme.colors.surface }}>
-                  <Text className="text-body" style={{ color: theme.colors.ink, fontWeight: '700' }}>{t('medications.choosePhoto')}</Text>
-                </Pressable>
-              </View>
+              {/* Floating edit badge — overlaps the preview's bottom-right corner like a
+                  profile-photo editor, so changing an existing photo doesn't need its own
+                  permanent row of buttons. Only once a photo exists: the empty dashed-box
+                  state already has its own big centered icon + "Add a photo" text, so a
+                  second camera badge there would be redundant — and sat right on top of
+                  the hint text at some widths, cutting it off. */}
               {medication.photo_uri ? (
-                <Pressable onPress={removePhoto} disabled={photoBusy} accessibilityRole="button" className="items-center py-1">
-                  <Text className="text-caption" style={{ color: theme.statusText('missed') }}>{t('medications.removePhoto')}</Text>
-                </Pressable>
+                <View
+                  pointerEvents="none"
+                  className="absolute items-center justify-center rounded-full"
+                  style={{
+                    right: 10,
+                    bottom: 10,
+                    width: 40,
+                    height: 40,
+                    backgroundColor: theme.action.base,
+                    borderWidth: 3,
+                    borderColor: theme.colors.elevated,
+                  }}
+                >
+                  <Camera color={theme.action.ink} size={18} strokeWidth={2.25} />
+                </View>
               ) : null}
-              {photoError ? (
-                <Text className="text-caption" style={{ color: theme.statusText('missed') }}>
-                  {t('medications.photoError')}
-                </Text>
-              ) : null}
+            </Pressable>
+            {photoError ? (
+              <Text className="text-caption" style={{ color: theme.statusText('missed') }}>
+                {t('medications.photoError')}
+              </Text>
+            ) : null}
           </View>
 
           <View className="flex-row gap-3">

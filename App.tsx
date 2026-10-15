@@ -14,7 +14,7 @@ import {
 } from '@gorhom/bottom-sheet';
 import { AlarmClock, Camera, ChevronRight, Ellipsis, HeartPulse, Home, Pill, Waves } from 'lucide-react-native';
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, type ComponentType } from 'react';
-import { Image, Pressable, StatusBar, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
+import { Image, LogBox, Pressable, StatusBar, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
@@ -34,6 +34,25 @@ import SettingsScreen from './src/screens/SettingsScreen';
 import { palette } from './src/theme/tokens';
 import { useTheme, useThemeMode } from './src/theme/useTheme';
 import './global.css';
+
+// Two warnings this app can't actually act on, both from third-party code and
+// both dev-only (LogBox doesn't exist in a release build, so neither ever
+// reaches a real user) — but both fire constantly and their LogBox
+// notification was intermittently eating taps meant for the screen below it:
+//  - @gorhom/bottom-sheet@5.2.14 (latest published version) still calls several
+//    Reanimated hooks with an explicit dependency array, which Reanimated 4's
+//    dev-only check now warns on even though the array is harmlessly ignored
+//    on native either way (the warning itself says so). Bottom sheets are
+//    used throughout this app, so this fires on practically every screen.
+//  - NativeWind's css-interop runtime touches RN's `ImageBackground` export at
+//    import time (to register `className` support for it) merely by
+//    importing `./global.css` below — regardless of whether this app ever
+//    renders one — which trips RN's own lazy-module deprecation warning for
+//    that component on every single launch.
+LogBox.ignoreLogs([
+  'Dependencies should only be used on the web and are always ignored on native',
+  'ImageBackground is deprecated',
+]);
 
 type Tab = 'home' | 'drugLab' | 'scanRx' | 'rhythm' | 'alarms' | 'vitals';
 
