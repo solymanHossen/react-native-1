@@ -8,7 +8,7 @@ import {
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import { ChartColumn, Check, ChevronRight, Clock, Droplet, Info, Moon, Package, Pencil, Phone, Pill, PillBottle, Plus, Sun, Sunrise, Sunset, Trash2, User, Utensils, X } from 'lucide-react-native';
+import { ChartColumn, Check, ChevronRight, Clock, Droplet, Info, MoonStar, Package, Pencil, Phone, Pill, PillBottle, Plus, Sun, Sunrise, Sunset, Trash2, User, Utensils, UtensilsCrossed, X } from 'lucide-react-native';
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, type ComponentType, type ElementRef } from 'react';
 import { ActivityIndicator, Image, Keyboard, Pressable, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -181,7 +181,7 @@ const TIME_SLOTS: TimeSlot[] = [
   { node: 'BREAKFAST', timeUtc: '08:00', labelKey: 'alarms.timeMorning', icon: Sunrise, depth: 0 },
   { node: 'LUNCH', timeUtc: '13:00', labelKey: 'alarms.timeAfternoon', icon: Sun, depth: 1 },
   { node: 'DINNER', timeUtc: '20:00', labelKey: 'alarms.timeEvening', icon: Sunset, depth: 2 },
-  { node: 'BEDTIME', timeUtc: '22:00', labelKey: 'alarms.timeBedtime', icon: Moon, depth: 3 },
+  { node: 'BEDTIME', timeUtc: '22:00', labelKey: 'alarms.timeBedtime', icon: MoonStar, depth: 3 },
 ];
 
 const MEAL_RELATIONS: Array<{ value: MealRelation; labelKey: TranslationKey }> = [
@@ -288,11 +288,29 @@ const ReminderSheet = forwardRef<ReminderSheetRef, {
       badgeBg: rt.slots.evening.badge,
     },
     BEDTIME: {
-      icon: Moon,
+      icon: MoonStar,
       iconColor: rt.slots.bedtime.icon,
       badgeBg: rt.slots.bedtime.badge,
     },
   }), [rt.slots]);
+
+  const mealStyles = useMemo(() => ({
+    BEFORE: {
+      icon: Utensils,
+      iconColor: rt.meals.before.icon,
+      badgeBg: rt.meals.before.badge,
+    },
+    WITH: {
+      icon: Utensils,
+      iconColor: rt.meals.with.icon,
+      badgeBg: rt.meals.with.badge,
+    },
+    AFTER: {
+      icon: UtensilsCrossed,
+      iconColor: rt.meals.after.icon,
+      badgeBg: rt.meals.after.badge,
+    },
+  }), [rt.meals]);
 
   useImperativeHandle(ref, () => ({
     present: (nextMedication) => {
@@ -454,9 +472,17 @@ const ReminderSheet = forwardRef<ReminderSheetRef, {
                 >
                   <View
                     className="items-center justify-center rounded-full"
-                    style={{ width: 38, height: 38, backgroundColor: style.badgeBg }}
+                    style={{
+                      width: 38,
+                      height: 38,
+                      backgroundColor: selected ? rt.primary : style.badgeBg,
+                    }}
                   >
-                    <SlotIcon color={style.iconColor} size={20} strokeWidth={2.2} />
+                    <SlotIcon
+                      color={selected ? rt.buttonInk : style.iconColor}
+                      size={20}
+                      strokeWidth={2.2}
+                    />
                   </View>
                   <View className="flex-1">
                     <Text
@@ -561,6 +587,8 @@ const ReminderSheet = forwardRef<ReminderSheetRef, {
           <View className="flex-row gap-3">
             {MEAL_RELATIONS.map((relation) => {
               const selected = mealRelation === relation.value;
+              const mStyle = mealStyles[relation.value as keyof typeof mealStyles] ?? mealStyles.WITH;
+              const MealIcon = mStyle.icon;
               return (
                 <Pressable
                   key={relation.value}
@@ -601,12 +629,12 @@ const ReminderSheet = forwardRef<ReminderSheetRef, {
                     style={{
                       width: 38,
                       height: 38,
-                      backgroundColor: selected ? rt.primary : rt.tint,
+                      backgroundColor: selected ? rt.primary : mStyle.badgeBg,
                       marginBottom: 8,
                     }}
                   >
-                    <Utensils
-                      color={selected ? rt.buttonInk : rt.primary}
+                    <MealIcon
+                      color={selected ? rt.buttonInk : mStyle.iconColor}
                       size={19}
                       strokeWidth={2.2}
                     />

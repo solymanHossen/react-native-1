@@ -443,6 +443,11 @@ export interface AlarmReminderTokens {
     evening: { icon: string; badge: string };
     bedtime: { icon: string; badge: string };
   };
+  meals: {
+    before: { icon: string; badge: string };
+    with: { icon: string; badge: string };
+    after: { icon: string; badge: string };
+  };
 }
 
 export interface ResolvedAlarmTokens {
@@ -574,6 +579,11 @@ export const alarmTokens = {
         evening: { icon: '#F97316', badge: '#FFEDD5' },
         bedtime: { icon: '#8B5CF6', badge: '#F5F3FF' },
       },
+      meals: {
+        before: { icon: '#059669', badge: '#DCFCE7' },
+        with: { icon: '#395886', badge: '#EEF4FB' },
+        after: { icon: '#7C3AED', badge: '#EDE9FE' },
+      },
     },
     dark: {
       primary: '#3B82F6',
@@ -593,6 +603,11 @@ export const alarmTokens = {
         afternoon: { icon: '#FBBF24', badge: 'rgba(245, 158, 11, 0.18)' },
         evening: { icon: '#FB923C', badge: 'rgba(249, 115, 22, 0.18)' },
         bedtime: { icon: '#C084FC', badge: 'rgba(139, 92, 246, 0.18)' },
+      },
+      meals: {
+        before: { icon: '#34D399', badge: 'rgba(16, 185, 129, 0.16)' },
+        with: { icon: '#60A5FA', badge: 'rgba(59, 130, 246, 0.16)' },
+        after: { icon: '#C084FC', badge: 'rgba(139, 92, 246, 0.18)' },
       },
     },
   },
