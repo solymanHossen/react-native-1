@@ -1,8 +1,8 @@
 # App Store Readiness Audit
 
-- Audit date: 2026-10-15T07:05:05.078Z
+- Audit date: 2026-10-15T07:39:12.212Z
 - Project version: 0.0.1
-- Environment: linux, Node v20.20.0
+- Environment: linux, Node v25.2.1
 - Current release gate: **FAIL**
 
 ## Automated checks

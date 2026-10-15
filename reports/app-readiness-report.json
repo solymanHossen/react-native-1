@@ -1,8 +1,8 @@
 {
-  "auditDate": "2026-10-15T07:05:05.078Z",
+  "auditDate": "2026-10-15T07:39:12.212Z",
   "projectVersion": "0.0.1",
   "runtime": {
-    "node": "v20.20.0",
+    "node": "v25.2.1",
     "platform": "linux",
     "iosBuildAvailable": false
   },
