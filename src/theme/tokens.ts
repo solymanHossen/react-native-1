@@ -424,6 +424,27 @@ export interface AlarmCardTokens {
   shadowOpacity: number;
 }
 
+export interface AlarmReminderTokens {
+  primary: string;
+  primaryLight: string;
+  tint: string;
+  border: string;
+  borderActive: string;
+  cardBg: string;
+  cardBgActive: string;
+  buttonBg: string;
+  buttonInk: string;
+  calloutBg: string;
+  calloutBorder: string;
+  calloutText: string;
+  slots: {
+    morning: { icon: string; badge: string };
+    afternoon: { icon: string; badge: string };
+    evening: { icon: string; badge: string };
+    bedtime: { icon: string; badge: string };
+  };
+}
+
 export interface ResolvedAlarmTokens {
   sun: AlarmSunTokens;
   moon: AlarmMoonTokens;
@@ -431,6 +452,7 @@ export interface ResolvedAlarmTokens {
   emergency: AlarmEmergencyTokens;
   banner: AlarmBannerTokens;
   card: AlarmCardTokens;
+  reminder: AlarmReminderTokens;
 }
 
 export const alarmTokens = {
@@ -532,6 +554,48 @@ export const alarmTokens = {
       shadowOpacity: 0.25,
     },
   },
+  reminder: {
+    light: {
+      primary: '#395886',
+      primaryLight: '#628ECB',
+      tint: '#EEF4FB',
+      border: '#D5DEEF',
+      borderActive: '#395886',
+      cardBg: '#FFFFFF',
+      cardBgActive: '#EEF4FB',
+      buttonBg: '#395886',
+      buttonInk: '#FFFFFF',
+      calloutBg: '#F0F3FA',
+      calloutBorder: '#D5DEEF',
+      calloutText: '#395886',
+      slots: {
+        morning: { icon: '#395886', badge: '#EEF4FB' },
+        afternoon: { icon: '#F59E0B', badge: '#FEF3C7' },
+        evening: { icon: '#F97316', badge: '#FFEDD5' },
+        bedtime: { icon: '#8B5CF6', badge: '#F5F3FF' },
+      },
+    },
+    dark: {
+      primary: '#3B82F6',
+      primaryLight: '#93C5FD',
+      tint: 'rgba(59, 130, 246, 0.16)',
+      border: 'rgba(255, 255, 255, 0.08)',
+      borderActive: '#3B82F6',
+      cardBg: 'rgba(31, 41, 55, 0.75)',
+      cardBgActive: 'rgba(59, 130, 246, 0.16)',
+      buttonBg: '#3B82F6',
+      buttonInk: '#FFFFFF',
+      calloutBg: 'rgba(31, 41, 55, 0.75)',
+      calloutBorder: 'rgba(255, 255, 255, 0.08)',
+      calloutText: '#94A3B8',
+      slots: {
+        morning: { icon: '#60A5FA', badge: 'rgba(59, 130, 246, 0.16)' },
+        afternoon: { icon: '#FBBF24', badge: 'rgba(245, 158, 11, 0.18)' },
+        evening: { icon: '#FB923C', badge: 'rgba(249, 115, 22, 0.18)' },
+        bedtime: { icon: '#C084FC', badge: 'rgba(139, 92, 246, 0.18)' },
+      },
+    },
+  },
 } as const;
 
 export function getAlarmTokens(mode: ThemeMode): ResolvedAlarmTokens {
@@ -542,6 +606,7 @@ export function getAlarmTokens(mode: ThemeMode): ResolvedAlarmTokens {
     emergency: alarmTokens.emergency[mode],
     banner: alarmTokens.banner[mode],
     card: alarmTokens.card[mode],
+    reminder: alarmTokens.reminder[mode],
   };
 }
 

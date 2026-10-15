@@ -263,36 +263,36 @@ const ReminderSheet = forwardRef<ReminderSheetRef, {
   const [showCustomPicker, setShowCustomPicker] = useState(false);
   const [mealRelation, setMealRelation] = useState<MealRelation>('WITH');
   const [customTitle, setCustomTitle] = useState('');
+  const [isTitleFocused, setIsTitleFocused] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const snapPoints = useMemo(() => ['88%'], []);
   const bottomPadding = Math.max(insets.bottom, 16) + 20;
-  const isDark = theme.mode === 'dark';
-  const primaryBlue = isDark ? '#3B82F6' : '#2563EB';
-  const tintBlue = isDark ? 'rgba(59, 130, 246, 0.14)' : '#EFF6FF';
+
+  const rt = theme.alarms.reminder;
 
   const slotStyles = useMemo(() => ({
     BREAKFAST: {
       icon: Sunrise,
-      iconColor: isDark ? '#60A5FA' : '#2563EB',
-      badgeBg: isDark ? 'rgba(59, 130, 246, 0.16)' : '#EBF5FF',
+      iconColor: rt.slots.morning.icon,
+      badgeBg: rt.slots.morning.badge,
     },
     LUNCH: {
       icon: Sun,
-      iconColor: theme.alarms.sun.icon,
-      badgeBg: theme.alarms.sun.badge,
+      iconColor: rt.slots.afternoon.icon,
+      badgeBg: rt.slots.afternoon.badge,
     },
     DINNER: {
       icon: Sunset,
-      iconColor: isDark ? '#FB923C' : '#F97316',
-      badgeBg: isDark ? 'rgba(249, 115, 22, 0.18)' : '#FFEDD5',
+      iconColor: rt.slots.evening.icon,
+      badgeBg: rt.slots.evening.badge,
     },
     BEDTIME: {
       icon: Moon,
-      iconColor: theme.alarms.moon.icon,
-      badgeBg: theme.alarms.moon.badge,
+      iconColor: rt.slots.bedtime.icon,
+      badgeBg: rt.slots.bedtime.badge,
     },
-  }), [isDark, theme.alarms.moon.badge, theme.alarms.moon.icon, theme.alarms.sun.badge, theme.alarms.sun.icon]);
+  }), [rt.slots]);
 
   useImperativeHandle(ref, () => ({
     present: (nextMedication) => {
@@ -391,9 +391,9 @@ const ReminderSheet = forwardRef<ReminderSheetRef, {
         <View className="flex-row items-center gap-3">
           <View
             className="items-center justify-center rounded-2xl"
-            style={{ width: 48, height: 48, backgroundColor: tintBlue }}
+            style={{ width: 48, height: 48, backgroundColor: rt.tint }}
           >
-            <FormIcon color={primaryBlue} size={24} strokeWidth={2.2} />
+            <FormIcon color={rt.primary} size={24} strokeWidth={2.2} />
           </View>
           <View className="flex-1">
             <Text className="text-title-lg font-bold" numberOfLines={1} style={{ color: theme.colors.ink, fontSize: 20 }}>
@@ -443,11 +443,12 @@ const ReminderSheet = forwardRef<ReminderSheetRef, {
                   accessibilityState={{ selected }}
                   className="min-h-hit flex-row items-center gap-2.5 rounded-2xl border"
                   style={{
+                    position: 'relative',
                     width: '48.5%',
                     paddingVertical: 12,
                     paddingHorizontal: 12,
-                    backgroundColor: selected ? tintBlue : theme.colors.elevated,
-                    borderColor: selected ? primaryBlue : theme.colors.hairline,
+                    backgroundColor: selected ? rt.cardBgActive : rt.cardBg,
+                    borderColor: selected ? rt.borderActive : rt.border,
                     borderWidth: selected ? 2 : 1,
                   }}
                 >
@@ -474,9 +475,16 @@ const ReminderSheet = forwardRef<ReminderSheetRef, {
                   {selected ? (
                     <View
                       className="items-center justify-center rounded-full"
-                      style={{ width: 20, height: 20, backgroundColor: primaryBlue }}
+                      style={{
+                        position: 'absolute',
+                        top: 7,
+                        right: 7,
+                        width: 18,
+                        height: 18,
+                        backgroundColor: rt.primary,
+                      }}
                     >
-                      <Check color="#FFFFFF" size={12} strokeWidth={3} />
+                      <Check color={rt.buttonInk} size={11} strokeWidth={3.5} />
                     </View>
                   ) : null}
                 </Pressable>
@@ -497,8 +505,8 @@ const ReminderSheet = forwardRef<ReminderSheetRef, {
             style={{
               paddingVertical: 12,
               paddingHorizontal: 14,
-              backgroundColor: customTime ? tintBlue : theme.colors.elevated,
-              borderColor: customTime ? primaryBlue : theme.colors.hairline,
+              backgroundColor: customTime ? rt.cardBgActive : rt.cardBg,
+              borderColor: customTime ? rt.borderActive : rt.border,
               borderWidth: customTime ? 2 : 1,
               marginTop: 2,
             }}
@@ -508,11 +516,11 @@ const ReminderSheet = forwardRef<ReminderSheetRef, {
               style={{
                 width: 38,
                 height: 38,
-                backgroundColor: customTime ? primaryBlue : (isDark ? 'rgba(59, 130, 246, 0.16)' : '#EFF6FF'),
+                backgroundColor: customTime ? rt.primary : rt.tint,
               }}
             >
               <Clock
-                color={customTime ? '#FFFFFF' : primaryBlue}
+                color={customTime ? rt.buttonInk : rt.primary}
                 size={20}
                 strokeWidth={2.2}
               />
@@ -534,9 +542,9 @@ const ReminderSheet = forwardRef<ReminderSheetRef, {
             {customTime ? (
               <View
                 className="items-center justify-center rounded-full"
-                style={{ width: 22, height: 22, backgroundColor: primaryBlue }}
+                style={{ width: 22, height: 22, backgroundColor: rt.primary }}
               >
-                <Check color="#FFFFFF" size={13} strokeWidth={3} />
+                <Check color={rt.buttonInk} size={13} strokeWidth={3} />
               </View>
             ) : null}
           </Pressable>
@@ -568,8 +576,8 @@ const ReminderSheet = forwardRef<ReminderSheetRef, {
                     position: 'relative',
                     paddingVertical: 14,
                     paddingHorizontal: 6,
-                    backgroundColor: selected ? tintBlue : theme.colors.elevated,
-                    borderColor: selected ? primaryBlue : theme.colors.hairline,
+                    backgroundColor: selected ? rt.cardBgActive : rt.cardBg,
+                    borderColor: selected ? rt.borderActive : rt.border,
                     borderWidth: selected ? 2 : 1,
                   }}
                 >
@@ -582,10 +590,10 @@ const ReminderSheet = forwardRef<ReminderSheetRef, {
                         right: 6,
                         width: 18,
                         height: 18,
-                        backgroundColor: primaryBlue,
+                        backgroundColor: rt.primary,
                       }}
                     >
-                      <Check color="#FFFFFF" size={11} strokeWidth={3.5} />
+                      <Check color={rt.buttonInk} size={11} strokeWidth={3.5} />
                     </View>
                   ) : null}
                   <View
@@ -593,12 +601,12 @@ const ReminderSheet = forwardRef<ReminderSheetRef, {
                     style={{
                       width: 38,
                       height: 38,
-                      backgroundColor: selected ? primaryBlue : (isDark ? 'rgba(59, 130, 246, 0.16)' : '#EFF6FF'),
+                      backgroundColor: selected ? rt.primary : rt.tint,
                       marginBottom: 8,
                     }}
                   >
                     <Utensils
-                      color={selected ? '#FFFFFF' : primaryBlue}
+                      color={selected ? rt.buttonInk : rt.primary}
                       size={19}
                       strokeWidth={2.2}
                     />
@@ -623,20 +631,22 @@ const ReminderSheet = forwardRef<ReminderSheetRef, {
           <View
             className="flex-row items-center gap-2.5 rounded-xl px-3.5 py-2.5"
             style={{
-              backgroundColor: tintBlue,
+              backgroundColor: rt.calloutBg,
+              borderColor: rt.calloutBorder,
+              borderWidth: 1,
               marginTop: 2,
             }}
           >
             <View
               className="items-center justify-center rounded-full"
-              style={{ width: 18, height: 18, backgroundColor: primaryBlue }}
+              style={{ width: 18, height: 18, backgroundColor: rt.primary }}
             >
-              <Info color="#FFFFFF" size={12} strokeWidth={2.5} />
+              <Info color={rt.buttonInk} size={12} strokeWidth={2.5} />
             </View>
             <Text
               style={{
                 flex: 1,
-                color: isDark ? '#93C5FD' : '#2563EB',
+                color: rt.calloutText,
                 fontSize: 12,
                 fontWeight: '500',
                 lineHeight: 16,
@@ -656,14 +666,17 @@ const ReminderSheet = forwardRef<ReminderSheetRef, {
             className="flex-row items-center rounded-2xl border px-3.5"
             style={{
               height: 48,
-              backgroundColor: theme.colors.elevated,
-              borderColor: theme.colors.hairline,
+              backgroundColor: rt.cardBg,
+              borderColor: isTitleFocused ? rt.borderActive : rt.border,
+              borderWidth: isTitleFocused ? 1.5 : 1,
             }}
           >
-            <Pencil color={theme.colors.inkMuted} size={18} strokeWidth={2} />
+            <Pencil color={isTitleFocused ? rt.primary : theme.colors.inkMuted} size={18} strokeWidth={2} />
             <BottomSheetTextInput
               value={customTitle}
               onChangeText={setCustomTitle}
+              onFocus={() => setIsTitleFocused(true)}
+              onBlur={() => setIsTitleFocused(false)}
               placeholder={t('alarms.customTitlePlaceholder')}
               placeholderTextColor={theme.colors.inkMuted}
               maxLength={60}
@@ -697,17 +710,17 @@ const ReminderSheet = forwardRef<ReminderSheetRef, {
           className="min-h-hit flex-row items-center justify-center gap-2 rounded-2xl"
           style={{
             height: 52,
-            backgroundColor: primaryBlue,
+            backgroundColor: rt.buttonBg,
             opacity: submitting ? 0.7 : 1,
             marginTop: 4,
           }}
         >
           {submitting ? (
-            <ActivityIndicator color="#FFFFFF" />
+            <ActivityIndicator color={rt.buttonInk} />
           ) : (
             <>
-              <Clock color="#FFFFFF" size={20} strokeWidth={2.2} />
-              <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '700' }}>
+              <Clock color={rt.buttonInk} size={20} strokeWidth={2.2} />
+              <Text style={{ color: rt.buttonInk, fontSize: 16, fontWeight: '700' }}>
                 {t('alarms.addReminder')}
               </Text>
             </>
