@@ -20,8 +20,8 @@
         </shape>
     </item>
     <item
-        android:drawable="@drawable/splash_brand"
+        android:drawable="@drawable/splash_icon"
         android:gravity="center"
-        android:width="251dp"
-        android:height="249dp" />
+        android:width="160dp"
+        android:height="160dp" />
 </layer-list>
