@@ -154,8 +154,7 @@ export const MedicationDetailsSheet = forwardRef<MedicationDetailsSheetRef, Medi
     },
   }), [loadDetails]);
 
-  if (!medication) return null;
-  const FormIcon = medication.form === 'tablet' || medication.form === 'capsule' ? Pill : Package;
+  const FormIcon = medication?.form === 'tablet' || medication?.form === 'capsule' ? Pill : Package;
 
   return (
     <BottomSheetModal
@@ -164,7 +163,8 @@ export const MedicationDetailsSheet = forwardRef<MedicationDetailsSheetRef, Medi
       backgroundStyle={{ backgroundColor: theme.colors.surface }}
       handleIndicatorStyle={{ backgroundColor: theme.colors.hairline }}
     >
-      <BottomSheetScrollView contentContainerStyle={{ paddingBottom: 36 }} showsVerticalScrollIndicator={false}>
+      {medication ? (
+        <BottomSheetScrollView contentContainerStyle={{ paddingBottom: 36 }} showsVerticalScrollIndicator={false}>
         <View className="gap-5 px-6">
           <View className="flex-row items-start gap-4">
             <View className="items-center justify-center rounded-2xl" style={{ width: 52, height: 52, backgroundColor: `${theme.action.base}18` }}>
@@ -338,6 +338,7 @@ export const MedicationDetailsSheet = forwardRef<MedicationDetailsSheetRef, Medi
           </View>
         </View>
       </BottomSheetScrollView>
+      ) : null}
     </BottomSheetModal>
   );
 });

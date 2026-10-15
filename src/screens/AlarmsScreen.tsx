@@ -159,7 +159,7 @@ function formatTimeLabel(timeUtc: string): string {
   return `${displayHour}:${minutes.toString().padStart(2, '0')} ${period}`;
 }
 
-function medicationFormIcon(form: Medication['form']) {
+function medicationFormIcon(form?: Medication['form']) {
   return form === 'tablet' || form === 'capsule' ? Pill : form === 'syrup' || form === 'drop' ? Droplet : Package;
 }
 
@@ -385,8 +385,7 @@ const ReminderSheet = forwardRef<ReminderSheetRef, {
     [],
   );
 
-  if (!medication) return null;
-  const FormIcon = medicationFormIcon(medication.form);
+  const FormIcon = medicationFormIcon(medication?.form);
 
   return (
     <BottomSheetModal
@@ -401,10 +400,11 @@ const ReminderSheet = forwardRef<ReminderSheetRef, {
       backgroundStyle={{ backgroundColor: theme.colors.surface }}
       handleIndicatorStyle={{ backgroundColor: theme.colors.hairline, width: 36, height: 4 }}
     >
-      <BottomSheetScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 6, paddingBottom: bottomPadding, gap: 18 }}
-      >
+      {medication ? (
+        <BottomSheetScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 6, paddingBottom: bottomPadding, gap: 18 }}
+        >
         {/* Header: Icon badge, Title, Med details & quote, Close button */}
         <View className="flex-row items-center gap-3">
           <View
@@ -754,7 +754,8 @@ const ReminderSheet = forwardRef<ReminderSheetRef, {
             </>
           )}
         </Pressable>
-      </BottomSheetScrollView>
+        </BottomSheetScrollView>
+      ) : null}
     </BottomSheetModal>
   );
 });
