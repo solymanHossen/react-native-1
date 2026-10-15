@@ -40,12 +40,30 @@
 -keep class com.shopify.reactnative.skia.** { *; }
 -dontwarn com.shopify.reactnative.skia.**
 
-# ML Kit Text Recognition
--keep class com.google.mlkit.vision.** { *; }
--dontwarn com.google.mlkit.vision.**
+# App classes
+-keep class com.myapp.** { *; }
+
+# ML Kit (Text Recognition & Barcode & Common DI)
+-keep class com.google.mlkit.** { *; }
+-keep class com.google.android.gms.internal.mlkit_** { *; }
+-keep class * implements com.google.firebase.components.ComponentRegistrar { *; }
+-dontwarn com.google.mlkit.**
+-dontwarn com.google.android.gms.internal.mlkit_**
 
 # react-native-html-to-pdf / PDFBox
 -keep class com.tom_roush.pdfbox.** { *; }
 -dontwarn com.tom_roush.pdfbox.**
 -dontwarn com.gemalto.jp2.JP2Decoder
+
+# AndroidX WorkManager & Room & Startup (used by Notifee and Background Tasks)
+-keep class androidx.work.** { *; }
+-keep class androidx.work.impl.** { *; }
+-keep class * extends androidx.work.ListenableWorker { *; }
+-keep class androidx.room.** { *; }
+-keep class * extends androidx.room.RoomDatabase { *; }
+-keep class androidx.startup.** { *; }
+-dontwarn androidx.work.**
+-dontwarn androidx.room.**
+-dontwarn androidx.startup.**
+
 
