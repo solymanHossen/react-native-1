@@ -14,6 +14,8 @@
     "audit:report": "node scripts/merge-reports.mjs",
     "audit": "npm run audit:policy; npm run audit:secrets; npm run audit:dependencies; npm run audit:report",
     "test": "jest",
+    "build:apk": "cd android && ./gradlew assembleRelease",
+    "build:apk:debug": "cd android && ./gradlew assembleDebug",
     "postinstall": "patch-package"
   },
   "dependencies": {

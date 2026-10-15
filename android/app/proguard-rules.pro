@@ -44,3 +44,8 @@
 -keep class com.google.mlkit.vision.** { *; }
 -dontwarn com.google.mlkit.vision.**
 
+# react-native-html-to-pdf / PDFBox
+-keep class com.tom_roush.pdfbox.** { *; }
+-dontwarn com.tom_roush.pdfbox.**
+-dontwarn com.gemalto.jp2.JP2Decoder
+

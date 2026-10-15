@@ -108,7 +108,8 @@ android {
         }
         release {
             // Configured through CI/CD environment or gradle.properties (MYAPP_UPLOAD_STORE_FILE)
-            signingConfig signingConfigs.release
+            // Falls back to debug signing when upload store file is not configured so test APKs are installable
+            signingConfig (project.hasProperty('MYAPP_UPLOAD_STORE_FILE') ? signingConfigs.release : signingConfigs.debug)
             manifestPlaceholders = [usesCleartextTraffic: "false"]
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
