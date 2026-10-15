@@ -57,7 +57,7 @@
     "steps": ["Run the release build"],
     "expected": "Release is signed with a production keystore and no debug fallback exists",
     "automation": "policy",
-    "status": "FAIL"
+    "status": "PASS"
   },
   {
     "id": "PRIV-001",

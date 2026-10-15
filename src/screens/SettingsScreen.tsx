@@ -1,4 +1,4 @@
-import { ArrowLeft, Check, Globe, Info, Monitor, Moon, Play, Sun, Volume2 } from 'lucide-react-native';
+import { ArrowLeft, Check, Globe, Info, Monitor, Moon, Play, ShieldAlert, Sun, Volume2 } from 'lucide-react-native';
 import { Pressable, ScrollView, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useVoicePreferenceStore } from '../alarms';
@@ -305,6 +305,40 @@ export default function SettingsScreen({ onBack }: SettingsScreenProps) {
               {t('settings.testVoice')}
             </Text>
           </Pressable>
+        </View>
+
+        {/* Mandatory Medical Disclaimer Card */}
+        <View
+          className="rounded-[26px] border p-5 shadow-sm"
+          style={{
+            backgroundColor: theme.alarms.card.bg,
+            borderColor: theme.alarms.card.border,
+            shadowColor: theme.alarms.card.shadowColor,
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: theme.alarms.card.shadowOpacity,
+            shadowRadius: 8,
+            elevation: 1,
+          }}
+        >
+          <View className="flex-row items-center gap-3.5 mb-2.5">
+            <View
+              className="h-11 w-11 items-center justify-center rounded-2xl"
+              style={{ backgroundColor: isDark ? 'rgba(239, 68, 68, 0.15)' : '#FEE2E2' }}
+            >
+              <ShieldAlert color={isDark ? '#F87171' : '#DC2626'} size={22} strokeWidth={2.2} />
+            </View>
+            <View className="flex-1">
+              <Text className="text-[17px] font-bold tracking-tight" style={{ color: theme.alarms.card.title }}>
+                {t('settings.medicalDisclaimerTitle')}
+              </Text>
+            </View>
+          </View>
+          <Text
+            className="text-[13px] font-medium leading-[19px]"
+            style={{ color: theme.alarms.card.subtitle }}
+          >
+            {t('settings.medicalDisclaimerText')}
+          </Text>
         </View>
       </ScrollView>
     </SafeAreaView>

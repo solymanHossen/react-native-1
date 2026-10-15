@@ -15,10 +15,14 @@ import com.facebook.react.HeadlessJsTaskService
 class AlarmBootReceiver : BroadcastReceiver() {
   override fun onReceive(context: Context, intent: Intent) {
     if (intent.action == Intent.ACTION_BOOT_COMPLETED) {
-      // Kotlin resolves an inherited companion member only through the
-      // class that actually declares it, not through the subclass name.
-      HeadlessJsTaskService.acquireWakeLockNow(context)
-      context.startService(Intent(context, AlarmRescheduleService::class.java))
+      try {
+        // Kotlin resolves an inherited companion member only through the
+        // class that actually declares it, not through the subclass name.
+        HeadlessJsTaskService.acquireWakeLockNow(context)
+        context.startService(Intent(context, AlarmRescheduleService::class.java))
+      } catch (e: Exception) {
+        android.util.Log.w("AlarmBootReceiver", "Unable to start AlarmRescheduleService on boot: ${e.message}")
+      }
     }
   }
 }

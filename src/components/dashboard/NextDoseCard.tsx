@@ -1,20 +1,19 @@
-import { Check, Clock, Droplets, Info, Sparkles, Utensils, type LucideIcon } from 'lucide-react-native';
-import { useEffect, useMemo, type ComponentType } from 'react';
-import { Image, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Check, Clock, Info, Sparkles, Utensils } from 'lucide-react-native';
+import { useEffect, useMemo } from 'react';
+import { Image, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, {
   Easing,
   useAnimatedStyle,
   useSharedValue,
   withRepeat,
   withSequence,
-  withSpring,
   withTiming,
 } from 'react-native-reanimated';
-import type { DosageForm, MealRelation } from '../../db/types';
+import type { DosageForm } from '../../db/types';
 import { useTranslation, type TranslationKey } from '../../i18n';
 import { triggerHaptic } from '../../lib/haptics';
 import type { IntakeQueueItem, IntakeQueueStatus } from '../../store';
-import { status as statusTokens, type StatusKey } from '../../theme/tokens';
+import { type StatusKey } from '../../theme/tokens';
 import { useTheme } from '../../theme/useTheme';
 import { GlassCard } from '../ui/GlassCard';
 import { LargeTextButton } from '../ui/LargeTextButton';
@@ -276,7 +275,7 @@ export function NextDoseCard({
   dose,
   totalScheduledToday = 0,
   onMarkTaken,
-  onPressCard,
+  onPressCard: _onPressCard,
   style,
   testID,
 }: NextDoseCardProps) {

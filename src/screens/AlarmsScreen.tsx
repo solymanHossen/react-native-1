@@ -7,10 +7,9 @@ import {
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import { ChartColumn, Check, ChevronRight, Clock, Droplet, Moon, Package, Pencil, Phone, Pill, PillBottle, Plus, ShieldAlert, Sun, Sunrise, Sunset, Trash2, User, X } from 'lucide-react-native';
+import { ChartColumn, Check, ChevronRight, Clock, Droplet, Moon, Package, Phone, Pill, PillBottle, Plus, Sun, Sunrise, Sunset, Trash2, User, X } from 'lucide-react-native';
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, type ComponentType, type ElementRef } from 'react';
 import { ActivityIndicator, Image, Keyboard, Pressable, Text, View } from 'react-native';
-import Svg, { Path as SvgPath } from 'react-native-svg';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AlarmScheduleCard, AlarmsEmptyState, AlarmsHeroSummary, EmergencyContactCard, maskPhone } from '../components/alarms';
 import { LargeTextButton } from '../components/ui';

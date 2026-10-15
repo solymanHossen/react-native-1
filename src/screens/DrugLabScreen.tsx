@@ -1,4 +1,4 @@
-import { BookOpen, Calendar, ChevronRight, Clock, Plus, Search, TriangleAlert, X } from 'lucide-react-native';
+import { BookOpen, Calendar, ChevronRight, Clock, Plus, Search, TriangleAlert } from 'lucide-react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, Image, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
@@ -41,12 +41,12 @@ function worstConflictSeverity(conflicts: DrugConflict[]): DrugConflict['severit
 function MedicationRow({
   medication,
   schedules = [],
-  onRemove,
+  onRemove: _onRemove,
   onOpen,
 }: {
   medication: Medication;
   schedules?: Schedule[];
-  onRemove: () => void;
+  onRemove?: () => void;
   onOpen: () => void;
 }) {
   const theme = useTheme();

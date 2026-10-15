@@ -1,27 +1,6 @@
-import { Check, ChevronRight, Clock, Droplets, FileText, Heart, HeartPulse, RefreshCw, Settings } from 'lucide-react-native';
+import { ChevronRight, Droplets, FileText, Heart, HeartPulse, RefreshCw, Settings } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Image, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
-
-/**
- * Improved clinical check icon chip for action buttons:
- * Solid/frosted circular badge with a bold crisp checkmark inside.
- */
-function ActionCheckIcon({ color = '#FFFFFF' }: { color?: string; size?: number }) {
-  return (
-    <View
-      style={{
-        width: 22,
-        height: 22,
-        borderRadius: 11,
-        backgroundColor: color === '#FFFFFF' ? 'rgba(255, 255, 255, 0.22)' : `${color}18`,
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
-      <Check size={14} color={color} strokeWidth={3} />
-    </View>
-  );
-}
+import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   Extrapolation,
@@ -34,7 +13,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { HealthRecordsSheet, type HealthRecordsSheetRef } from '../components/records/HealthRecordsSheet';
 import { LiquidProgressRing, NextDoseCard, TodayStatusCard } from '../components/dashboard';
-import { ActionRow, ActionRowGroup, AmbientDepthBackground, AppLogo, GlassCard, LargeTextButton, MetricCard, StatusPill } from '../components/ui';
+import { ActionRow, ActionRowGroup, AmbientDepthBackground, AppLogo, GlassCard, MetricCard } from '../components/ui';
 import { useTranslation, type TranslationKey } from '../i18n';
 import { triggerHaptic } from '../lib/haptics';
 import { generateClinicalReportPdf, shareClinicalReportPdf } from '../reports/pdfService';
@@ -80,12 +59,6 @@ function greetingKeyForHour(hour: number): TranslationKey {
   return 'home.greetingEvening';
 }
 
-function formatTimeLabel(timeUtc: string): string {
-  const [hours, minutes] = timeUtc.split(':').map(Number);
-  const period = hours >= 12 ? 'PM' : 'AM';
-  const displayHour = hours % 12 === 0 ? 12 : hours % 12;
-  return `${displayHour}:${minutes.toString().padStart(2, '0')} ${period}`;
-}
 
 function hoursAgoLabel(iso: string, t: ReturnType<typeof useTranslation>['t']): string {
   const hours = Math.round((Date.now() - new Date(iso).getTime()) / (1000 * 60 * 60));

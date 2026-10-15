@@ -13,12 +13,13 @@ import {
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
 import { AlarmClock, Camera, ChevronRight, Ellipsis, HeartPulse, Home, Pill, Waves } from 'lucide-react-native';
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, type ComponentType } from 'react';
-import { Image, LogBox, Pressable, StatusBar, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState, type ComponentType } from 'react';
+import { BackHandler, Image, LogBox, Pressable, StatusBar, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { initializeAlarmSystem } from './src/alarms';
+import { ErrorBoundary } from './src/components/ui';
 import { useTranslation, type TranslationKey } from './src/i18n';
 import { triggerHaptic } from './src/lib/haptics';
 import AlarmScreen from './src/screens/AlarmScreen';
@@ -55,8 +56,6 @@ LogBox.ignoreLogs([
 ]);
 
 type Tab = 'home' | 'drugLab' | 'scanRx' | 'rhythm' | 'alarms' | 'vitals';
-
-const TAB_ORDER: Tab[] = ['home', 'drugLab', 'scanRx', 'rhythm', 'alarms', 'vitals'];
 
 // Apple HIG and Material Design both call for the same fix once a tab bar
 // passes 5 items: keep the most-used destinations as direct tabs and fold
@@ -450,37 +449,54 @@ function App() {
     ]).finally(() => setStoresReady(true));
   }, []);
 
+  useEffect(() => {
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (settingsOpen) {
+        setSettingsOpen(false);
+        return true;
+      }
+      if (tab !== 'home') {
+        setTab('home');
+        return true;
+      }
+      return false;
+    });
+    return () => subscription.remove();
+  }, [settingsOpen, tab]);
+
   return (
     // GestureHandlerRootView wraps the whole app, not just the screen that
     // uses it: react-native-gesture-handler (a @gorhom/bottom-sheet peer
     // dependency) requires exactly one root-level wrapper, and it has to be
     // an ancestor of every gesture-handling view, not a per-screen concern.
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: palette[mode].canvas }}>
-      <SafeAreaProvider>
-        <BottomSheetModalProvider>
-          {activeAlarm ? (
-            // A fired alarm takes over the whole app — no tab bar, no way
-            // back to the normal screens except resolving it
-            <>
-              <StatusBar barStyle="light-content" />
-              <AlarmScreen alarm={activeAlarm} />
-            </>
-          ) : (
-            <>
-              <StatusBar barStyle={mode === 'dark' ? 'light-content' : 'dark-content'} />
-              {settingsOpen ? (
-                <SettingsScreen onBack={() => setSettingsOpen(false)} />
-              ) : (
-                <>
-                  <FadingScreen tab={tab} onNavigate={handleNavigate} onOpenSettings={() => setSettingsOpen(true)} vitalsFocus={vitalsFocus} />
-                  <BottomTabBar tab={tab} onChange={(nextTab) => handleNavigate(nextTab)} />
-                </>
-              )}
-            </>
-          )}
-        </BottomSheetModalProvider>
-        {splashMounted ? <BootSplash visible={!bootDone} onHidden={() => setSplashMounted(false)} /> : null}
-      </SafeAreaProvider>
+      <ErrorBoundary>
+        <SafeAreaProvider>
+          <BottomSheetModalProvider>
+            {activeAlarm ? (
+              // A fired alarm takes over the whole app — no tab bar, no way
+              // back to the normal screens except resolving it
+              <>
+                <StatusBar barStyle="light-content" />
+                <AlarmScreen alarm={activeAlarm} />
+              </>
+            ) : (
+              <>
+                <StatusBar barStyle={mode === 'dark' ? 'light-content' : 'dark-content'} />
+                {settingsOpen ? (
+                  <SettingsScreen onBack={() => setSettingsOpen(false)} />
+                ) : (
+                  <>
+                    <FadingScreen tab={tab} onNavigate={handleNavigate} onOpenSettings={() => setSettingsOpen(true)} vitalsFocus={vitalsFocus} />
+                    <BottomTabBar tab={tab} onChange={(nextTab) => handleNavigate(nextTab)} />
+                  </>
+                )}
+              </>
+            )}
+          </BottomSheetModalProvider>
+          {splashMounted ? <BootSplash visible={!bootDone} onHidden={() => setSplashMounted(false)} /> : null}
+        </SafeAreaProvider>
+      </ErrorBoundary>
     </GestureHandlerRootView>
   );
 }

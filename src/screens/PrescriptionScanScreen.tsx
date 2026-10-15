@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import RNFS from 'react-native-fs';
 import TextRecognition, { TextRecognitionScript } from '@react-native-ml-kit/text-recognition';
 import type { PhotoFile } from 'react-native-vision-camera';
 import { PrescriptionCameraView } from '../components/camera/PrescriptionCameraView';
@@ -76,7 +77,7 @@ export default function PrescriptionScanScreen() {
   const [lastConfirmedCount, setLastConfirmedCount] = useState<number | null>(null);
   const [skippedDuplicateCount, setSkippedDuplicateCount] = useState(0);
 
-  const processImageFile = useCallback(async (rawFilePath: string) => {
+  const processImageFile = useCallback(async (rawFilePath: string, isTemporaryCameraCapture = false) => {
     setProcessing(true);
     setError(null);
     setLastConfirmedCount(null);
@@ -99,12 +100,17 @@ export default function PrescriptionScanScreen() {
       setError(caughtError instanceof Error ? caughtError.message : String(caughtError));
     } finally {
       setProcessing(false);
+      // Clean up camera temporary file so sensitive patient health info doesn't linger in cache
+      if (isTemporaryCameraCapture && rawFilePath) {
+        const cleanPath = rawFilePath.replace(/^file:\/\//, '');
+        RNFS.unlink(cleanPath).catch(() => {});
+      }
     }
   }, [t]);
 
   const handleCapture = useCallback(
     (photo: PhotoFile) => {
-      processImageFile(photo.path);
+      processImageFile(photo.path, true);
     },
     [processImageFile],
   );

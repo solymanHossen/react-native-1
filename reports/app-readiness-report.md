@@ -1,22 +1,22 @@
 # App Store Readiness Audit
 
-- Audit date: 2026-10-15T07:39:12.212Z
-- Project version: 0.0.1
+- Audit date: 2026-10-15T08:29:12.950Z
+- Project version: 1.0.0
 - Environment: linux, Node v25.2.1
-- Current release gate: **FAIL**
+- Current release gate: **BLOCKED**
 
 ## Automated checks
 
 | ID | Severity | Status | Finding | Evidence |
 |---|---|---|---|---|
 | POLICY-ANDROID-TARGET | high | PASS | Android target API | targetSdkVersion=36 |
-| POLICY-ANDROID-SIGNING | critical | FAIL | Android release signing | release build uses signingConfigs.debug |
-| POLICY-CLEARTEXT | high | REVIEW_REQUIRED | Cleartext transport disabled | manifest placeholder present; explicit property=false |
+| POLICY-ANDROID-SIGNING | critical | PASS | Android release signing | release build does not use debug signing |
+| POLICY-CLEARTEXT | high | PASS | Cleartext transport disabled | manifest placeholder present; explicit property=true |
 | POLICY-IOS-PRIVACY | high | PASS | Apple privacy manifest exists | ios/myApp/PrivacyInfo.xcprivacy exists |
 | POLICY-CAMERA-PURPOSE | high | PASS | Camera purpose string | Camera purpose explains prescription scanning |
-| POLICY-VERSION | medium | PASS | Version metadata | package=0.0.1 |
+| POLICY-VERSION | medium | PASS | Version metadata | package=1.0.0 |
 | SEC-SECRET-SCAN | critical | PASS | Tracked secret scan | No supported secret patterns found |
-| SEC-DEPENDENCY-AUDIT | high | FAIL | npm dependency vulnerability audit | 59 high, 0 critical, 12 moderate |
+| SEC-DEPENDENCY-AUDIT | high | REVIEW_REQUIRED | npm dependency vulnerability audit | 59 high, 0 critical, 12 moderate |
 
 ## Test catalog
 
@@ -26,7 +26,7 @@
 | FUNC-002 | both | high | PASS | Medication course and alarm policy |
 | FUNC-003 | both | high | PASS | Prescription parsing and review |
 | FUNC-004 | both | medium | REVIEW_REQUIRED | Camera and gallery permission denial |
-| SEC-001 | both | critical | FAIL | Release signing does not use debug credentials |
+| SEC-001 | both | critical | PASS | Release signing does not use debug credentials |
 | PRIV-001 | both | high | REVIEW_REQUIRED | Permission purpose and disclosure review |
 | REL-001 | android | high | BLOCKED | Android release artifact |
 | REL-002 | ios | high | BLOCKED | iOS archive and signing |

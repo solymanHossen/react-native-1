@@ -43,7 +43,7 @@ function activateFromEvent(event: Event): void {
  * first), so this is the one place that routes by notification identity
  * rather than assuming every event is an alarm.
  */
-async function handleNotifeeEvent(event: Event): Promise<void> {
+export async function handleNotifeeEvent(event: Event): Promise<void> {
   const notificationId = event.detail.notification?.id;
   if (notificationId === DAILY_SENTINEL_NOTIFICATION_ID) {
     if (event.type === EventType.DELIVERED) {

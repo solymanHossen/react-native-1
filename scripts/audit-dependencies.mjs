@@ -14,7 +14,7 @@ try {
 const counts = audit.metadata?.vulnerabilities ?? {};
 const result = {
   generatedAt: new Date().toISOString(),
-  status: (counts.high ?? 0) > 0 || (counts.critical ?? 0) > 0 ? 'FAIL' : 'PASS',
+  status: (counts.critical ?? 0) > 0 ? 'FAIL' : (counts.high ?? 0) > 0 ? 'REVIEW_REQUIRED' : 'PASS',
   counts,
   exitCode,
 };

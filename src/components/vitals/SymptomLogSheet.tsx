@@ -15,13 +15,13 @@ import { useTranslation, type TranslationKey } from '../../i18n';
 import { triggerHaptic } from '../../lib/haptics';
 import { useTheme } from '../../theme/useTheme';
 
-const COMMON_SYMPTOMS = ['Nausea', 'Dizziness', 'Acid Reflux', 'Headache', 'Fatigue', 'Rash'] as const;
+type CommonSymptom = 'Nausea' | 'Dizziness' | 'Acid Reflux' | 'Headache' | 'Fatigue' | 'Rash';
 const SEVERITIES: SymptomSeverity[] = ['MILD', 'MODERATE', 'SEVERE'];
 
 const SYMPTOM_GRID: [
-  [(typeof COMMON_SYMPTOMS)[number], (typeof COMMON_SYMPTOMS)[number]],
-  [(typeof COMMON_SYMPTOMS)[number], (typeof COMMON_SYMPTOMS)[number]],
-  [(typeof COMMON_SYMPTOMS)[number], (typeof COMMON_SYMPTOMS)[number]],
+  [CommonSymptom, CommonSymptom],
+  [CommonSymptom, CommonSymptom],
+  [CommonSymptom, CommonSymptom],
 ] = [
   ['Nausea', 'Dizziness'],
   ['Acid Reflux', 'Headache'],
@@ -48,7 +48,7 @@ interface SymptomConfig {
   image: (typeof SYMPTOM_IMAGES)[keyof typeof SYMPTOM_IMAGES];
 }
 
-const SYMPTOM_CONFIGS: Record<(typeof COMMON_SYMPTOMS)[number], SymptomConfig> = {
+const SYMPTOM_CONFIGS: Record<CommonSymptom, SymptomConfig> = {
   Nausea: {
     key: 'vitals.symptomSheet.symptoms.Nausea',
     image: SYMPTOM_IMAGES.Nausea,
@@ -153,7 +153,7 @@ export const SymptomLogSheet = forwardRef<SymptomLogSheetRef, Record<string, unk
   const bottomPadding = Math.max(insets.bottom, 16) + 20;
   const isDark = theme.mode === 'dark';
 
-  const [symptom, setSymptom] = useState<(typeof COMMON_SYMPTOMS)[number] | null>(null);
+  const [symptom, setSymptom] = useState<CommonSymptom | null>(null);
   const [severity, setSeverity] = useState<SymptomSeverity>('MODERATE');
   const [relatedMeds, setRelatedMeds] = useState<RecentIntakeContext[] | null>(null);
   const [saving, setSaving] = useState(false);

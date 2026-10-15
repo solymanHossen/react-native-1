@@ -516,5 +516,8 @@ export const en = {
     voiceInfo: "Uses your device's text-to-speech to announce medicine reminders clearly.",
     testVoice: 'Test Voice',
     testVoiceMessage: 'This is a test of your medicine reminder voice.',
+    medicalDisclaimerTitle: 'Medical Disclaimer',
+    medicalDisclaimerText:
+      'This application is an informational medication reminder and health tracking aid. It does not provide medical advice, diagnosis, or clinical treatment. Always consult a licensed healthcare professional for medical advice and before making changes to prescribed medication.',
   },
 };

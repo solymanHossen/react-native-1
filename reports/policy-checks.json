@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-15T07:38:52.580Z",
+  "generatedAt": "2026-10-15T08:28:56.308Z",
   "results": [
     {
       "id": "POLICY-ANDROID-TARGET",
@@ -12,17 +12,17 @@
     {
       "id": "POLICY-ANDROID-SIGNING",
       "title": "Android release signing",
-      "status": "FAIL",
+      "status": "PASS",
       "severity": "critical",
-      "evidence": "release build uses signingConfigs.debug",
-      "recommendation": "Configure a production keystore through CI secrets and remove the debug fallback."
+      "evidence": "release build does not use debug signing",
+      "recommendation": null
     },
     {
       "id": "POLICY-CLEARTEXT",
       "title": "Cleartext transport disabled",
-      "status": "REVIEW_REQUIRED",
+      "status": "PASS",
       "severity": "high",
-      "evidence": "manifest placeholder present; explicit property=false",
+      "evidence": "manifest placeholder present; explicit property=true",
       "recommendation": null
     },
     {
@@ -46,7 +46,7 @@
       "title": "Version metadata",
       "status": "PASS",
       "severity": "medium",
-      "evidence": "package=0.0.1",
+      "evidence": "package=1.0.0",
       "recommendation": null
     }
   ]

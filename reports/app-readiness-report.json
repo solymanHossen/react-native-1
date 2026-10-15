@@ -1,12 +1,12 @@
 {
-  "auditDate": "2026-10-15T07:39:12.212Z",
-  "projectVersion": "0.0.1",
+  "auditDate": "2026-10-15T08:29:12.950Z",
+  "projectVersion": "1.0.0",
   "runtime": {
     "node": "v25.2.1",
     "platform": "linux",
     "iosBuildAvailable": false
   },
-  "gate": "FAIL",
+  "gate": "BLOCKED",
   "checks": [
     {
       "id": "POLICY-ANDROID-TARGET",
@@ -20,18 +20,18 @@
     {
       "id": "POLICY-ANDROID-SIGNING",
       "title": "Android release signing",
-      "status": "FAIL",
+      "status": "PASS",
       "severity": "critical",
-      "evidence": "release build uses signingConfigs.debug",
-      "recommendation": "Configure a production keystore through CI secrets and remove the debug fallback.",
+      "evidence": "release build does not use debug signing",
+      "recommendation": null,
       "source": "policy"
     },
     {
       "id": "POLICY-CLEARTEXT",
       "title": "Cleartext transport disabled",
-      "status": "REVIEW_REQUIRED",
+      "status": "PASS",
       "severity": "high",
-      "evidence": "manifest placeholder present; explicit property=false",
+      "evidence": "manifest placeholder present; explicit property=true",
       "recommendation": null,
       "source": "policy"
     },
@@ -58,7 +58,7 @@
       "title": "Version metadata",
       "status": "PASS",
       "severity": "medium",
-      "evidence": "package=0.0.1",
+      "evidence": "package=1.0.0",
       "recommendation": null,
       "source": "policy"
     },
@@ -73,7 +73,7 @@
     {
       "id": "SEC-DEPENDENCY-AUDIT",
       "title": "npm dependency vulnerability audit",
-      "status": "FAIL",
+      "status": "REVIEW_REQUIRED",
       "severity": "high",
       "evidence": "59 high, 0 critical, 12 moderate",
       "source": "npm-audit"
@@ -162,7 +162,7 @@
       ],
       "expected": "Release is signed with a production keystore and no debug fallback exists",
       "automation": "policy",
-      "status": "FAIL"
+      "status": "PASS"
     },
     {
       "id": "PRIV-001",

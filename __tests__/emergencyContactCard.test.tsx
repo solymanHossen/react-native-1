@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, Text } from 'react-native';
+import { Text } from 'react-native';
 import ReactTestRenderer from 'react-test-renderer';
 import { EmergencyContactCard, maskPhone } from '../src/components/alarms/EmergencyContactCard';
 

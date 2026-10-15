@@ -7,25 +7,16 @@ import notifee, { AndroidImportance, AndroidNotificationSetting, AndroidVisibili
 // channel id to actually take effect on a device that already has the old
 // one. The old id is simply abandoned, not migrated — nothing reads it by
 // name outside this module.
-export const ALARM_CHANNEL_ID = 'medication-alarms-v2';
+export const ALARM_CHANNEL_ID = 'medication-alarms-v3';
 
 let channelReady: Promise<string> | null = null;
 
 /**
  * High-importance + `bypassDnd` is what actually gets this past Do Not
  * Disturb — Android only bypasses DND for a channel explicitly marked this
- * way (the same mechanism the stock Clock app's alarm channel uses), not for
- * any notification that merely asks loudly. Memoized: `createChannel` is
- * idempotent on the OS side, but there's no reason to re-call it on every
- * `scheduleAlarm`.
- *
- * No `sound` here (silent): the channel previously used Android's generic
- * `'default'` notification chime — a short, quiet "ding" meant for routine
- * notifications, not an unmissable medication alarm, and one that would
- * talk over/precede the spoken announcement instead of working with it. The
- * repeating voice announcement (`AlarmScreen`'s voice effect, on the ALARM
- * audio stream) is the actual alert now; vibration stays as the
- * non-audio layer under it for a silenced/low-volume phone.
+ * way (the same mechanism the stock Clock app's alarm channel uses).
+ * `sound: 'default'` guarantees an audible chime even when the device is
+ * locked or screen is off.
  */
 export function ensureAlarmChannel(): Promise<string> {
   if (!channelReady) {
@@ -36,6 +27,7 @@ export function ensureAlarmChannel(): Promise<string> {
       importance: AndroidImportance.HIGH,
       visibility: AndroidVisibility.PUBLIC,
       bypassDnd: true,
+      sound: 'default',
       vibration: true,
       vibrationPattern: [300, 600, 300, 600],
     });
