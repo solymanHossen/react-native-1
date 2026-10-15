@@ -1,6 +1,6 @@
 # App Store Readiness Audit
 
-- Audit date: 2026-10-09T12:44:51.461Z
+- Audit date: 2026-10-15T07:05:05.078Z
 - Project version: 0.0.1
 - Environment: linux, Node v20.20.0
 - Current release gate: **FAIL**
@@ -16,7 +16,7 @@
 | POLICY-CAMERA-PURPOSE | high | PASS | Camera purpose string | Camera purpose explains prescription scanning |
 | POLICY-VERSION | medium | PASS | Version metadata | package=0.0.1 |
 | SEC-SECRET-SCAN | critical | PASS | Tracked secret scan | No supported secret patterns found |
-| SEC-DEPENDENCY-AUDIT | high | FAIL | npm dependency vulnerability audit | 57 high, 0 critical, 12 moderate |
+| SEC-DEPENDENCY-AUDIT | high | FAIL | npm dependency vulnerability audit | 59 high, 0 critical, 12 moderate |
 
 ## Test catalog
 

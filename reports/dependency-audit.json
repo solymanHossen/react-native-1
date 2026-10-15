@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-10-09T12:44:51.203Z",
+  "generatedAt": "2026-10-15T07:05:04.920Z",
   "status": "FAIL",
   "counts": {
     "info": 0,
     "low": 0,
     "moderate": 12,
-    "high": 57,
+    "high": 59,
     "critical": 0,
-    "total": 69
+    "total": 71
   },
   "exitCode": 1
 }

@@ -1,5 +1,5 @@
 {
-  "auditDate": "2026-10-09T12:44:51.461Z",
+  "auditDate": "2026-10-15T07:05:05.078Z",
   "projectVersion": "0.0.1",
   "runtime": {
     "node": "v20.20.0",
@@ -75,7 +75,7 @@
       "title": "npm dependency vulnerability audit",
       "status": "FAIL",
       "severity": "high",
-      "evidence": "57 high, 0 critical, 12 moderate",
+      "evidence": "59 high, 0 critical, 12 moderate",
       "source": "npm-audit"
     }
   ],
