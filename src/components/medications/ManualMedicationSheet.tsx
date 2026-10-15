@@ -5,7 +5,7 @@ import {
   BottomSheetScrollView,
   BottomSheetTextInput,
 } from '@gorhom/bottom-sheet';
-import { ArrowLeft, Bell, Check, CircleCheck, Pencil, Search, ShieldCheck } from 'lucide-react-native';
+import { ArrowLeft, Bell, CircleCheck, Pencil, Search, ShieldCheck } from 'lucide-react-native';
 import { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { Image, Keyboard, Pressable, Switch, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -28,12 +28,6 @@ const FORM_LABEL_KEY: Record<Medication['form'], TranslationKey> = {
 };
 
 type Step = 'details' | 'review' | 'added';
-const STEPS: Step[] = ['details', 'review', 'added'];
-const STEP_LABEL_KEY: Record<Step, TranslationKey> = {
-  details: 'medications.manualSheet.stepDetails',
-  review: 'medications.manualSheet.stepReview',
-  added: 'medications.manualSheet.stepAdded',
-};
 
 export interface ManualMedicationInput {
   name: string;
@@ -60,61 +54,6 @@ export interface ManualMedicationSheetProps {
   onSave: (input: ManualMedicationInput) => Promise<ManualMedicationSaveResult>;
 }
 
-/** The small "① Enter Details — ② Review — ③ Added" progress footer every step shares. */
-function StepIndicator({ step }: { step: Step }) {
-  const theme = useTheme();
-  const { t } = useTranslation();
-  const currentIndex = STEPS.indexOf(step);
-
-  return (
-    <View className="flex-row items-start justify-between px-2">
-      {STEPS.map((entry, index) => {
-        const isDone = index < currentIndex;
-        const isCurrent = index === currentIndex;
-        const isFilled = isDone || isCurrent;
-        return (
-          <View key={entry} className="flex-1 items-center gap-2">
-            <View className="w-full flex-row items-center">
-              <View
-                className="h-1.5 flex-1 rounded-full"
-                style={{ backgroundColor: index === 0 ? 'transparent' : isFilled ? theme.action.base : theme.colors.hairline }}
-              />
-              <View
-                className="items-center justify-center rounded-full"
-                style={{
-                  width: 26,
-                  height: 26,
-                  backgroundColor: isFilled ? theme.action.base : theme.colors.elevated,
-                  borderWidth: isFilled ? 0 : 1.5,
-                  borderColor: theme.colors.hairline,
-                }}
-              >
-                {isDone ? (
-                  <Check color={theme.action.ink} size={15} strokeWidth={3} />
-                ) : (
-                  <Text className="text-caption font-bold" style={{ color: isFilled ? theme.action.ink : theme.colors.inkMuted }}>
-                    {index + 1}
-                  </Text>
-                )}
-              </View>
-              <View
-                className="h-1.5 flex-1 rounded-full"
-                style={{ backgroundColor: index === STEPS.length - 1 ? 'transparent' : isDone ? theme.action.base : theme.colors.hairline }}
-              />
-            </View>
-            <Text
-              numberOfLines={1}
-              className="text-caption text-center font-semibold"
-              style={{ color: isCurrent ? theme.colors.ink : theme.colors.inkMuted }}
-            >
-              {t(STEP_LABEL_KEY[entry])}
-            </Text>
-          </View>
-        );
-      })}
-    </View>
-  );
-}
 
 function FormPicker({ value, onChange }: { value: Medication['form']; onChange: (form: Medication['form']) => void }) {
   const theme = useTheme();
@@ -551,9 +490,6 @@ export const ManualMedicationSheet = forwardRef<ManualMedicationSheetRef, Manual
             </View>
           ) : null}
 
-          <View style={{ marginTop: 24, paddingHorizontal: 8 }}>
-            <StepIndicator step={step} />
-          </View>
         </BottomSheetScrollView>
       </BottomSheetModal>
     );
