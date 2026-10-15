@@ -173,6 +173,7 @@ export const en = {
     pickMedication: 'Tap a medicine to set its alarm time',
     reminderSheetTitle: 'Set a reminder',
     reminderSheetClose: 'Close without adding a reminder',
+    reminderSheetQuote: 'Stay consistent. Small steps make a big difference.',
     pickTime: 'Choose a time',
     customTime: 'Custom time',
     customTimeHint: 'Pick any time',

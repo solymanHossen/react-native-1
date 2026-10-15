@@ -3,11 +3,12 @@ import {
   BottomSheetBackdrop,
   type BottomSheetBackdropProps,
   BottomSheetModal,
+  BottomSheetScrollView,
   BottomSheetTextInput,
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import { ChartColumn, Check, ChevronRight, Clock, Droplet, Moon, Package, Phone, Pill, PillBottle, Plus, Sun, Sunrise, Sunset, Trash2, User, X } from 'lucide-react-native';
+import { ChartColumn, Check, ChevronRight, Clock, Droplet, Info, Moon, Package, Pencil, Phone, Pill, PillBottle, Plus, Sun, Sunrise, Sunset, Trash2, User, Utensils, X } from 'lucide-react-native';
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, type ComponentType, type ElementRef } from 'react';
 import { ActivityIndicator, Image, Keyboard, Pressable, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -264,8 +265,34 @@ const ReminderSheet = forwardRef<ReminderSheetRef, {
   const [customTitle, setCustomTitle] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const snapPoints = useMemo(() => ['78%'], []);
+  const snapPoints = useMemo(() => ['88%'], []);
   const bottomPadding = Math.max(insets.bottom, 16) + 20;
+  const isDark = theme.mode === 'dark';
+  const primaryBlue = isDark ? '#3B82F6' : '#2563EB';
+  const tintBlue = isDark ? 'rgba(59, 130, 246, 0.14)' : '#EFF6FF';
+
+  const slotStyles = useMemo(() => ({
+    BREAKFAST: {
+      icon: Sunrise,
+      iconColor: isDark ? '#60A5FA' : '#2563EB',
+      badgeBg: isDark ? 'rgba(59, 130, 246, 0.16)' : '#EBF5FF',
+    },
+    LUNCH: {
+      icon: Sun,
+      iconColor: theme.alarms.sun.icon,
+      badgeBg: theme.alarms.sun.badge,
+    },
+    DINNER: {
+      icon: Sunset,
+      iconColor: isDark ? '#FB923C' : '#F97316',
+      badgeBg: isDark ? 'rgba(249, 115, 22, 0.18)' : '#FFEDD5',
+    },
+    BEDTIME: {
+      icon: Moon,
+      iconColor: theme.alarms.moon.icon,
+      badgeBg: theme.alarms.moon.badge,
+    },
+  }), [isDark, theme.alarms.moon.badge, theme.alarms.moon.icon, theme.alarms.sun.badge, theme.alarms.sun.icon]);
 
   useImperativeHandle(ref, () => ({
     present: (nextMedication) => {
@@ -354,19 +381,29 @@ const ReminderSheet = forwardRef<ReminderSheetRef, {
       android_keyboardInputMode="adjustResize"
       backdropComponent={renderBackdrop}
       backgroundStyle={{ backgroundColor: theme.colors.surface }}
-      handleIndicatorStyle={{ backgroundColor: theme.colors.hairline }}
+      handleIndicatorStyle={{ backgroundColor: theme.colors.hairline, width: 36, height: 4 }}
     >
-      <BottomSheetView className="gap-5 px-6 pt-2" style={{ paddingBottom: bottomPadding }}>
+      <BottomSheetScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 6, paddingBottom: bottomPadding, gap: 18 }}
+      >
+        {/* Header: Icon badge, Title, Med details & quote, Close button */}
         <View className="flex-row items-center gap-3">
-          <View className="items-center justify-center rounded-2xl" style={{ width: 48, height: 48, backgroundColor: `${theme.action.base}18` }}>
-            <FormIcon color={theme.action.base} size={23} strokeWidth={2.25} />
+          <View
+            className="items-center justify-center rounded-2xl"
+            style={{ width: 48, height: 48, backgroundColor: tintBlue }}
+          >
+            <FormIcon color={primaryBlue} size={24} strokeWidth={2.2} />
           </View>
           <View className="flex-1">
-            <Text className="text-title-lg" numberOfLines={1} style={{ color: theme.colors.ink }}>
+            <Text className="text-title-lg font-bold" numberOfLines={1} style={{ color: theme.colors.ink, fontSize: 20 }}>
               {t('alarms.reminderSheetTitle')}
             </Text>
-            <Text className="text-caption" numberOfLines={1} style={{ color: theme.colors.inkSecondary }}>
+            <Text numberOfLines={1} style={{ color: theme.colors.inkSecondary, fontSize: 13.5, fontWeight: '500', marginTop: 2 }}>
               {[medication.name, medication.strength].filter(Boolean).join(' · ')}
+            </Text>
+            <Text numberOfLines={1} style={{ color: theme.colors.inkMuted, fontSize: 12, marginTop: 2 }}>
+              {t('alarms.reminderSheetQuote')}
             </Text>
           </View>
           <Pressable
@@ -376,19 +413,22 @@ const ReminderSheet = forwardRef<ReminderSheetRef, {
             }}
             accessibilityRole="button"
             accessibilityLabel={t('alarms.reminderSheetClose')}
+            hitSlop={8}
             className="min-h-hit min-w-hit items-center justify-center"
           >
-            <X color={theme.colors.inkMuted} size={22} />
+            <X color={theme.colors.inkMuted} size={22} strokeWidth={2} />
           </Pressable>
         </View>
 
+        {/* Section 1: Choose a time */}
         <View className="gap-2.5">
-          <Text className="text-caption" style={{ color: theme.colors.inkMuted }}>
+          <Text style={{ color: theme.colors.ink, fontSize: 15, fontWeight: '700' }}>
             {t('alarms.pickTime')}
           </Text>
-          <View className="flex-row flex-wrap gap-3">
+          <View className="flex-row flex-wrap justify-between" style={{ rowGap: 10 }}>
             {TIME_SLOTS.map((slot) => {
-              const SlotIcon = slot.icon;
+              const style = slotStyles[slot.node as keyof typeof slotStyles] ?? slotStyles.BREAKFAST;
+              const SlotIcon = style.icon;
               const selected = !customTime && timeNode === slot.node;
               return (
                 <Pressable
@@ -401,73 +441,118 @@ const ReminderSheet = forwardRef<ReminderSheetRef, {
                   accessibilityRole="button"
                   accessibilityLabel={t(slot.labelKey)}
                   accessibilityState={{ selected }}
-                  className="min-h-hit flex-row items-center gap-3 rounded-2xl border p-3.5"
+                  className="min-h-hit flex-row items-center gap-2.5 rounded-2xl border"
                   style={{
-                    width: '47%',
-                    backgroundColor: selected ? `${theme.action.base}12` : theme.colors.elevated,
-                    borderColor: selected ? theme.action.base : theme.colors.hairline,
+                    width: '48.5%',
+                    paddingVertical: 12,
+                    paddingHorizontal: 12,
+                    backgroundColor: selected ? tintBlue : theme.colors.elevated,
+                    borderColor: selected ? primaryBlue : theme.colors.hairline,
                     borderWidth: selected ? 2 : 1,
                   }}
                 >
-                  <View className="items-center justify-center rounded-xl" style={{ width: 38, height: 38, backgroundColor: selected ? theme.action.base : `${theme.action.base}14` }}>
-                    <SlotIcon color={selected ? theme.action.ink : theme.action.base} size={19} strokeWidth={2.25} />
+                  <View
+                    className="items-center justify-center rounded-full"
+                    style={{ width: 38, height: 38, backgroundColor: style.badgeBg }}
+                  >
+                    <SlotIcon color={style.iconColor} size={20} strokeWidth={2.2} />
                   </View>
                   <View className="flex-1">
-                    <Text className="text-body" numberOfLines={1} style={{ color: theme.colors.ink, fontWeight: selected ? '700' : '600' }}>
+                    <Text
+                      numberOfLines={1}
+                      style={{ color: theme.colors.ink, fontSize: 14.5, fontWeight: '700' }}
+                    >
                       {t(slot.labelKey)}
                     </Text>
-                    <Text className="text-caption" numberOfLines={1} style={{ color: theme.colors.inkSecondary }}>
+                    <Text
+                      numberOfLines={1}
+                      style={{ color: theme.colors.inkSecondary, fontSize: 12.5, fontWeight: '500', marginTop: 1 }}
+                    >
                       {formatTimeLabel(slot.timeUtc)}
                     </Text>
                   </View>
-                  {selected ? <Check color={theme.action.base} size={17} strokeWidth={2.5} /> : null}
+                  {selected ? (
+                    <View
+                      className="items-center justify-center rounded-full"
+                      style={{ width: 20, height: 20, backgroundColor: primaryBlue }}
+                    >
+                      <Check color="#FFFFFF" size={12} strokeWidth={3} />
+                    </View>
+                  ) : null}
                 </Pressable>
               );
             })}
           </View>
 
-          {/* A 5th, full-width option rather than wedging it into the 2x2
-              grid — picking any exact time is a different kind of choice
-              than picking one of four fixed presets, and reads clearer as
-              its own row than as an oddly-wrapping fifth card. */}
+          {/* Full-width Custom time card */}
           <Pressable
-            onPress={() => setShowCustomPicker(true)}
+            onPress={() => {
+              setShowCustomPicker(true);
+              triggerHaptic('selection');
+            }}
             accessibilityRole="button"
             accessibilityLabel={t('alarms.timeSelectorAccessibility')}
             accessibilityState={{ selected: customTime !== null }}
-            className="min-h-hit flex-row items-center gap-3 rounded-2xl border p-3.5"
+            className="min-h-hit flex-row items-center gap-3 rounded-2xl border"
             style={{
-              backgroundColor: customTime ? `${theme.action.base}12` : theme.colors.elevated,
-              borderColor: customTime ? theme.action.base : theme.colors.hairline,
+              paddingVertical: 12,
+              paddingHorizontal: 14,
+              backgroundColor: customTime ? tintBlue : theme.colors.elevated,
+              borderColor: customTime ? primaryBlue : theme.colors.hairline,
               borderWidth: customTime ? 2 : 1,
+              marginTop: 2,
             }}
           >
-            <View className="items-center justify-center rounded-xl" style={{ width: 38, height: 38, backgroundColor: customTime ? theme.action.base : `${theme.action.base}14` }}>
-              <Clock color={customTime ? theme.action.ink : theme.action.base} size={19} strokeWidth={2.25} />
+            <View
+              className="items-center justify-center rounded-xl"
+              style={{
+                width: 38,
+                height: 38,
+                backgroundColor: customTime ? primaryBlue : (isDark ? 'rgba(59, 130, 246, 0.16)' : '#EFF6FF'),
+              }}
+            >
+              <Clock
+                color={customTime ? '#FFFFFF' : primaryBlue}
+                size={20}
+                strokeWidth={2.2}
+              />
             </View>
             <View className="flex-1">
-              <Text className="text-body" numberOfLines={1} style={{ color: theme.colors.ink, fontWeight: customTime ? '700' : '600' }}>
+              <Text
+                numberOfLines={1}
+                style={{ color: theme.colors.ink, fontSize: 14.5, fontWeight: '700' }}
+              >
                 {t('alarms.customTime')}
               </Text>
-              <Text className="text-caption" numberOfLines={1} style={{ color: theme.colors.inkSecondary }}>
+              <Text
+                numberOfLines={1}
+                style={{ color: theme.colors.inkSecondary, fontSize: 12.5, fontWeight: '500', marginTop: 1 }}
+              >
                 {customTime ? formatTimeLabel(toHHMM(customTime.hours, customTime.minutes)) : t('alarms.customTimeHint')}
               </Text>
             </View>
-            {customTime ? <Check color={theme.action.base} size={17} strokeWidth={2.5} /> : null}
+            {customTime ? (
+              <View
+                className="items-center justify-center rounded-full"
+                style={{ width: 22, height: 22, backgroundColor: primaryBlue }}
+              >
+                <Check color="#FFFFFF" size={13} strokeWidth={3} />
+              </View>
+            ) : null}
           </Pressable>
           {showCustomPicker ? (
             <DateTimePicker value={customPickerValue} mode="time" display="default" onChange={handleCustomTimeChange} />
           ) : null}
         </View>
 
+        {/* Section 2: When should you take it? */}
         <View className="gap-2.5">
-          <Text className="text-caption" style={{ color: theme.colors.inkMuted }}>
+          <Text style={{ color: theme.colors.ink, fontSize: 15, fontWeight: '700' }}>
             {t('alarms.mealRelationLabel')}
           </Text>
           <View className="flex-row gap-3">
             {MEAL_RELATIONS.map((relation) => {
               const selected = mealRelation === relation.value;
-              const RelationIcon = relation.value === 'BEFORE' ? Sunrise : relation.value === 'AFTER' ? Sunset : Check;
               return (
                 <Pressable
                   key={relation.value}
@@ -478,43 +563,120 @@ const ReminderSheet = forwardRef<ReminderSheetRef, {
                   accessibilityRole="button"
                   accessibilityLabel={t(relation.labelKey)}
                   accessibilityState={{ selected }}
-                  className="min-h-hit flex-1 items-center gap-2 rounded-2xl border p-3.5"
+                  className="min-h-hit flex-1 items-center justify-center rounded-2xl border"
                   style={{
-                    backgroundColor: selected ? `${theme.action.base}12` : theme.colors.elevated,
-                    borderColor: selected ? theme.action.base : theme.colors.hairline,
+                    position: 'relative',
+                    paddingVertical: 14,
+                    paddingHorizontal: 6,
+                    backgroundColor: selected ? tintBlue : theme.colors.elevated,
+                    borderColor: selected ? primaryBlue : theme.colors.hairline,
                     borderWidth: selected ? 2 : 1,
                   }}
                 >
-                  <View className="items-center justify-center rounded-xl" style={{ width: 36, height: 36, backgroundColor: selected ? theme.action.base : `${theme.action.base}14` }}>
-                    <RelationIcon color={selected ? theme.action.ink : theme.action.base} size={19} strokeWidth={2.25} />
+                  {selected ? (
+                    <View
+                      className="items-center justify-center rounded-full"
+                      style={{
+                        position: 'absolute',
+                        top: 6,
+                        right: 6,
+                        width: 18,
+                        height: 18,
+                        backgroundColor: primaryBlue,
+                      }}
+                    >
+                      <Check color="#FFFFFF" size={11} strokeWidth={3.5} />
+                    </View>
+                  ) : null}
+                  <View
+                    className="items-center justify-center rounded-full"
+                    style={{
+                      width: 38,
+                      height: 38,
+                      backgroundColor: selected ? primaryBlue : (isDark ? 'rgba(59, 130, 246, 0.16)' : '#EFF6FF'),
+                      marginBottom: 8,
+                    }}
+                  >
+                    <Utensils
+                      color={selected ? '#FFFFFF' : primaryBlue}
+                      size={19}
+                      strokeWidth={2.2}
+                    />
                   </View>
-                  <Text className="text-caption" numberOfLines={1} style={{ color: theme.colors.ink, fontWeight: selected ? '700' : '600' }}>
+                  <Text
+                    numberOfLines={1}
+                    style={{
+                      color: theme.colors.ink,
+                      fontSize: 13,
+                      fontWeight: '700',
+                      textAlign: 'center',
+                    }}
+                  >
                     {t(relation.labelKey)}
                   </Text>
                 </Pressable>
               );
             })}
           </View>
-          <Text className="text-caption" style={{ color: theme.colors.inkMuted }}>
-            {t('alarms.mealRelationHint')}
-          </Text>
+
+          {/* Info callout banner */}
+          <View
+            className="flex-row items-center gap-2.5 rounded-xl px-3.5 py-2.5"
+            style={{
+              backgroundColor: tintBlue,
+              marginTop: 2,
+            }}
+          >
+            <View
+              className="items-center justify-center rounded-full"
+              style={{ width: 18, height: 18, backgroundColor: primaryBlue }}
+            >
+              <Info color="#FFFFFF" size={12} strokeWidth={2.5} />
+            </View>
+            <Text
+              style={{
+                flex: 1,
+                color: isDark ? '#93C5FD' : '#2563EB',
+                fontSize: 12,
+                fontWeight: '500',
+                lineHeight: 16,
+              }}
+            >
+              {t('alarms.mealRelationHint')}
+            </Text>
+          </View>
         </View>
 
+        {/* Section 3: Custom title (optional) */}
         <View className="gap-2">
-          <Text className="text-caption" style={{ color: theme.colors.inkMuted }}>
+          <Text style={{ color: theme.colors.ink, fontSize: 15, fontWeight: '700' }}>
             {t('alarms.customTitleLabel')}
           </Text>
-          <BottomSheetTextInput
-            value={customTitle}
-            onChangeText={setCustomTitle}
-            placeholder={t('alarms.customTitlePlaceholder')}
-            placeholderTextColor={theme.colors.inkMuted}
-            maxLength={60}
-            returnKeyType="done"
-            className="min-h-hit rounded-2xl border px-5 text-body-lg"
-            style={{ backgroundColor: theme.colors.elevated, borderColor: theme.colors.hairline, color: theme.colors.ink }}
-          />
-          <Text className="text-caption" style={{ color: theme.colors.inkMuted }}>
+          <View
+            className="flex-row items-center rounded-2xl border px-3.5"
+            style={{
+              height: 48,
+              backgroundColor: theme.colors.elevated,
+              borderColor: theme.colors.hairline,
+            }}
+          >
+            <Pencil color={theme.colors.inkMuted} size={18} strokeWidth={2} />
+            <BottomSheetTextInput
+              value={customTitle}
+              onChangeText={setCustomTitle}
+              placeholder={t('alarms.customTitlePlaceholder')}
+              placeholderTextColor={theme.colors.inkMuted}
+              maxLength={60}
+              returnKeyType="done"
+              className="flex-1 px-2.5 text-body"
+              style={{
+                color: theme.colors.ink,
+                fontSize: 14,
+                paddingVertical: 0,
+              }}
+            />
+          </View>
+          <Text style={{ color: theme.colors.inkMuted, fontSize: 12, marginTop: 2 }}>
             {t('alarms.customTitleHint', { name: medication.name })}
           </Text>
         </View>
@@ -524,26 +686,34 @@ const ReminderSheet = forwardRef<ReminderSheetRef, {
             {error}
           </Text>
         ) : null}
+
+        {/* Action Button: Schedule a Reminder */}
         <Pressable
           onPress={handleConfirm}
           disabled={submitting}
           accessibilityRole="button"
+          accessibilityLabel={t('alarms.addReminder')}
           accessibilityState={{ disabled: submitting }}
-          className="min-h-hit flex-row items-center justify-center gap-2 rounded-2xl px-5 py-4"
-          style={{ backgroundColor: theme.action.base, opacity: submitting ? 0.7 : 1 }}
+          className="min-h-hit flex-row items-center justify-center gap-2 rounded-2xl"
+          style={{
+            height: 52,
+            backgroundColor: primaryBlue,
+            opacity: submitting ? 0.7 : 1,
+            marginTop: 4,
+          }}
         >
           {submitting ? (
-            <ActivityIndicator color={theme.action.ink} />
+            <ActivityIndicator color="#FFFFFF" />
           ) : (
             <>
-              <Clock color={theme.action.ink} size={20} strokeWidth={2.25} />
-              <Text className="text-body-lg" style={{ color: theme.action.ink, fontWeight: '700' }}>
+              <Clock color="#FFFFFF" size={20} strokeWidth={2.2} />
+              <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '700' }}>
                 {t('alarms.addReminder')}
               </Text>
             </>
           )}
         </Pressable>
-      </BottomSheetView>
+      </BottomSheetScrollView>
     </BottomSheetModal>
   );
 });

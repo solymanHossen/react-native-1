@@ -165,6 +165,7 @@ export const bn: typeof en = {
     pickMedication: 'অ্যালার্মের সময় নির্ধারণ করতে ওষুধে ট্যাপ করুন',
     reminderSheetTitle: 'রিমাইন্ডার সেট করুন',
     reminderSheetClose: 'রিমাইন্ডার যোগ না করে বন্ধ করুন',
+    reminderSheetQuote: 'ধারাবাহিক থাকুন। ছোট ছোট পদক্ষেপ বড় পরিবর্তন আনে।',
     pickTime: 'একটি সময় বেছে নিন',
     customTime: 'কাস্টম সময়',
     customTimeHint: 'যেকোনো সময় বেছে নিন',
