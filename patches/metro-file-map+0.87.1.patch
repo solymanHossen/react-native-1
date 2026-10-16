@@ -1,0 +1,31 @@
+diff --git a/node_modules/metro-file-map/src/watchers/FallbackWatcher.js b/node_modules/metro-file-map/src/watchers/FallbackWatcher.js
+index b6fbb15..04910c7 100644
+--- a/node_modules/metro-file-map/src/watchers/FallbackWatcher.js
++++ b/node_modules/metro-file-map/src/watchers/FallbackWatcher.js
+@@ -128,6 +128,17 @@ class FallbackWatcher extends _AbstractWatcher.AbstractWatcher {
+     if (this.#watched[dir]) {
+       return false;
+     }
++    if (
++      dir.includes("/node_modules/") ||
++      dir.endsWith("/node_modules") ||
++      dir.includes("/.git/") ||
++      dir.endsWith("/.git") ||
++      dir.includes("/android/") ||
++      dir.includes("/ios/")
++    ) {
++      this.#watched[dir] = true;
++      return false;
++    }
+     let watcher;
+     try {
+       watcher = _nodeFs.default.watch(
+@@ -348,7 +359,7 @@ class FallbackWatcher extends _AbstractWatcher.AbstractWatcher {
+ exports.default = FallbackWatcher;
+ function isIgnorableFileError(error) {
+   return (
+-    error.code === "ENOENT" || (error.code === "EPERM" && platform === "win32")
++    error.code === "ENOENT" || (error.code === "EPERM" && platform === "win32") || error.code === "ENOSPC"
+   );
+ }
+ async function recReaddir(
