@@ -54,7 +54,7 @@ import {
 } from '../alarms';
 import { useTranslation } from '../i18n';
 import { toast } from '../store';
-import { status } from '../theme/tokens';
+import { useTheme } from '../theme/useTheme';
 import { triggerHapticCascade, triggerHaptic } from '../lib/haptics';
 import { speakReminder, stopSpeaking } from '../lib/tts';
 
@@ -105,6 +105,8 @@ function NfcContactlessWave({ size = 36 }: { size?: number }) {
 }
 
 export default function AlarmScreen({ alarm, onBack, onNavigate: _onNavigate }: AlarmScreenProps) {
+  const theme = useTheme();
+  const isDark = theme.mode === 'dark';
   const { t, language } = useTranslation();
   const { payload, firedAtMs, snoozeCount } = alarm;
   const clearActiveAlarm = useActiveAlarmStore((state) => state.clearActiveAlarm);
@@ -315,23 +317,28 @@ export default function AlarmScreen({ alarm, onBack, onNavigate: _onNavigate }: 
 
   if (resolution === 'verified') {
     return (
-      <SafeAreaView className="flex-1 items-center justify-center gap-6" style={{ backgroundColor: '#EEF5FC' }}>
+      <SafeAreaView
+        className="flex-1 items-center justify-center gap-6"
+        style={{ backgroundColor: theme.colors.canvas }}
+      >
         <View
           className="items-center justify-center rounded-full"
           style={{
             width: 140,
             height: 140,
-            backgroundColor: '#DCFCE7',
+            backgroundColor: isDark ? 'rgba(16, 185, 129, 0.2)' : '#DCFCE7',
+            borderWidth: isDark ? 1.5 : 0,
+            borderColor: isDark ? 'rgba(16, 185, 129, 0.4)' : 'transparent',
             shadowColor: '#10B981',
             shadowOffset: { width: 0, height: 6 },
-            shadowOpacity: 0.35,
+            shadowOpacity: isDark ? 0.45 : 0.35,
             shadowRadius: 18,
             elevation: 8,
           }}
         >
-          <CheckCircle2 color="#059669" size={84} strokeWidth={2.2} />
+          <CheckCircle2 color={isDark ? '#34D399' : '#059669'} size={84} strokeWidth={2.2} />
         </View>
-        <Text className="text-2xl font-bold tracking-tight" style={{ color: '#0F172A' }}>
+        <Text className="text-2xl font-bold tracking-tight" style={{ color: theme.colors.ink }}>
           {t('alarmRinging.confirmed', { name: payload.medicationName })}
         </Text>
       </SafeAreaView>
@@ -339,7 +346,7 @@ export default function AlarmScreen({ alarm, onBack, onNavigate: _onNavigate }: 
   }
 
   return (
-    <SafeAreaView edges={['top', 'left', 'right']} className="flex-1" style={{ backgroundColor: '#EEF5FC' }}>
+    <SafeAreaView edges={['top', 'left', 'right']} className="flex-1" style={{ backgroundColor: theme.colors.canvas }}>
       {/* Top Header Bar */}
       <View className="flex-row items-center justify-between px-5 pt-2 pb-3">
         <Pressable
@@ -348,16 +355,22 @@ export default function AlarmScreen({ alarm, onBack, onNavigate: _onNavigate }: 
           accessibilityRole="button"
           accessibilityLabel="Back"
           className="items-center justify-center rounded-full"
-          style={{ width: 40, height: 40 }}
+          style={{
+            width: 40,
+            height: 40,
+            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : `${theme.action.base}12`,
+            borderWidth: isDark ? 1 : 0,
+            borderColor: 'rgba(255, 255, 255, 0.08)',
+          }}
         >
-          <ArrowLeft color="#1E293B" size={24} strokeWidth={2.4} />
+          <ArrowLeft color={theme.colors.ink} size={22} strokeWidth={2.4} />
         </Pressable>
 
         <View className="flex-1 items-center px-2">
-          <Text className="text-[19px] font-extrabold tracking-tight" style={{ color: '#0F172A' }}>
+          <Text className="text-[19px] font-extrabold tracking-tight" style={{ color: theme.colors.ink }}>
             {t('alarmRinging.title')}
           </Text>
-          <Text className="text-[13px] font-medium" style={{ color: '#64748B' }}>
+          <Text className="text-[13px] font-medium" style={{ color: theme.colors.inkSecondary }}>
             {t('alarmRinging.timeToTake')}
           </Text>
         </View>
@@ -370,10 +383,14 @@ export default function AlarmScreen({ alarm, onBack, onNavigate: _onNavigate }: 
           accessibilityRole="button"
           accessibilityLabel={t('alarmRinging.help')}
           className="flex-row items-center gap-1.5 rounded-full px-3.5 py-1.5"
-          style={{ backgroundColor: '#DBEAFE' }}
+          style={{
+            backgroundColor: isDark ? 'rgba(59, 130, 246, 0.16)' : '#E5EEFB',
+            borderWidth: 1,
+            borderColor: isDark ? 'rgba(59, 130, 246, 0.3)' : 'rgba(5, 82, 172, 0.15)',
+          }}
         >
-          <CircleHelp color="#2563EB" size={16} strokeWidth={2.2} />
-          <Text className="text-[13.5px] font-bold" style={{ color: '#2563EB' }}>
+          <CircleHelp color={isDark ? '#60A5FA' : '#0552AC'} size={16} strokeWidth={2.2} />
+          <Text className="text-[13.5px] font-bold" style={{ color: isDark ? '#60A5FA' : '#0552AC' }}>
             {t('alarmRinging.help')}
           </Text>
         </Pressable>
@@ -387,11 +404,11 @@ export default function AlarmScreen({ alarm, onBack, onNavigate: _onNavigate }: 
         <View
           className="rounded-[32px] p-5 border"
           style={{
-            backgroundColor: '#FFFFFF',
-            borderColor: '#E2EDF8',
-            shadowColor: '#2563EB',
+            backgroundColor: isDark ? '#1E293B' : theme.colors.surface,
+            borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : theme.colors.hairline,
+            shadowColor: isDark ? '#000000' : '#395886',
             shadowOffset: { width: 0, height: 6 },
-            shadowOpacity: 0.08,
+            shadowOpacity: isDark ? 0.35 : 0.08,
             shadowRadius: 18,
             elevation: 4,
           }}
@@ -403,9 +420,9 @@ export default function AlarmScreen({ alarm, onBack, onNavigate: _onNavigate }: 
               style={{
                 width: 64,
                 height: 64,
-                backgroundColor: '#E6F0FC',
+                backgroundColor: isDark ? 'rgba(59, 130, 246, 0.14)' : '#EEF4FB',
                 borderWidth: 1,
-                borderColor: '#DBEAFE',
+                borderColor: isDark ? 'rgba(59, 130, 246, 0.28)' : '#D5DEEF',
               }}
             >
               <Image
@@ -416,10 +433,10 @@ export default function AlarmScreen({ alarm, onBack, onNavigate: _onNavigate }: 
             </View>
 
             <View className="flex-1">
-              <Text className="text-[23px] font-extrabold tracking-tight" style={{ color: '#0F172A' }}>
+              <Text className="text-[23px] font-extrabold tracking-tight" style={{ color: theme.colors.ink }}>
                 {payload.medicationName}
               </Text>
-              <Text className="text-[14.5px] font-medium" style={{ color: '#64748B' }}>
+              <Text className="text-[14.5px] font-medium" style={{ color: theme.colors.inkSecondary }}>
                 {payload.dosageLabel}
               </Text>
 
@@ -427,20 +444,26 @@ export default function AlarmScreen({ alarm, onBack, onNavigate: _onNavigate }: 
               <View className="flex-row items-center gap-2 mt-2">
                 <View
                   className="flex-row items-center gap-1.5 rounded-full px-2.5 py-1 border"
-                  style={{ backgroundColor: '#F1F5F9', borderColor: '#E2E8F0' }}
+                  style={{
+                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : '#F0F3FA',
+                    borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : '#D5DEEF',
+                  }}
                 >
-                  <Utensils color="#475569" size={12} strokeWidth={2.2} />
-                  <Text className="text-[12px] font-semibold" style={{ color: '#475569' }}>
+                  <Utensils color={theme.colors.inkSecondary} size={12} strokeWidth={2.2} />
+                  <Text className="text-[12px] font-semibold" style={{ color: theme.colors.inkSecondary }}>
                     {mealText}
                   </Text>
                 </View>
 
                 <View
                   className="flex-row items-center gap-1.5 rounded-full px-2.5 py-1 border"
-                  style={{ backgroundColor: '#EFF6FF', borderColor: '#DBEAFE' }}
+                  style={{
+                    backgroundColor: isDark ? 'rgba(59, 130, 246, 0.16)' : '#E5EEFB',
+                    borderColor: isDark ? 'rgba(59, 130, 246, 0.3)' : 'rgba(5, 82, 172, 0.2)',
+                  }}
                 >
-                  <Clock color="#2563EB" size={12} strokeWidth={2.2} />
-                  <Text className="text-[12px] font-bold" style={{ color: '#2563EB' }}>
+                  <Clock color={isDark ? '#60A5FA' : '#0552AC'} size={12} strokeWidth={2.2} />
+                  <Text className="text-[12px] font-bold" style={{ color: isDark ? '#60A5FA' : '#0552AC' }}>
                     {t('alarmRinging.dueNow')}
                   </Text>
                 </View>
@@ -451,25 +474,32 @@ export default function AlarmScreen({ alarm, onBack, onNavigate: _onNavigate }: 
           {/* Reminder Note Callout */}
           <View
             className="flex-row items-center gap-3 rounded-2xl p-3.5 mt-5 border"
-            style={{ backgroundColor: '#F0F6FE', borderColor: '#DBEAFE' }}
+            style={{
+              backgroundColor: isDark ? 'rgba(59, 130, 246, 0.08)' : '#F0F6FE',
+              borderColor: isDark ? 'rgba(59, 130, 246, 0.2)' : '#D5DEEF',
+            }}
           >
             <View
               className="items-center justify-center rounded-xl"
-              style={{ width: 36, height: 36, backgroundColor: '#DBEAFE' }}
+              style={{
+                width: 36,
+                height: 36,
+                backgroundColor: isDark ? 'rgba(59, 130, 246, 0.2)' : '#E5EEFB',
+              }}
             >
-              <FileText color="#2563EB" size={18} strokeWidth={2.2} />
+              <FileText color={isDark ? '#60A5FA' : '#0552AC'} size={18} strokeWidth={2.2} />
             </View>
 
             <View className="flex-1">
-              <Text className="text-[13px] font-bold" style={{ color: '#1E3A8A' }}>
+              <Text className="text-[13px] font-bold" style={{ color: isDark ? '#93C5FD' : '#1E3A8A' }}>
                 {t('alarmRinging.reminderNote')}
               </Text>
-              <Text className="text-[12.5px] font-medium mt-0.5 leading-4" style={{ color: '#475569' }}>
+              <Text className="text-[12.5px] font-medium mt-0.5 leading-4" style={{ color: theme.colors.inkSecondary }}>
                 {reminderNote}
               </Text>
             </View>
 
-            <ChevronRight color="#94A3B8" size={18} strokeWidth={2.4} />
+            <ChevronRight color={theme.colors.inkMuted} size={18} strokeWidth={2.4} />
           </View>
 
           {/* NFC Radar / Camera Scanner Area */}
@@ -486,9 +516,9 @@ export default function AlarmScreen({ alarm, onBack, onNavigate: _onNavigate }: 
                         width: 156,
                         height: 156,
                         borderRadius: 78,
-                        backgroundColor: 'rgba(239, 246, 255, 0.65)',
+                        backgroundColor: isDark ? 'rgba(59, 130, 246, 0.08)' : 'rgba(238, 244, 251, 0.75)',
                         borderWidth: 1.5,
-                        borderColor: 'rgba(59, 130, 246, 0.16)',
+                        borderColor: isDark ? 'rgba(59, 130, 246, 0.22)' : 'rgba(57, 88, 134, 0.18)',
                       },
                       pulseOuterStyle,
                     ]}
@@ -501,9 +531,9 @@ export default function AlarmScreen({ alarm, onBack, onNavigate: _onNavigate }: 
                         width: 118,
                         height: 118,
                         borderRadius: 59,
-                        backgroundColor: 'rgba(219, 234, 254, 0.75)',
+                        backgroundColor: isDark ? 'rgba(59, 130, 246, 0.18)' : 'rgba(229, 238, 251, 0.85)',
                         borderWidth: 1.5,
-                        borderColor: 'rgba(59, 130, 246, 0.32)',
+                        borderColor: isDark ? 'rgba(59, 130, 246, 0.4)' : 'rgba(57, 88, 134, 0.3)',
                       },
                       pulseMiddleStyle,
                     ]}
@@ -513,11 +543,11 @@ export default function AlarmScreen({ alarm, onBack, onNavigate: _onNavigate }: 
                     style={{
                       width: 80,
                       height: 80,
-                      backgroundColor: '#2563EB',
-                      shadowColor: '#2563EB',
+                      backgroundColor: isDark ? '#3B82F6' : '#2563EB',
+                      shadowColor: isDark ? '#3B82F6' : '#2563EB',
                       shadowOffset: { width: 0, height: 6 },
-                      shadowOpacity: 0.38,
-                      shadowRadius: 12,
+                      shadowOpacity: isDark ? 0.45 : 0.38,
+                      shadowRadius: 14,
                       elevation: 6,
                     }}
                   >
@@ -526,10 +556,10 @@ export default function AlarmScreen({ alarm, onBack, onNavigate: _onNavigate }: 
                 </View>
 
                 {/* Subtitle / Prompt */}
-                <Text className="text-[17.5px] font-bold tracking-tight text-center mt-3" style={{ color: '#0F172A' }}>
+                <Text className="text-[17.5px] font-bold tracking-tight text-center mt-3" style={{ color: theme.colors.ink }}>
                   {t('alarmRinging.tapPhoneToBottle')}
                 </Text>
-                <Text className="text-[13px] font-medium text-center mt-1" style={{ color: '#64748B' }}>
+                <Text className="text-[13px] font-medium text-center mt-1" style={{ color: theme.colors.inkSecondary }}>
                   {nfcReady ? t('alarmRinging.nfcPrompt') : t('alarmRinging.nfcUnavailable')}
                 </Text>
               </View>
@@ -539,25 +569,25 @@ export default function AlarmScreen({ alarm, onBack, onNavigate: _onNavigate }: 
                   className="w-full overflow-hidden rounded-2xl items-center justify-center"
                   style={{
                     height: 220,
-                    backgroundColor: '#0F172A',
+                    backgroundColor: isDark ? '#0F172A' : '#1E293B',
                     borderWidth: 1,
-                    borderColor: '#CBD5E1',
+                    borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : '#CBD5E1',
                   }}
                 >
                   {device && hasPermission ? (
                     <Camera ref={cameraRef} style={{ width: '100%', height: '100%' }} device={device} isActive photo />
                   ) : (
                     <View className="items-center justify-center gap-2">
-                      <CameraIcon color="#94A3B8" size={44} />
-                      <Text className="text-[13px] font-medium" style={{ color: '#94A3B8' }}>
+                      <CameraIcon color={isDark ? '#64748B' : '#94A3B8'} size={44} />
+                      <Text className="text-[13px] font-medium" style={{ color: isDark ? '#94A3B8' : '#CBD5E1' }}>
                         {t('alarmRinging.visionPrompt')}
                       </Text>
                     </View>
                   )}
                 </View>
-                {scanning ? <ActivityIndicator color="#2563EB" /> : null}
+                {scanning ? <ActivityIndicator color={isDark ? '#60A5FA' : '#2563EB'} /> : null}
                 {lastConfidence !== null ? (
-                  <Text className="text-[12px] font-semibold" style={{ color: '#64748B' }}>
+                  <Text className="text-[12px] font-semibold" style={{ color: theme.colors.inkSecondary }}>
                     {t('alarmRinging.lastReadMatch', { confidence: lastConfidence, threshold: VISION_CONFIDENCE_THRESHOLD })}
                   </Text>
                 ) : null}
@@ -569,10 +599,14 @@ export default function AlarmScreen({ alarm, onBack, onNavigate: _onNavigate }: 
           {statusMessage ? (
             <View
               className="flex-row items-center gap-2 rounded-xl px-4 py-2.5 mt-3"
-              style={{ backgroundColor: '#FEF2F2', borderWidth: 1, borderColor: '#FEE2E2' }}
+              style={{
+                backgroundColor: isDark ? 'rgba(239, 68, 68, 0.15)' : '#FEF2F2',
+                borderWidth: 1,
+                borderColor: isDark ? 'rgba(239, 68, 68, 0.3)' : '#FEE2E2',
+              }}
             >
-              <AlertTriangle color="#DC2626" size={17} />
-              <Text className="flex-1 text-[12.5px] font-medium" style={{ color: '#DC2626' }}>
+              <AlertTriangle color={isDark ? '#F87171' : '#DC2626'} size={17} />
+              <Text className="flex-1 text-[12.5px] font-medium" style={{ color: isDark ? '#FCA5A5' : '#DC2626' }}>
                 {statusMessage}
               </Text>
             </View>
@@ -586,15 +620,18 @@ export default function AlarmScreen({ alarm, onBack, onNavigate: _onNavigate }: 
             }}
             accessibilityRole="button"
             className="flex-row items-center justify-between rounded-2xl px-4 py-3 mt-4 border active:opacity-85"
-            style={{ backgroundColor: '#EFF6FF', borderColor: '#DBEAFE' }}
+            style={{
+              backgroundColor: isDark ? 'rgba(59, 130, 246, 0.12)' : '#EFF6FF',
+              borderColor: isDark ? 'rgba(59, 130, 246, 0.25)' : '#DBEAFE',
+            }}
           >
             <View className="flex-row items-center gap-2.5">
-              <CameraIcon color="#2563EB" size={18} strokeWidth={2.2} />
-              <Text className="text-[13.5px] font-bold" style={{ color: '#1D4ED8' }}>
+              <CameraIcon color={isDark ? '#60A5FA' : '#2563EB'} size={18} strokeWidth={2.2} />
+              <Text className="text-[13.5px] font-bold" style={{ color: isDark ? '#93C5FD' : '#1D4ED8' }}>
                 {mode === 'nfc' ? t('alarmRinging.useCameraInstead') : t('alarmRinging.useNfcInstead')}
               </Text>
             </View>
-            <ChevronRight color="#2563EB" size={17} strokeWidth={2.4} />
+            <ChevronRight color={isDark ? '#60A5FA' : '#2563EB'} size={17} strokeWidth={2.4} />
           </Pressable>
 
           {/* Action Buttons */}
@@ -604,10 +641,10 @@ export default function AlarmScreen({ alarm, onBack, onNavigate: _onNavigate }: 
             accessibilityLabel={t('alarmRinging.markAsTaken')}
             className="flex-row items-center justify-center gap-2.5 rounded-full py-4 mt-4 shadow-md active:opacity-90"
             style={{
-              backgroundColor: '#2563EB',
-              shadowColor: '#2563EB',
+              backgroundColor: isDark ? '#3B82F6' : '#2563EB',
+              shadowColor: isDark ? '#3B82F6' : '#2563EB',
               shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.28,
+              shadowOpacity: isDark ? 0.35 : 0.28,
               shadowRadius: 10,
               elevation: 4,
             }}
@@ -623,15 +660,15 @@ export default function AlarmScreen({ alarm, onBack, onNavigate: _onNavigate }: 
             disabled={!canSnooze(snoozeCount)}
             accessibilityRole="button"
             accessibilityLabel={t('alarmRinging.snoozeMinutes', { count: remainingSnoozes(snoozeCount) })}
-            className="flex-row items-center justify-center gap-2.5 rounded-full py-4 mt-3 border-2 active:bg-blue-50/50"
+            className="flex-row items-center justify-center gap-2.5 rounded-full py-4 mt-3 border-2 active:opacity-80"
             style={{
-              backgroundColor: '#FFFFFF',
-              borderColor: '#BFDBFE',
-              opacity: canSnooze(snoozeCount) ? 1 : 0.6,
+              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : '#FFFFFF',
+              borderColor: isDark ? 'rgba(59, 130, 246, 0.35)' : '#BFDBFE',
+              opacity: canSnooze(snoozeCount) ? 1 : 0.5,
             }}
           >
-            <Clock color="#2563EB" size={18} strokeWidth={2.2} />
-            <Text className="text-[15.5px] font-bold" style={{ color: '#2563EB' }}>
+            <Clock color={isDark ? '#60A5FA' : '#2563EB'} size={18} strokeWidth={2.2} />
+            <Text className="text-[15.5px] font-bold" style={{ color: isDark ? '#60A5FA' : '#2563EB' }}>
               {canSnooze(snoozeCount)
                 ? t('alarmRinging.snoozeMinutes', { count: remainingSnoozes(snoozeCount) })
                 : t('alarmRinging.noSnoozesLeft')}
@@ -642,27 +679,31 @@ export default function AlarmScreen({ alarm, onBack, onNavigate: _onNavigate }: 
           <View
             className="flex-row items-center gap-3 rounded-2xl p-3.5 mt-4 border"
             style={{
-              backgroundColor: '#FFFFFF',
-              borderColor: '#FEE2E2',
+              backgroundColor: isDark ? 'rgba(239, 68, 68, 0.08)' : '#FFFFFF',
+              borderColor: isDark ? 'rgba(239, 68, 68, 0.25)' : '#FEE2E2',
               shadowColor: '#EF4444',
               shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.04,
+              shadowOpacity: isDark ? 0.12 : 0.04,
               shadowRadius: 6,
               elevation: 1,
             }}
           >
             <View
               className="items-center justify-center rounded-full"
-              style={{ width: 42, height: 42, backgroundColor: '#FEE2E2' }}
+              style={{
+                width: 42,
+                height: 42,
+                backgroundColor: isDark ? 'rgba(239, 68, 68, 0.18)' : '#FEE2E2',
+              }}
             >
-              <BellRing color="#DC2626" size={20} strokeWidth={2.2} />
+              <BellRing color={isDark ? '#F87171' : '#DC2626'} size={20} strokeWidth={2.2} />
             </View>
 
             <View className="flex-1">
-              <Text className="text-[13.5px] font-bold" style={{ color: '#DC2626' }}>
+              <Text className="text-[13.5px] font-bold" style={{ color: isDark ? '#F87171' : '#DC2626' }}>
                 {t('alarmRinging.silenceTitle')}
               </Text>
-              <Text className="text-[11.5px] font-medium leading-4 mt-0.5" style={{ color: '#64748B' }}>
+              <Text className="text-[11.5px] font-medium leading-4 mt-0.5" style={{ color: theme.colors.inkSecondary }}>
                 {t('alarmRinging.silenceSubtitle')}
               </Text>
             </View>
@@ -672,9 +713,9 @@ export default function AlarmScreen({ alarm, onBack, onNavigate: _onNavigate }: 
               accessibilityRole="button"
               accessibilityLabel={t('alarmRinging.turnOff')}
               className="rounded-full px-4 py-2 active:opacity-80"
-              style={{ backgroundColor: '#FEE2E2' }}
+              style={{ backgroundColor: isDark ? 'rgba(239, 68, 68, 0.22)' : '#FEE2E2' }}
             >
-              <Text className="text-[13px] font-bold" style={{ color: '#DC2626' }}>
+              <Text className="text-[13px] font-bold" style={{ color: isDark ? '#FCA5A5' : '#DC2626' }}>
                 {t('alarmRinging.turnOff')}
               </Text>
             </Pressable>
@@ -685,10 +726,13 @@ export default function AlarmScreen({ alarm, onBack, onNavigate: _onNavigate }: 
         <View className="items-center mt-3">
           <View
             className="flex-row items-center gap-1.5 rounded-full px-3.5 py-1.5 border"
-            style={{ backgroundColor: '#F0F5FA', borderColor: '#D5DEEF' }}
+            style={{
+              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : '#F0F5FA',
+              borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : '#D5DEEF',
+            }}
           >
-            <Clock color="#64748B" size={13} strokeWidth={2} />
-            <Text className="text-[12px] font-medium" style={{ color: '#64748B' }}>
+            <Clock color={theme.colors.inkSecondary} size={13} strokeWidth={2} />
+            <Text className="text-[12px] font-medium" style={{ color: theme.colors.inkSecondary }}>
               {t('alarmRinging.autoEscalates', { time: formatCountdown(remainingMs) })}
             </Text>
           </View>
@@ -697,20 +741,27 @@ export default function AlarmScreen({ alarm, onBack, onNavigate: _onNavigate }: 
 
       {/* Help Modal */}
       <Modal visible={helpVisible} transparent animationType="fade" onRequestClose={() => setHelpVisible(false)}>
-        <View className="flex-1 items-center justify-center px-6" style={{ backgroundColor: 'rgba(15, 23, 42, 0.45)' }}>
+        <View className="flex-1 items-center justify-center px-6" style={{ backgroundColor: isDark ? 'rgba(0, 0, 0, 0.75)' : 'rgba(15, 23, 42, 0.45)' }}>
           <View
             className="w-full rounded-[28px] p-6 border shadow-2xl"
-            style={{ backgroundColor: '#FFFFFF', borderColor: '#E2EDF8' }}
+            style={{
+              backgroundColor: isDark ? '#1E293B' : '#FFFFFF',
+              borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : '#E2EDF8',
+            }}
           >
-            <View className="flex-row items-center justify-between pb-3 border-b" style={{ borderColor: '#F1F5F9' }}>
+            <View className="flex-row items-center justify-between pb-3 border-b" style={{ borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : '#F1F5F9' }}>
               <View className="flex-row items-center gap-2.5">
                 <View
                   className="items-center justify-center rounded-xl"
-                  style={{ width: 36, height: 36, backgroundColor: '#DBEAFE' }}
+                  style={{
+                    width: 36,
+                    height: 36,
+                    backgroundColor: isDark ? 'rgba(59, 130, 246, 0.2)' : '#DBEAFE',
+                  }}
                 >
-                  <CircleHelp color="#2563EB" size={20} strokeWidth={2.2} />
+                  <CircleHelp color={isDark ? '#60A5FA' : '#2563EB'} size={20} strokeWidth={2.2} />
                 </View>
-                <Text className="text-[17px] font-bold" style={{ color: '#0F172A' }}>
+                <Text className="text-[17px] font-bold" style={{ color: theme.colors.ink }}>
                   {t('alarmRinging.helpTitle')}
                 </Text>
               </View>
@@ -718,90 +769,61 @@ export default function AlarmScreen({ alarm, onBack, onNavigate: _onNavigate }: 
                 onPress={() => setHelpVisible(false)}
                 hitSlop={8}
                 className="items-center justify-center rounded-full"
-                style={{ width: 32, height: 32, backgroundColor: '#F1F5F9' }}
+                style={{
+                  width: 32,
+                  height: 32,
+                  backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : '#F1F5F9',
+                }}
               >
-                <X color="#64748B" size={18} strokeWidth={2.4} />
+                <X color={theme.colors.inkSecondary} size={18} strokeWidth={2.4} />
               </Pressable>
             </View>
 
-            <Text className="text-[13px] font-medium mt-3" style={{ color: '#64748B' }}>
+            <Text className="text-[13px] font-medium mt-3" style={{ color: theme.colors.inkSecondary }}>
               {t('alarmRinging.helpDesc')}
             </Text>
 
             <View className="gap-3.5 mt-4">
-              <View className="flex-row items-start gap-3">
-                <View
-                  className="items-center justify-center rounded-full mt-0.5"
-                  style={{ width: 22, height: 22, backgroundColor: '#DBEAFE' }}
-                >
-                  <Text className="text-[11px] font-bold" style={{ color: '#2563EB' }}>1</Text>
+              {[
+                { step: 1, title: t('alarmRinging.helpStep1Title'), desc: t('alarmRinging.helpStep1Desc'), danger: false },
+                { step: 2, title: t('alarmRinging.helpStep2Title'), desc: t('alarmRinging.helpStep2Desc'), danger: false },
+                { step: 3, title: t('alarmRinging.helpStep3Title'), desc: t('alarmRinging.helpStep3Desc'), danger: false },
+                { step: 4, title: t('alarmRinging.helpStep4Title'), desc: t('alarmRinging.helpStep4Desc'), danger: true },
+              ].map(({ step, title, desc, danger }) => (
+                <View key={step} className="flex-row items-start gap-3">
+                  <View
+                    className="items-center justify-center rounded-full mt-0.5"
+                    style={{
+                      width: 22,
+                      height: 22,
+                      backgroundColor: danger
+                        ? isDark ? 'rgba(239, 68, 68, 0.2)' : '#FEE2E2'
+                        : isDark ? 'rgba(59, 130, 246, 0.2)' : '#DBEAFE',
+                    }}
+                  >
+                    <Text
+                      className="text-[11px] font-bold"
+                      style={{ color: danger ? (isDark ? '#F87171' : '#DC2626') : (isDark ? '#60A5FA' : '#2563EB') }}
+                    >
+                      {step}
+                    </Text>
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-[13.5px] font-bold" style={{ color: theme.colors.ink }}>
+                      {title}
+                    </Text>
+                    <Text className="text-[12px] font-medium mt-0.5" style={{ color: theme.colors.inkSecondary }}>
+                      {desc}
+                    </Text>
+                  </View>
                 </View>
-                <View className="flex-1">
-                  <Text className="text-[13.5px] font-bold" style={{ color: '#0F172A' }}>
-                    {t('alarmRinging.helpStep1Title')}
-                  </Text>
-                  <Text className="text-[12px] font-medium text-slate-500 mt-0.5">
-                    {t('alarmRinging.helpStep1Desc')}
-                  </Text>
-                </View>
-              </View>
-
-              <View className="flex-row items-start gap-3">
-                <View
-                  className="items-center justify-center rounded-full mt-0.5"
-                  style={{ width: 22, height: 22, backgroundColor: '#DBEAFE' }}
-                >
-                  <Text className="text-[11px] font-bold" style={{ color: '#2563EB' }}>2</Text>
-                </View>
-                <View className="flex-1">
-                  <Text className="text-[13.5px] font-bold" style={{ color: '#0F172A' }}>
-                    {t('alarmRinging.helpStep2Title')}
-                  </Text>
-                  <Text className="text-[12px] font-medium text-slate-500 mt-0.5">
-                    {t('alarmRinging.helpStep2Desc')}
-                  </Text>
-                </View>
-              </View>
-
-              <View className="flex-row items-start gap-3">
-                <View
-                  className="items-center justify-center rounded-full mt-0.5"
-                  style={{ width: 22, height: 22, backgroundColor: '#DBEAFE' }}
-                >
-                  <Text className="text-[11px] font-bold" style={{ color: '#2563EB' }}>3</Text>
-                </View>
-                <View className="flex-1">
-                  <Text className="text-[13.5px] font-bold" style={{ color: '#0F172A' }}>
-                    {t('alarmRinging.helpStep3Title')}
-                  </Text>
-                  <Text className="text-[12px] font-medium text-slate-500 mt-0.5">
-                    {t('alarmRinging.helpStep3Desc')}
-                  </Text>
-                </View>
-              </View>
-
-              <View className="flex-row items-start gap-3">
-                <View
-                  className="items-center justify-center rounded-full mt-0.5"
-                  style={{ width: 22, height: 22, backgroundColor: '#FEE2E2' }}
-                >
-                  <Text className="text-[11px] font-bold" style={{ color: '#DC2626' }}>4</Text>
-                </View>
-                <View className="flex-1">
-                  <Text className="text-[13.5px] font-bold" style={{ color: '#0F172A' }}>
-                    {t('alarmRinging.helpStep4Title')}
-                  </Text>
-                  <Text className="text-[12px] font-medium text-slate-500 mt-0.5">
-                    {t('alarmRinging.helpStep4Desc')}
-                  </Text>
-                </View>
-              </View>
+              ))}
             </View>
 
             <Pressable
               onPress={() => setHelpVisible(false)}
               className="items-center justify-center rounded-2xl py-3.5 mt-6 shadow-sm active:opacity-90"
-              style={{ backgroundColor: '#2563EB' }}
+              style={{ backgroundColor: isDark ? '#3B82F6' : '#2563EB' }}
             >
               <Text className="text-[15px] font-bold" style={{ color: '#FFFFFF' }}>
                 {t('alarmRinging.closeHelp')}

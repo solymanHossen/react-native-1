@@ -8,7 +8,7 @@ import {
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import { BellRing, ChartColumn, Check, ChevronRight, Clock, Droplet, Info, MoonStar, Package, Pencil, Phone, Pill, PillBottle, Plus, Sun, Sunrise, Sunset, Trash2, User, Utensils, UtensilsCrossed, X } from 'lucide-react-native';
+import { BellRing, ChartColumn, Check, ChevronRight, Clock, Droplet, Info, MoonStar, Package, Pencil, Phone, Pill, PillBottle, Plus, Settings, Sun, Sunrise, Sunset, Trash2, Utensils, UtensilsCrossed, X } from 'lucide-react-native';
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, type ComponentType, type ElementRef } from 'react';
 import { ActivityIndicator, Image, Keyboard, Pressable, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -22,7 +22,6 @@ import {
   rescheduleAllActiveAlarms,
   setCaregiverPhone,
   setScheduleActive,
-  useActiveAlarmStore,
 } from '../alarms';
 import { initializeDatabase, type Medication, type MediusDatabase } from '../db';
 import type { MealRelation, ScheduleWithMedication, TimeNode } from '../db/types';
@@ -937,38 +936,6 @@ export default function AlarmsScreen({ onOpenSettings, onNavigateToMedications }
           ) : null}
         </View>
         <View className="flex-row items-center gap-2">
-          <Pressable
-            onPress={() => {
-              triggerHaptic('selection');
-              useActiveAlarmStore.getState().setActiveAlarm({
-                notificationId: `demo-naprosyn-${Date.now()}`,
-                payload: {
-                  scheduleId: schedules[0]?.id ?? 1,
-                  medicationId: schedules[0]?.medication_id ?? 1,
-                  medicationName: 'Naprosyn',
-                  medicationStrength: '500 mg',
-                  dosageLabel: '1 tablet',
-                  doseQuantity: 1,
-                  mealRelation: 'WITH',
-                  nfcTagUid: null,
-                  scheduledAtMs: Date.now(),
-                  title: 'Medication Alarm',
-                },
-                firedAtMs: Date.now(),
-                snoozeCount: 0,
-              });
-            }}
-            accessibilityRole="button"
-            accessibilityLabel="Test Alarm"
-            hitSlop={6}
-            className="flex-row items-center gap-1.5 rounded-full px-3 py-2 border shadow-xs"
-            style={{ backgroundColor: theme.alarms.bell.badge, borderColor: `${theme.alarms.bell.icon}33` }}
-          >
-            <BellRing color={theme.alarms.bell.icon} size={15} strokeWidth={2.4} />
-            <Text style={{ color: theme.alarms.bell.pillText, fontSize: 13, fontWeight: '700' }}>
-              Test Alarm
-            </Text>
-          </Pressable>
           {onOpenSettings ? (
             <Pressable
               onPress={onOpenSettings}
@@ -976,9 +943,15 @@ export default function AlarmsScreen({ onOpenSettings, onNavigateToMedications }
               accessibilityLabel={t('home.settings')}
               hitSlop={6}
               className="items-center justify-center rounded-full"
-              style={{ width: 40, height: 40, backgroundColor: theme.colors.elevated }}
+              style={{
+                width: 40,
+                height: 40,
+                backgroundColor: theme.mode === 'dark' ? 'rgba(255, 255, 255, 0.06)' : `${theme.action.base}14`,
+                borderWidth: theme.mode === 'dark' ? 1 : 0,
+                borderColor: 'rgba(255, 255, 255, 0.08)',
+              }}
             >
-              <User color={theme.colors.inkSecondary} size={19} strokeWidth={2} />
+              <Settings color={theme.mode === 'dark' ? theme.colors.inkSecondary : theme.action.base} size={19} strokeWidth={2} />
             </Pressable>
           ) : null}
         </View>
