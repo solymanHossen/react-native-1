@@ -21,7 +21,7 @@ import type { AlarmDismissalMethod, ScheduledAlarmPayload } from './types';
  * executor, so this writes the two statements directly against `tx.execute`
  * instead of going through `intakeLogs.record`/`medications.adjustStock`.
  */
-export async function confirmIntake(payload: ScheduledAlarmPayload, method: Exclude<AlarmDismissalMethod, 'MANUAL_OVERRIDE'>): Promise<void> {
+export async function confirmIntake(payload: ScheduledAlarmPayload, method: AlarmDismissalMethod): Promise<void> {
   const database = await initializeDatabase();
   const scheduledTime = new Date(payload.scheduledAtMs).toISOString();
   const takenTime = new Date().toISOString();

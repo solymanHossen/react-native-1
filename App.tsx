@@ -417,6 +417,7 @@ function App() {
   const [vitalsFocus, setVitalsFocus] = useState<VitalType | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const activeAlarm = useActiveAlarmStore((state) => state.activeAlarm);
+  const clearActiveAlarm = useActiveAlarmStore((state) => state.clearActiveAlarm);
 
   // Boot splash: visible until the stores are actually primed *and* a
   // minimum floor has elapsed (so it doesn't flash-and-vanish on a fast
@@ -474,11 +475,23 @@ function App() {
         <SafeAreaProvider>
           <BottomSheetModalProvider>
             {activeAlarm ? (
-              // A fired alarm takes over the whole app — no tab bar, no way
-              // back to the normal screens except resolving it
               <>
-                <StatusBar barStyle="light-content" />
-                <AlarmScreen alarm={activeAlarm} />
+                <StatusBar barStyle={mode === 'dark' ? 'light-content' : 'dark-content'} />
+                <AlarmScreen
+                  alarm={activeAlarm}
+                  onBack={() => clearActiveAlarm()}
+                  onNavigate={(nextTab) => {
+                    clearActiveAlarm();
+                    handleNavigate(nextTab);
+                  }}
+                />
+                <BottomTabBar
+                  tab="alarms"
+                  onChange={(nextTab) => {
+                    clearActiveAlarm();
+                    handleNavigate(nextTab);
+                  }}
+                />
               </>
             ) : (
               <>
