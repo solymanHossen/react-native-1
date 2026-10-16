@@ -13,6 +13,7 @@ import { initializeDatabase, type Medication, type Schedule } from '../../db';
 import { runSentinelCheckForMedication } from '../../alarms/sentinel';
 import { useTranslation } from '../../i18n';
 import { triggerHaptic } from '../../lib/haptics';
+import { SkeletonBox, SkeletonCircle } from '../ui';
 import { useTheme } from '../../theme/useTheme';
 
 export interface MedicationDetailsSheetRef {
@@ -350,7 +351,21 @@ export const MedicationDetailsSheet = forwardRef<MedicationDetailsSheetRef, Medi
 
           <View className="gap-3">
             <Text className="text-caption uppercase tracking-wider" style={{ color: theme.colors.inkSecondary }}>{t('medications.detailsScheduleTitle')}</Text>
-            {loading ? <ActivityIndicator color={theme.action.base} /> : schedules.length === 0 ? (
+            {loading ? (
+              <View className="gap-2.5">
+                {[1, 2].map((key) => (
+                  <View
+                    key={key}
+                    className="flex-row items-center gap-3 rounded-2xl border p-4"
+                    style={{ backgroundColor: theme.colors.elevated, borderColor: theme.colors.hairline }}
+                  >
+                    <SkeletonCircle size={22} />
+                    <SkeletonBox width="50%" height={16} borderRadius={5} />
+                    <SkeletonBox width={50} height={16} borderRadius={8} style={{ marginLeft: 'auto' }} />
+                  </View>
+                ))}
+              </View>
+            ) : schedules.length === 0 ? (
               <Text className="text-body" style={{ color: theme.colors.inkSecondary }}>{t('medications.detailsNoSchedules')}</Text>
             ) : schedules.map((schedule) => (
               <View key={schedule.id} className="flex-row items-center gap-3 rounded-2xl border p-4" style={{ backgroundColor: theme.colors.elevated, borderColor: theme.colors.hairline }}>

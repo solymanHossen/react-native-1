@@ -10,6 +10,7 @@ import { ActivityIndicator, Text, View } from 'react-native';
 import { initializeDatabase, type MedicationHistoryItem } from '../../db';
 import { useTranslation } from '../../i18n';
 import { triggerHaptic } from '../../lib/haptics';
+import { SkeletonBox, SkeletonCircle } from '../ui';
 import { useTheme } from '../../theme/useTheme';
 
 export interface MedicationHistorySheetRef {
@@ -169,8 +170,21 @@ export const MedicationHistorySheet = forwardRef<MedicationHistorySheetRef>(func
             {t('medications.historyTimeline')}
           </Text>
           {loading ? (
-            <View className="items-center py-10">
-              <ActivityIndicator color={theme.action.base} />
+            <View className="gap-3 py-2">
+              {[1, 2, 3].map((key) => (
+                <View
+                  key={key}
+                  className="flex-row items-center gap-3.5 rounded-2xl border p-4"
+                  style={{ backgroundColor: theme.colors.elevated, borderColor: theme.colors.hairline }}
+                >
+                  <SkeletonCircle size={36} />
+                  <View className="flex-1 gap-1.5">
+                    <SkeletonBox width="60%" height={16} borderRadius={5} />
+                    <SkeletonBox width="40%" height={12} borderRadius={4} />
+                  </View>
+                  <SkeletonBox width={64} height={24} borderRadius={12} />
+                </View>
+              ))}
             </View>
           ) : items.length === 0 ? (
             <Text className="text-body-lg" style={{ color: theme.colors.inkSecondary }}>

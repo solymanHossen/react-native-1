@@ -13,7 +13,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { HealthRecordsSheet, type HealthRecordsSheetRef } from '../components/records/HealthRecordsSheet';
 import { LiquidProgressRing, NextDoseCard, TodayStatusCard } from '../components/dashboard';
-import { ActionRow, ActionRowGroup, AmbientDepthBackground, AppLogo, GlassCard, MetricCard } from '../components/ui';
+import { ActionRow, ActionRowGroup, AmbientDepthBackground, AppLogo, GlassCard, HomeScreenSkeleton, MetricCard } from '../components/ui';
 import { useTranslation, type TranslationKey } from '../i18n';
 import { triggerHaptic } from '../lib/haptics';
 import { generateClinicalReportPdf, shareClinicalReportPdf } from '../reports/pdfService';
@@ -127,13 +127,17 @@ export default function HomeScreen({ onNavigateToVitals, onOpenSettings }: HomeS
     [refreshIntakeQueue, refreshVitals, refreshAlerts],
   );
 
+  const [initialLoading, setInitialLoading] = useState(intakeItems.length === 0);
+
   // Re-reads on every mount (i.e. every time this tab is switched back to),
   // not just once at app startup — the alarm engine's own NFC/vision-verified
   // intake writes go straight to SQLite without touching this store, so
   // "whatever the store already holds in memory" can go stale the moment the
   // user resolves a dose from an alarm instead of from this screen.
   useEffect(() => {
-    refreshEverything().catch(() => {});
+    refreshEverything()
+      .catch(() => {})
+      .finally(() => setInitialLoading(false));
   }, [refreshEverything]);
 
   // Marks the entrance stagger (see RevealOnMount above) as already played
@@ -239,6 +243,10 @@ export default function HomeScreen({ onNavigateToVitals, onOpenSettings }: HomeS
 
   const seeAllScale = useSharedValue(1);
   const seeAllPressStyle = useAnimatedStyle(() => ({ transform: [{ scale: seeAllScale.value }] }));
+
+  if (initialLoading && intakeItems.length === 0) {
+    return <HomeScreenSkeleton />;
+  }
 
   return (
     <SafeAreaView className="flex-1" edges={['left', 'right']} style={{ backgroundColor: theme.colors.canvas }}>

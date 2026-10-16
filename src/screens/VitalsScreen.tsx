@@ -12,7 +12,7 @@ import { BloodPressureCard } from '../components/vitals/BloodPressureCard';
 import { Sparkline } from '../components/vitals/Sparkline';
 import { SymptomLogSheet, type SymptomLogSheetRef } from '../components/vitals/SymptomLogSheet';
 import { VitalStepperCard } from '../components/vitals/VitalStepperCard';
-import { LargeTextButton } from '../components/ui';
+import { LargeTextButton, SkeletonBox, VitalsScreenSkeleton } from '../components/ui';
 import { initializeDatabase } from '../db';
 import type { Vital, VitalType } from '../db/types';
 import { useTranslation, type TranslationKey } from '../i18n';
@@ -216,6 +216,8 @@ export default function VitalsScreen({ focusVital = null }: VitalsScreenProps) {
   const [trendRange, setTrendRange] = useState<TrendRange>(7);
   const [trendPoints, setTrendPoints] = useState<Vital[]>([]);
   const [canvasWidth, setCanvasWidth] = useState(0);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [trendLoading, setTrendLoading] = useState(true);
 
   const scrollToVital = useCallback((type: VitalType) => {
     const offset = sectionOffsets.current[type];
@@ -237,9 +239,15 @@ export default function VitalsScreen({ focusVital = null }: VitalsScreenProps) {
   }, []);
 
   useEffect(() => {
-    refreshTrend(trendType, trendRange).catch((error: unknown) => {
-      console.warn('[VitalsScreen] failed to load trend', error);
-    });
+    setTrendLoading(true);
+    refreshTrend(trendType, trendRange)
+      .catch((error: unknown) => {
+        console.warn('[VitalsScreen] failed to load trend', error);
+      })
+      .finally(() => {
+        setTrendLoading(false);
+        setInitialLoading(false);
+      });
   }, [trendType, trendRange, refreshTrend]);
 
   const saveVital = useCallback(
@@ -293,6 +301,10 @@ export default function VitalsScreen({ focusVital = null }: VitalsScreenProps) {
     { type: 'WEIGHT', label: t('vitals.bodyWeight'), icon: Scale, color: '#8E5C00' },
     { type: 'TEMPERATURE', label: t('vitals.bodyTemperature'), icon: Thermometer, color: '#CD0000' },
   ];
+
+  if (initialLoading) {
+    return <VitalsScreenSkeleton />;
+  }
 
   return (
     <SafeAreaView className="flex-1" edges={['top', 'left', 'right']} style={{ backgroundColor: theme.colors.canvas }}>
@@ -383,7 +395,9 @@ export default function VitalsScreen({ focusVital = null }: VitalsScreenProps) {
             className="rounded-3xl border p-5"
             style={{ backgroundColor: theme.colors.elevated, borderColor: theme.colors.hairline }}
           >
-            {canvasWidth > 0 ? (
+            {trendLoading ? (
+              <SkeletonBox width="100%" height={160} borderRadius={16} />
+            ) : canvasWidth > 0 ? (
               <Sparkline
                 points={trendPoints.map((vital) => ({ timestamp: vital.timestamp, value: vital.value }))}
                 width={canvasWidth - 40}

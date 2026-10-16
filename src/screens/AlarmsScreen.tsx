@@ -13,7 +13,7 @@ import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRe
 import { ActivityIndicator, Image, Keyboard, Pressable, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AlarmScheduleCard, AlarmsEmptyState, AlarmsHeroSummary, EmergencyContactCard, maskPhone } from '../components/alarms';
-import { LargeTextButton } from '../components/ui';
+import { AlarmsScreenSkeleton, LargeTextButton } from '../components/ui';
 import {
   deleteSchedule,
   getCaregiverPhone,
@@ -808,6 +808,7 @@ export default function AlarmsScreen({ onOpenSettings, onNavigateToMedications }
   const [initError, setInitError] = useState<string | null>(null);
   const [schedules, setSchedules] = useState<ScheduleWithMedication[]>([]);
   const [medications, setMedications] = useState<Medication[]>([]);
+  const [loading, setLoading] = useState(true);
   const [savedCaregiverPhone, setSavedCaregiverPhone] = useState(() => getCaregiverPhone());
   const caregiverSheetRef = useRef<CaregiverContactSheetRef>(null);
   const reminderSheetRef = useRef<ReminderSheetRef>(null);
@@ -825,7 +826,8 @@ export default function AlarmsScreen({ onOpenSettings, onNavigateToMedications }
   useEffect(() => {
     initializeDatabase()
       .then((database) => refresh(database))
-      .catch((error: unknown) => setInitError(error instanceof Error ? error.message : String(error)));
+      .catch((error: unknown) => setInitError(error instanceof Error ? error.message : String(error)))
+      .finally(() => setLoading(false));
   }, [refresh]);
 
   const handleAddReminder = useCallback(
@@ -910,6 +912,10 @@ export default function AlarmsScreen({ onOpenSettings, onNavigateToMedications }
   }, [t]);
 
   const maskedCaregiverPhone = savedCaregiverPhone ? maskPhone(savedCaregiverPhone) : null;
+
+  if (loading && schedules.length === 0 && medications.length === 0 && !initError) {
+    return <AlarmsScreenSkeleton />;
+  }
 
   return (
     <SafeAreaView className="flex-1" edges={['top', 'left', 'right']} style={{ backgroundColor: theme.colors.canvas }}>

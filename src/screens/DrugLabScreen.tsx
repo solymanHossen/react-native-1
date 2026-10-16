@@ -17,6 +17,7 @@ import { DuplicateMedicationError, initializeDatabase, type DrugConflict, type D
 import { useTranslation } from '../i18n';
 import { triggerHaptic } from '../lib/haptics';
 import type { SeverityKey } from '../theme/tokens';
+import { DrugLabScreenSkeleton, SkeletonBox } from '../components/ui';
 import { toast } from '../store';
 import { useTheme } from '../theme/useTheme';
 
@@ -574,6 +575,10 @@ export default function DrugLabScreen() {
     [mediusDb, refreshMedications, t],
   );
 
+  if (!mediusDb && !initError) {
+    return <DrugLabScreenSkeleton />;
+  }
+
   return (
     <SafeAreaView className="flex-1" edges={['top', 'left', 'right']} style={{ flex: 1, backgroundColor: theme.colors.canvas }}>
       {/* ── Screen Header: Title + Subtitle + 3D Capsule Orb ── */}
@@ -757,7 +762,27 @@ export default function DrugLabScreen() {
                 />
               </View>
 
-              {searching ? <ActivityIndicator color={theme.action.base} /> : null}
+              {searching ? (
+                <View className="gap-3">
+                  {[1, 2, 3].map((key) => (
+                    <View
+                      key={key}
+                      className="flex-row items-center gap-3.5 rounded-2xl border p-4"
+                      style={{
+                        backgroundColor: theme.colors.elevated,
+                        borderColor: theme.mode === 'dark' ? theme.colors.hairline : '#EDF2F7',
+                      }}
+                    >
+                      <SkeletonBox width={40} height={40} borderRadius={14} />
+                      <View className="flex-1 gap-1.5">
+                        <SkeletonBox width="60%" height={16} borderRadius={5} />
+                        <SkeletonBox width="40%" height={12} borderRadius={4} />
+                      </View>
+                      <SkeletonBox width={32} height={32} borderRadius={16} />
+                    </View>
+                  ))}
+                </View>
+              ) : null}
               {!searching && query.trim() && results.length === 0 ? (
                 <Text className="text-body-lg" style={{ color: theme.colors.inkSecondary }}>
                   {t('medications.noResultsFound', { query })}

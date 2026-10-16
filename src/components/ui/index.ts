@@ -23,3 +23,28 @@ export type { StatusPillProps } from './StatusPill';
 
 export { ErrorBoundary } from './ErrorBoundary';
 export { ToastContainer } from './Toast';
+
+export {
+  SkeletonProvider,
+  useSkeletonAnimation,
+  SkeletonBox,
+  SkeletonCircle,
+  SkeletonText,
+  SkeletonCard,
+  SkeletonCrossFade,
+  HomeScreenSkeleton,
+  DrugLabScreenSkeleton,
+  AlarmsScreenSkeleton,
+  VitalsScreenSkeleton,
+  CircadianDashboardScreenSkeleton,
+} from './skeleton';
+export type {
+  SkeletonProviderProps,
+  SkeletonContextValue,
+  SkeletonBoxProps,
+  SkeletonCircleProps,
+  SkeletonTextProps,
+  SkeletonCardProps,
+  SkeletonCrossFadeProps,
+} from './skeleton';
+

@@ -12,8 +12,9 @@ import {
   type SkipReasonSheetRef,
 } from '../components/dashboard';
 import type { DoseEntry } from '../dashboard/types';
+import { CircadianDashboardScreenSkeleton } from '../components/ui';
 import { useTranslation } from '../i18n';
-import { toast } from '../store';
+import { toast, useIntakeQueueStore } from '../store';
 import { useLiveDoseSchedule } from '../store/intakeQueueStore';
 import { useTheme } from '../theme/useTheme';
 
@@ -58,6 +59,12 @@ export default function CircadianDashboardScreen() {
     },
     [doses, markSkipped, t],
   );
+
+  const intakeLoading = useIntakeQueueStore((state) => state.loading);
+
+  if (intakeLoading && doses.length === 0) {
+    return <CircadianDashboardScreenSkeleton />;
+  }
 
   return (
     <SafeAreaView className="flex-1" edges={['top', 'left', 'right']} style={{ backgroundColor: theme.colors.canvas }}>
