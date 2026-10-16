@@ -13,6 +13,7 @@ import {
 } from '../components/dashboard';
 import type { DoseEntry } from '../dashboard/types';
 import { useTranslation } from '../i18n';
+import { toast } from '../store';
 import { useLiveDoseSchedule } from '../store/intakeQueueStore';
 import { useTheme } from '../theme/useTheme';
 
@@ -37,6 +38,26 @@ export default function CircadianDashboardScreen() {
   const handleLongPressDetail = useCallback((dose: DoseEntry) => {
     detailSheetRef.current?.present(dose);
   }, []);
+
+  const handleMarkTaken = useCallback(
+    (id: string) => {
+      markTaken(id);
+      const targetDose = doses.find((d) => d.id === id);
+      if (targetDose) {
+        toast.success(t('alarmRinging.confirmed', { name: targetDose.medicationName }));
+      }
+    },
+    [doses, markTaken, t],
+  );
+
+  const handleSelectReason = useCallback(
+    (doseId: string, reason: import('../dashboard/types').SkipReason) => {
+      markSkipped(doseId, reason);
+      const targetDose = doses.find((d) => d.id === doseId);
+      toast.info(`${t('rhythm.skippedPrefix')}${targetDose ? targetDose.medicationName : ''}`);
+    },
+    [doses, markSkipped, t],
+  );
 
   return (
     <SafeAreaView className="flex-1" edges={['top', 'left', 'right']} style={{ backgroundColor: theme.colors.canvas }}>
@@ -109,7 +130,7 @@ export default function CircadianDashboardScreen() {
                 key={dose.id}
                 dose={dose}
                 skipReason={skipReasons[dose.id]}
-                onMarkTaken={markTaken}
+                onMarkTaken={handleMarkTaken}
                 onRequestSkip={handleRequestSkip}
                 onLongPressDetail={handleLongPressDetail}
               />
@@ -118,7 +139,7 @@ export default function CircadianDashboardScreen() {
         </View>
       </ScrollView>
 
-      <SkipReasonSheet ref={skipSheetRef} onSelectReason={markSkipped} />
+      <SkipReasonSheet ref={skipSheetRef} onSelectReason={handleSelectReason} />
       <DoseDetailSheet ref={detailSheetRef} />
     </SafeAreaView>
   );

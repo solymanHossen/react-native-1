@@ -338,6 +338,7 @@ export const bn: typeof en = {
     removeConfirmTitle: '{{name}} সরাবেন?',
     removeConfirmBody: 'এটি শুধু আপনার ওষুধের তালিকা থেকে সরানো হবে — এটি অতীতের কোনো ডোজের তথ্য মুছে দেয় না।',
     removeFailed: 'এই ওষুধটি সরানো যায়নি: {{error}}',
+    removedSuccess: '{{name}} ওষুধ তালিকা থেকে সরানো হয়েছে।',
     historyTitle: 'ওষুধের ইতিহাস',
     historyEntryCaption: 'গৃহীত, বাদ দেওয়া এবং মিস হওয়া ডোজ দেখুন',
     historySubtitle: 'রেকর্ড করা ডোজের একটি পরিষ্কার টাইমলাইন',

@@ -16,6 +16,7 @@ export { useIntakeQueueStore, useLiveDoseSchedule, type IntakeQueueItem, type In
 export { useSentinelStore } from './sentinelStore';
 export { useVitalsStore, type LatestVitals } from './vitalsStore';
 export { useActiveAlarmStore } from '../alarms';
+export { useToastStore, toast, type ToastItem, type ToastType, type ToastAction, type ToastInput } from './toastStore';
 
 import { useIntakeQueueStore } from './intakeQueueStore';
 import { useSentinelStore } from './sentinelStore';

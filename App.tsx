@@ -19,7 +19,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { initializeAlarmSystem } from './src/alarms';
-import { ErrorBoundary } from './src/components/ui';
+import { ErrorBoundary, ToastContainer } from './src/components/ui';
 import { useTranslation, type TranslationKey } from './src/i18n';
 import { triggerHaptic } from './src/lib/haptics';
 import AlarmScreen from './src/screens/AlarmScreen';
@@ -507,6 +507,7 @@ function App() {
               </>
             )}
           </BottomSheetModalProvider>
+          <ToastContainer />
           {splashMounted ? <BootSplash visible={!bootDone} onHidden={() => setSplashMounted(false)} /> : null}
         </SafeAreaProvider>
       </ErrorBoundary>

@@ -28,6 +28,7 @@ import { initializeDatabase, type Medication, type MediusDatabase } from '../db'
 import type { MealRelation, ScheduleWithMedication, TimeNode } from '../db/types';
 import { useTranslation, type TranslationKey } from '../i18n';
 import { triggerHaptic } from '../lib/haptics';
+import { toast } from '../store';
 import { useTheme } from '../theme/useTheme';
 
 interface CaregiverContactSheetRef {
@@ -786,7 +787,6 @@ export default function AlarmsScreen({ onOpenSettings, onNavigateToMedications }
   const [schedules, setSchedules] = useState<ScheduleWithMedication[]>([]);
   const [medications, setMedications] = useState<Medication[]>([]);
   const [savedCaregiverPhone, setSavedCaregiverPhone] = useState(() => getCaregiverPhone());
-  const [status, setStatus] = useState<string | null>(null);
   const caregiverSheetRef = useRef<CaregiverContactSheetRef>(null);
   const reminderSheetRef = useRef<ReminderSheetRef>(null);
   const flashListRef = useRef<ElementRef<typeof FlashList<ScheduleWithMedication>>>(null);
@@ -823,15 +823,13 @@ export default function AlarmsScreen({ onOpenSettings, onNavigateToMedications }
         title,
       });
       await Promise.all([refresh(database), rescheduleAllActiveAlarms()]);
-      triggerHaptic('notificationSuccess');
-      setStatus(t('alarms.reminderAdded', { name: medication.name }));
+      toast.success(t('alarms.reminderAdded', { name: medication.name }));
     },
     [refresh, t],
   );
 
   const handleToggleActive = useCallback(
     async (schedule: ScheduleWithMedication, nextActive: boolean) => {
-      triggerHaptic('selection');
       // Optimistic update — setScheduleActive also has to cancel/reschedule
       // the real notifee trigger, which takes a moment, and the switch
       // shouldn't visibly lag behind the tap that flipped it.
@@ -843,11 +841,10 @@ export default function AlarmsScreen({ onOpenSettings, onNavigateToMedications }
         // revert the optimistic switch so the UI doesn't drift from reality.
         console.warn('[AlarmsScreen] failed to toggle schedule', error);
         setSchedules((prev) => prev.map((entry) => (entry.id === schedule.id ? { ...entry, is_active: !nextActive } : entry)));
-        setStatus(t('alarms.toggleFailed', { name: schedule.medicationName }));
-        triggerHaptic('notificationError');
+        toast.error(t('alarms.toggleFailed', { name: schedule.medicationName }));
         return;
       }
-      setStatus(
+      toast.info(
         nextActive
           ? t('alarms.turnedOn', { name: schedule.medicationName })
           : t('alarms.turnedOff', { name: schedule.medicationName }),
@@ -862,14 +859,12 @@ export default function AlarmsScreen({ onOpenSettings, onNavigateToMedications }
       setSchedules((prev) => prev.filter((entry) => entry.id !== schedule.id));
       try {
         await deleteSchedule(schedule.id);
-        setStatus(t('alarms.alarmDeleted', { name: schedule.medicationName }));
-        triggerHaptic('notificationSuccess');
+        toast.success(t('alarms.alarmDeleted', { name: schedule.medicationName }));
       } catch (error) {
         console.warn('[AlarmsScreen] failed to delete schedule', error);
         const database = await initializeDatabase();
         await refresh(database);
-        setStatus(t('alarms.deleteFailed'));
-        triggerHaptic('notificationError');
+        toast.error(t('alarms.deleteFailed'));
       }
     },
     [refresh, t],
@@ -879,15 +874,17 @@ export default function AlarmsScreen({ onOpenSettings, onNavigateToMedications }
     const normalized = normalizeCaregiverPhone(phone);
     setCaregiverPhone(normalized);
     setSavedCaregiverPhone(normalized);
-    setStatus(normalized ? t('alarms.caregiverSaved') : t('alarms.caregiverCleared'));
-    triggerHaptic('notificationSuccess');
+    if (normalized) {
+      toast.success(t('alarms.caregiverSaved'));
+    } else {
+      toast.info(t('alarms.caregiverCleared'));
+    }
   }, [t]);
 
   const handleClearCaregiverPhone = useCallback(() => {
     setCaregiverPhone('');
     setSavedCaregiverPhone(null);
-    setStatus(t('alarms.caregiverCleared'));
-    triggerHaptic('selection');
+    toast.info(t('alarms.caregiverCleared'));
   }, [t]);
 
   const maskedCaregiverPhone = savedCaregiverPhone ? maskPhone(savedCaregiverPhone) : null;
@@ -908,10 +905,6 @@ export default function AlarmsScreen({ onOpenSettings, onNavigateToMedications }
           {initError ? (
             <Text className="mt-2 text-caption" style={{ color: theme.statusText('missed') }}>
               {t('alarms.databaseFailed', { error: initError })}
-            </Text>
-          ) : status ? (
-            <Text className="mt-2 text-caption" style={{ color: theme.statusText('taken') }}>
-              {status}
             </Text>
           ) : null}
         </View>

@@ -53,6 +53,7 @@ import {
   type ActiveAlarm,
 } from '../alarms';
 import { useTranslation } from '../i18n';
+import { toast } from '../store';
 import { status } from '../theme/tokens';
 import { triggerHapticCascade, triggerHaptic } from '../lib/haptics';
 import { speakReminder, stopSpeaking } from '../lib/tts';
@@ -171,7 +172,9 @@ export default function AlarmScreen({ alarm, onBack, onNavigate: _onNavigate }: 
       } catch (error) {
         console.warn('[AlarmScreen] resolution action failed, keeping alarm active', error);
         resolvedRef.current = false;
-        setStatusMessage(t('alarmRinging.actionFailed'));
+        const msg = t('alarmRinging.actionFailed');
+        setStatusMessage(msg);
+        toast.error(msg);
         return;
       }
       setResolution(next);
@@ -196,7 +199,9 @@ export default function AlarmScreen({ alarm, onBack, onNavigate: _onNavigate }: 
         triggerHapticCascade();
         resolveAndClose('verified', () => confirmIntake(payload, 'NFC'));
       } else {
-        setStatusMessage(t('alarmRinging.nfcMismatch'));
+        const mismatchMsg = t('alarmRinging.nfcMismatch');
+        setStatusMessage(mismatchMsg);
+        toast.error(mismatchMsg);
         triggerHaptic('notificationError');
       }
     });
@@ -265,7 +270,9 @@ export default function AlarmScreen({ alarm, onBack, onNavigate: _onNavigate }: 
     } catch (error) {
       console.warn('[AlarmScreen] snooze failed, keeping alarm active', error);
       resolvedRef.current = false;
-      setStatusMessage(t('alarmRinging.actionFailed'));
+      const snoozeFailMsg = t('alarmRinging.actionFailed');
+      setStatusMessage(snoozeFailMsg);
+      toast.error(snoozeFailMsg);
       return;
     }
     incrementSnooze();

@@ -17,6 +17,7 @@ import { DuplicateMedicationError, initializeDatabase, type DrugConflict, type D
 import { useTranslation } from '../i18n';
 import { triggerHaptic } from '../lib/haptics';
 import type { SeverityKey } from '../theme/tokens';
+import { toast } from '../store';
 import { useTheme } from '../theme/useTheme';
 
 /**
@@ -459,7 +460,11 @@ export default function DrugLabScreen() {
           course_end_date: null,
         });
         const conflicts = await database.conflicts.checkDrugConflicts(result.generic_name);
-        triggerHaptic(conflicts.length > 0 ? 'notificationWarning' : 'notificationSuccess');
+        if (conflicts.length > 0) {
+          toast.warning(t('medications.addedConflictsFound', { name: result.brand_name }), result.brand_name);
+        } else {
+          toast.success(t('medications.addedNoConflicts', { name: result.brand_name }), result.brand_name);
+        }
         setAddedName(result.brand_name);
         setAddedConflicts(conflicts);
         setQuery('');
@@ -467,7 +472,7 @@ export default function DrugLabScreen() {
         await refreshMedications(database);
       } catch (error) {
         if (error instanceof DuplicateMedicationError) {
-          triggerHaptic('notificationWarning');
+          toast.warning(t('medications.alreadyAdded', { name: result.brand_name }));
           setDuplicateName(result.brand_name);
           return;
         }
@@ -556,10 +561,11 @@ export default function DrugLabScreen() {
               // ringing for a medication that's no longer in the active list.
               await Promise.all(schedulesToCancel.map((schedule) => cancelAlarm(schedule.id)));
               await refreshMedications(database);
-              triggerHaptic('notificationSuccess');
+              toast.info(t('medications.removedSuccess', { name: medication.name }));
             } catch (error) {
-              setRemoveError(t('medications.removeFailed', { error: error instanceof Error ? error.message : String(error) }));
-              triggerHaptic('notificationError');
+              const errMsg = t('medications.removeFailed', { error: error instanceof Error ? error.message : String(error) });
+              setRemoveError(errMsg);
+              toast.error(errMsg);
             }
           },
         },

@@ -17,7 +17,7 @@ import { initializeDatabase } from '../db';
 import type { Vital, VitalType } from '../db/types';
 import { useTranslation, type TranslationKey } from '../i18n';
 import { triggerHaptic } from '../lib/haptics';
-import { useVitalsStore } from '../store';
+import { toast, useVitalsStore } from '../store';
 import { useTheme } from '../theme/useTheme';
 
 type GlucoseContext = 'Fasting' | 'Post-prandial';
@@ -200,7 +200,6 @@ export default function VitalsScreen({ focusVital = null }: VitalsScreenProps) {
   const [temperature, setTemperature] = useState(98.6);
   const [selectedEntry, setSelectedEntry] = useState<VitalEntryType | null>(null);
   const entrySheetRef = useRef<ElementRef<typeof BottomSheetModal>>(null);
-  const [status, setStatus] = useState<string | null>(null);
 
   const [trendType, setTrendType] = useState<VitalType>('BP_SYS');
   const [trendRange, setTrendRange] = useState<TrendRange>(7);
@@ -236,8 +235,7 @@ export default function VitalsScreen({ focusVital = null }: VitalsScreenProps) {
     async (type: VitalType, value: number, unit: string, notes: string | null, savedMessageKey: TranslationKey) => {
       const database = await initializeDatabase();
       await database.vitals.record({ timestamp: new Date().toISOString(), type, value, unit, notes });
-      triggerHaptic('notificationSuccess');
-      setStatus(t(savedMessageKey));
+      toast.success(t(savedMessageKey));
       if (type === trendType) {
         refreshTrend(trendType, trendRange).catch(() => {});
       }
@@ -254,8 +252,7 @@ export default function VitalsScreen({ focusVital = null }: VitalsScreenProps) {
     // Both readings share one timestamp — they're the same cuff reading, not two independent events.
     await database.vitals.record({ timestamp, type: 'BP_SYS', value: systolic, unit: 'mmHg', notes: null });
     await database.vitals.record({ timestamp, type: 'BP_DIA', value: diastolic, unit: 'mmHg', notes: null });
-    triggerHaptic('notificationSuccess');
-    setStatus(t('vitals.bloodPressureSaved'));
+    toast.success(t('vitals.bloodPressureSaved'));
     if (trendType === 'BP_SYS' || trendType === 'BP_DIA') {
       refreshTrend(trendType, trendRange).catch(() => {});
     }
@@ -292,11 +289,6 @@ export default function VitalsScreen({ focusVital = null }: VitalsScreenProps) {
         <Text className="text-title-lg" style={{ color: theme.colors.ink }}>
           {t('vitals.title')}
         </Text>
-        {status ? (
-          <Text className="mt-2 text-caption" style={{ color: theme.statusText('taken') }}>
-            {status}
-          </Text>
-        ) : null}
       </View>
 
       <ScrollView ref={scrollRef} className="flex-1" contentContainerClassName="gap-7 px-6 py-7" showsVerticalScrollIndicator={false}>

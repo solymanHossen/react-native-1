@@ -346,6 +346,7 @@ export const en = {
     removeConfirmTitle: 'Remove {{name}}?',
     removeConfirmBody: 'This only removes it from your medication list — it does not delete any past dose history.',
     removeFailed: 'Could not remove this medication: {{error}}',
+    removedSuccess: '{{name}} removed from your medications.',
     historyTitle: 'Medication history',
     historyEntryCaption: 'Review taken, missed, and skipped doses',
     historySubtitle: 'A clear timeline of your recorded doses',

@@ -17,7 +17,7 @@ import { ActionRow, ActionRowGroup, AmbientDepthBackground, AppLogo, GlassCard, 
 import { useTranslation, type TranslationKey } from '../i18n';
 import { triggerHaptic } from '../lib/haptics';
 import { generateClinicalReportPdf, shareClinicalReportPdf } from '../reports/pdfService';
-import { useIntakeQueueStore, useSentinelStore, useVitalsStore, type IntakeQueueStatus } from '../store';
+import { toast, useIntakeQueueStore, useSentinelStore, useVitalsStore, type IntakeQueueStatus } from '../store';
 import type { VitalType } from '../db/types';
 import type { StatusKey } from '../theme/tokens';
 import { useTheme } from '../theme/useTheme';
@@ -210,10 +210,13 @@ export default function HomeScreen({ onNavigateToVitals, onOpenSettings }: HomeS
     try {
       const filePath = await generateClinicalReportPdf();
       await shareClinicalReportPdf(filePath);
-      setSyncStatus(t('healthRecords.reportGenerated'));
-      triggerHaptic('notificationSuccess');
+      const reportMsg = t('healthRecords.reportGenerated');
+      setSyncStatus(reportMsg);
+      toast.success(reportMsg);
     } catch (error) {
-      setSyncStatus(t('healthRecords.reportFailed', { error: error instanceof Error ? error.message : String(error) }));
+      const errorMsg = t('healthRecords.reportFailed', { error: error instanceof Error ? error.message : String(error) });
+      setSyncStatus(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setSyncing(false);
     }
@@ -418,7 +421,12 @@ export default function HomeScreen({ onNavigateToVitals, onOpenSettings }: HomeS
           <NextDoseCard
             dose={nextDose}
             totalScheduledToday={intakeItems.length}
-            onMarkTaken={(scheduleId) => markTaken(scheduleId)}
+            onMarkTaken={async (scheduleId) => {
+              await markTaken(scheduleId);
+              if (nextDose) {
+                toast.success(t('alarmRinging.confirmed', { name: nextDose.medicationName }));
+              }
+            }}
           />
         </RevealOnMount>
 
