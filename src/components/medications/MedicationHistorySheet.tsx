@@ -1,4 +1,9 @@
-import { BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import {
+  BottomSheetBackdrop,
+  BottomSheetModal,
+  BottomSheetScrollView,
+  type BottomSheetBackdropProps,
+} from '@gorhom/bottom-sheet';
 import { CheckCircle2, Clock3, History, XCircle } from 'lucide-react-native';
 import { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
@@ -88,6 +93,19 @@ export const MedicationHistorySheet = forwardRef<MedicationHistorySheetRef>(func
     [loadHistory],
   );
 
+  const renderBackdrop = useCallback(
+    (props: BottomSheetBackdropProps) => (
+      <BottomSheetBackdrop
+        {...props}
+        disappearsOnIndex={-1}
+        appearsOnIndex={0}
+        opacity={theme.mode === 'dark' ? 0.75 : 0.5}
+        pressBehavior="close"
+      />
+    ),
+    [theme.mode],
+  );
+
   const taken = items.filter((item) => item.status === 'TAKEN').length;
   const missed = items.filter((item) => item.status === 'MISSED').length;
   const tracked = taken + missed;
@@ -97,8 +115,20 @@ export const MedicationHistorySheet = forwardRef<MedicationHistorySheetRef>(func
     <BottomSheetModal
       ref={modalRef}
       snapPoints={snapPoints}
-      backgroundStyle={{ backgroundColor: theme.colors.surface }}
-      handleIndicatorStyle={{ backgroundColor: theme.colors.hairline }}
+      backdropComponent={renderBackdrop}
+      backgroundStyle={{
+        backgroundColor: theme.colors.surface,
+        borderTopLeftRadius: 28,
+        borderTopRightRadius: 28,
+        borderWidth: theme.mode === 'dark' ? 1 : 0,
+        borderColor: theme.mode === 'dark' ? 'rgba(255, 255, 255, 0.10)' : 'transparent',
+      }}
+      handleIndicatorStyle={{
+        backgroundColor: theme.mode === 'dark' ? 'rgba(255, 255, 255, 0.22)' : theme.colors.hairline,
+        width: 36,
+        height: 4.5,
+        borderRadius: 3,
+      }}
     >
       <BottomSheetScrollView contentContainerStyle={{ paddingBottom: 32 }} showsVerticalScrollIndicator={false}>
         <View className="gap-1 px-6 pb-5">

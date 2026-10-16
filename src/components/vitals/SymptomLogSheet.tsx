@@ -226,11 +226,11 @@ export const SymptomLogSheet = forwardRef<SymptomLogSheetRef, Record<string, unk
         {...props}
         disappearsOnIndex={-1}
         appearsOnIndex={0}
-        opacity={0.5}
+        opacity={isDark ? 0.75 : 0.5}
         pressBehavior="close"
       />
     ),
-    [],
+    [isDark],
   );
 
   return (
@@ -239,8 +239,19 @@ export const SymptomLogSheet = forwardRef<SymptomLogSheetRef, Record<string, unk
       snapPoints={snapPoints}
       enablePanDownToClose
       backdropComponent={renderBackdrop}
-      backgroundStyle={{ backgroundColor: isDark ? theme.colors.surface : '#FFFFFF' }}
-      handleIndicatorStyle={{ backgroundColor: isDark ? 'rgba(255, 255, 255, 0.2)' : theme.colors.hairline, width: 38, height: 4 }}
+      backgroundStyle={{
+        backgroundColor: theme.colors.surface,
+        borderTopLeftRadius: 28,
+        borderTopRightRadius: 28,
+        borderWidth: isDark ? 1 : 0,
+        borderColor: isDark ? 'rgba(255, 255, 255, 0.10)' : 'transparent',
+      }}
+      handleIndicatorStyle={{
+        backgroundColor: isDark ? 'rgba(255, 255, 255, 0.22)' : theme.colors.hairline,
+        width: 38,
+        height: 4.5,
+        borderRadius: 3,
+      }}
     >
       <BottomSheetScrollView
         contentContainerStyle={{ paddingBottom: bottomPadding }}

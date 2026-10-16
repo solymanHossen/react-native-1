@@ -1,9 +1,11 @@
 import {
+  BottomSheetBackdrop,
   BottomSheetFooter,
   BottomSheetModal,
   BottomSheetScrollView,
   BottomSheetTextInput,
   BottomSheetView,
+  type BottomSheetBackdropProps,
   type BottomSheetFooterProps,
 } from '@gorhom/bottom-sheet';
 import { X } from 'lucide-react-native';
@@ -286,6 +288,19 @@ export const PrescriptionReviewSheet = forwardRef<PrescriptionReviewSheetRef, Pr
     [handleConfirm, handleFooterLayout, reviewItems.length, t, theme.colors.hairline, theme.colors.surface],
   );
 
+  const renderBackdrop = useCallback(
+    (props: BottomSheetBackdropProps) => (
+      <BottomSheetBackdrop
+        {...props}
+        disappearsOnIndex={-1}
+        appearsOnIndex={0}
+        opacity={theme.mode === 'dark' ? 0.75 : 0.5}
+        pressBehavior="close"
+      />
+    ),
+    [theme.mode],
+  );
+
   return (
     <BottomSheetModal
       ref={modalRef}
@@ -299,8 +314,20 @@ export const PrescriptionReviewSheet = forwardRef<PrescriptionReviewSheetRef, Pr
       // first screenful. A fixed-height sheet with an internally scrolling
       // list needs dynamic sizing off.
       enableDynamicSizing={false}
-      backgroundStyle={{ backgroundColor: theme.colors.surface }}
-      handleIndicatorStyle={{ backgroundColor: theme.colors.hairline }}
+      backdropComponent={renderBackdrop}
+      backgroundStyle={{
+        backgroundColor: theme.colors.surface,
+        borderTopLeftRadius: 28,
+        borderTopRightRadius: 28,
+        borderWidth: theme.mode === 'dark' ? 1 : 0,
+        borderColor: theme.mode === 'dark' ? 'rgba(255, 255, 255, 0.10)' : 'transparent',
+      }}
+      handleIndicatorStyle={{
+        backgroundColor: theme.mode === 'dark' ? 'rgba(255, 255, 255, 0.22)' : theme.colors.hairline,
+        width: 36,
+        height: 4.5,
+        borderRadius: 3,
+      }}
       footerComponent={renderFooter}
     >
       <BottomSheetView style={{ flex: 1 }}>

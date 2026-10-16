@@ -1,5 +1,10 @@
-import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
-import { forwardRef, useImperativeHandle, useMemo, useRef } from 'react';
+import {
+  BottomSheetBackdrop,
+  BottomSheetModal,
+  BottomSheetView,
+  type BottomSheetBackdropProps,
+} from '@gorhom/bottom-sheet';
+import { forwardRef, useCallback, useImperativeHandle, useMemo, useRef } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { useLanguageStore, useTranslation, type LanguageCode } from '../../i18n';
 import { triggerHaptic } from '../../lib/haptics';
@@ -75,12 +80,37 @@ export const SettingsSheet = forwardRef<SettingsSheetRef, Record<string, unknown
   const themeLabel = (preference: ThemePreference) =>
     preference === 'system' ? t('settings.themeSystem') : preference === 'light' ? t('settings.themeLight') : t('settings.themeDark');
 
+  const renderBackdrop = useCallback(
+    (props: BottomSheetBackdropProps) => (
+      <BottomSheetBackdrop
+        {...props}
+        disappearsOnIndex={-1}
+        appearsOnIndex={0}
+        opacity={theme.mode === 'dark' ? 0.75 : 0.5}
+        pressBehavior="close"
+      />
+    ),
+    [theme.mode],
+  );
+
   return (
     <BottomSheetModal
       ref={modalRef}
       snapPoints={snapPoints}
-      backgroundStyle={{ backgroundColor: theme.colors.surface }}
-      handleIndicatorStyle={{ backgroundColor: theme.colors.hairline }}
+      backdropComponent={renderBackdrop}
+      backgroundStyle={{
+        backgroundColor: theme.colors.surface,
+        borderTopLeftRadius: 28,
+        borderTopRightRadius: 28,
+        borderWidth: theme.mode === 'dark' ? 1 : 0,
+        borderColor: theme.mode === 'dark' ? 'rgba(255, 255, 255, 0.10)' : 'transparent',
+      }}
+      handleIndicatorStyle={{
+        backgroundColor: theme.mode === 'dark' ? 'rgba(255, 255, 255, 0.22)' : theme.colors.hairline,
+        width: 36,
+        height: 4.5,
+        borderRadius: 3,
+      }}
     >
       <BottomSheetView style={{ flex: 1 }}>
         <View className="gap-1 px-6 pb-6">

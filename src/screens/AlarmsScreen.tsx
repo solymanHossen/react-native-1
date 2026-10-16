@@ -78,11 +78,11 @@ const CaregiverContactSheet = forwardRef<CaregiverContactSheetRef, {
         {...props}
         disappearsOnIndex={-1}
         appearsOnIndex={0}
-        opacity={0.5}
+        opacity={theme.mode === 'dark' ? 0.75 : 0.5}
         pressBehavior="close"
       />
     ),
-    [],
+    [theme.mode],
   );
 
   return (
@@ -95,8 +95,19 @@ const CaregiverContactSheet = forwardRef<CaregiverContactSheetRef, {
       keyboardBlurBehavior="restore"
       android_keyboardInputMode="adjustResize"
       backdropComponent={renderBackdrop}
-      backgroundStyle={{ backgroundColor: theme.colors.surface }}
-      handleIndicatorStyle={{ backgroundColor: theme.colors.hairline }}
+      backgroundStyle={{
+        backgroundColor: theme.colors.surface,
+        borderTopLeftRadius: 28,
+        borderTopRightRadius: 28,
+        borderWidth: theme.mode === 'dark' ? 1 : 0,
+        borderColor: theme.mode === 'dark' ? 'rgba(255, 255, 255, 0.10)' : 'transparent',
+      }}
+      handleIndicatorStyle={{
+        backgroundColor: theme.mode === 'dark' ? 'rgba(255, 255, 255, 0.22)' : theme.colors.hairline,
+        width: 36,
+        height: 4.5,
+        borderRadius: 3,
+      }}
     >
       <BottomSheetView className="gap-5 px-6 pt-2" style={{ paddingBottom: bottomPadding }}>
         <View className="flex-row items-center gap-3">
@@ -380,11 +391,11 @@ const ReminderSheet = forwardRef<ReminderSheetRef, {
         {...props}
         disappearsOnIndex={-1}
         appearsOnIndex={0}
-        opacity={0.5}
+        opacity={theme.mode === 'dark' ? 0.75 : 0.5}
         pressBehavior="close"
       />
     ),
-    [],
+    [theme.mode],
   );
 
   const FormIcon = medicationFormIcon(medication?.form);
@@ -399,8 +410,19 @@ const ReminderSheet = forwardRef<ReminderSheetRef, {
       keyboardBlurBehavior="restore"
       android_keyboardInputMode="adjustResize"
       backdropComponent={renderBackdrop}
-      backgroundStyle={{ backgroundColor: theme.colors.surface }}
-      handleIndicatorStyle={{ backgroundColor: theme.colors.hairline, width: 36, height: 4 }}
+      backgroundStyle={{
+        backgroundColor: theme.colors.surface,
+        borderTopLeftRadius: 28,
+        borderTopRightRadius: 28,
+        borderWidth: theme.mode === 'dark' ? 1 : 0,
+        borderColor: theme.mode === 'dark' ? 'rgba(255, 255, 255, 0.10)' : 'transparent',
+      }}
+      handleIndicatorStyle={{
+        backgroundColor: theme.mode === 'dark' ? 'rgba(255, 255, 255, 0.22)' : theme.colors.hairline,
+        width: 36,
+        height: 4.5,
+        borderRadius: 3,
+      }}
     >
       {medication ? (
         <BottomSheetScrollView

@@ -1,6 +1,11 @@
-import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
+import {
+  BottomSheetBackdrop,
+  BottomSheetModal,
+  BottomSheetView,
+  type BottomSheetBackdropProps,
+} from '@gorhom/bottom-sheet';
 import { AlertTriangle, Pill } from 'lucide-react-native';
-import { forwardRef, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { Text, View } from 'react-native';
 import type { DoseEntry } from '../../dashboard/types';
 import { useTranslation } from '../../i18n';
@@ -33,14 +38,39 @@ export const DoseDetailSheet = forwardRef<DoseDetailSheetRef, Record<string, unk
     [],
   );
 
+  const renderBackdrop = useCallback(
+    (props: BottomSheetBackdropProps) => (
+      <BottomSheetBackdrop
+        {...props}
+        disappearsOnIndex={-1}
+        appearsOnIndex={0}
+        opacity={theme.mode === 'dark' ? 0.75 : 0.5}
+        pressBehavior="close"
+      />
+    ),
+    [theme.mode],
+  );
+
   const isLowStock = (dose?.stockRemaining ?? Infinity) <= LOW_STOCK_THRESHOLD;
 
   return (
     <BottomSheetModal
       ref={modalRef}
       snapPoints={snapPoints}
-      backgroundStyle={{ backgroundColor: theme.colors.surface }}
-      handleIndicatorStyle={{ backgroundColor: theme.colors.hairline }}
+      backdropComponent={renderBackdrop}
+      backgroundStyle={{
+        backgroundColor: theme.colors.surface,
+        borderTopLeftRadius: 28,
+        borderTopRightRadius: 28,
+        borderWidth: theme.mode === 'dark' ? 1 : 0,
+        borderColor: theme.mode === 'dark' ? 'rgba(255, 255, 255, 0.10)' : 'transparent',
+      }}
+      handleIndicatorStyle={{
+        backgroundColor: theme.mode === 'dark' ? 'rgba(255, 255, 255, 0.22)' : theme.colors.hairline,
+        width: 36,
+        height: 4.5,
+        borderRadius: 3,
+      }}
     >
       <BottomSheetView style={{ flex: 1 }}>
         <View className="gap-6 px-6 pb-8">

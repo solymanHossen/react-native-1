@@ -1,4 +1,9 @@
-import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
+import {
+  BottomSheetBackdrop,
+  BottomSheetModal,
+  BottomSheetView,
+  type BottomSheetBackdropProps,
+} from '@gorhom/bottom-sheet';
 import { CalendarX, PackageX, Stethoscope, ThumbsUp, TriangleAlert, X, type LucideIcon } from 'lucide-react-native';
 import { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
@@ -75,12 +80,37 @@ export const SkipReasonSheet = forwardRef<SkipReasonSheetRef, SkipReasonSheetPro
     [dose, onSelectReason],
   );
 
+  const renderBackdrop = useCallback(
+    (props: BottomSheetBackdropProps) => (
+      <BottomSheetBackdrop
+        {...props}
+        disappearsOnIndex={-1}
+        appearsOnIndex={0}
+        opacity={theme.mode === 'dark' ? 0.75 : 0.5}
+        pressBehavior="close"
+      />
+    ),
+    [theme.mode],
+  );
+
   return (
     <BottomSheetModal
       ref={modalRef}
       snapPoints={snapPoints}
-      backgroundStyle={{ backgroundColor: theme.colors.surface }}
-      handleIndicatorStyle={{ backgroundColor: theme.colors.hairline }}
+      backdropComponent={renderBackdrop}
+      backgroundStyle={{
+        backgroundColor: theme.colors.surface,
+        borderTopLeftRadius: 28,
+        borderTopRightRadius: 28,
+        borderWidth: theme.mode === 'dark' ? 1 : 0,
+        borderColor: theme.mode === 'dark' ? 'rgba(255, 255, 255, 0.10)' : 'transparent',
+      }}
+      handleIndicatorStyle={{
+        backgroundColor: theme.mode === 'dark' ? 'rgba(255, 255, 255, 0.22)' : theme.colors.hairline,
+        width: 36,
+        height: 4.5,
+        borderRadius: 3,
+      }}
     >
       <BottomSheetView style={{ flex: 1 }}>
         <View className="flex-row items-start justify-between gap-3 px-6 pb-4">

@@ -166,10 +166,10 @@ export function AlarmScheduleCard({
         marginBottom: 16,
         backgroundColor: isActive
           ? isDark
-            ? 'rgba(31, 41, 55, 0.75)'
+            ? '#1E293B'
             : '#FFFFFF'
           : isDark
-            ? 'rgba(20, 26, 36, 0.55)'
+            ? '#141C2B'
             : '#F8FAFC',
         borderColor: isActive
           ? isDark

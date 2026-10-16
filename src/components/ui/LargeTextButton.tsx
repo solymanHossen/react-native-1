@@ -89,7 +89,7 @@ export function LargeTextButton({
 
   const isDark = forceDark || theme.mode === 'dark';
   const isPrimary = variant === 'primary';
-  const backgroundColor = isPrimary ? theme.action.base : isDark ? 'rgba(31, 41, 55, 0.75)' : theme.colors.elevated;
+  const backgroundColor = isPrimary ? theme.action.base : isDark ? '#1E293B' : theme.colors.elevated;
   // The secondary-variant branch has no live-dark-mode value to fall back to
   // the way background/border do (they hardcode the glass rgba literal
   // directly) — without this branch, `forceDark` on a live-light device would

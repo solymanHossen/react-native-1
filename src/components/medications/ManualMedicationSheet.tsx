@@ -58,6 +58,7 @@ export interface ManualMedicationSheetProps {
 function FormPicker({ value, onChange }: { value: Medication['form']; onChange: (form: Medication['form']) => void }) {
   const theme = useTheme();
   const { t } = useTranslation();
+  const isDark = theme.mode === 'dark';
 
   return (
     <View className="flex-row flex-wrap gap-3">
@@ -73,14 +74,28 @@ function FormPicker({ value, onChange }: { value: Medication['form']; onChange: 
             className="min-h-hit flex-row items-center gap-2.5 rounded-2xl border px-4 py-3"
             style={{
               width: '47%',
-              backgroundColor: isActive ? colors.badgeBg : theme.colors.elevated,
+              backgroundColor: isActive
+                ? isDark
+                  ? '#1E2D4A'
+                  : colors.badgeBg
+                : theme.colors.elevated,
               borderColor: isActive ? colors.iconColor : theme.colors.hairline,
               borderWidth: isActive ? 1.5 : 1,
             }}
           >
             <View
               className="items-center justify-center rounded-xl"
-              style={{ width: 36, height: 36, backgroundColor: isActive ? theme.colors.surface : colors.badgeBg }}
+              style={{
+                width: 36,
+                height: 36,
+                backgroundColor: isActive
+                  ? isDark
+                    ? '#131B2E'
+                    : theme.colors.surface
+                  : isDark
+                    ? '#25334D'
+                    : colors.badgeBg,
+              }}
             >
               <Image source={DOSAGE_FORM_ASSETS[option]} style={{ width: 24, height: 24 }} resizeMode="contain" />
             </View>
@@ -227,9 +242,15 @@ export const ManualMedicationSheet = forwardRef<ManualMedicationSheetRef, Manual
 
     const renderBackdrop = useCallback(
       (props: BottomSheetBackdropProps) => (
-        <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} opacity={0.5} pressBehavior="close" />
+        <BottomSheetBackdrop
+          {...props}
+          disappearsOnIndex={-1}
+          appearsOnIndex={0}
+          opacity={theme.mode === 'dark' ? 0.75 : 0.5}
+          pressBehavior="close"
+        />
       ),
-      [],
+      [theme.mode],
     );
 
     const ongoingLabel = ongoing ? t('medications.manualSheet.reviewOngoingYes') : t('medications.manualSheet.reviewOngoingNo');
@@ -244,8 +265,19 @@ export const ManualMedicationSheet = forwardRef<ManualMedicationSheetRef, Manual
         keyboardBlurBehavior="restore"
         android_keyboardInputMode="adjustResize"
         backdropComponent={renderBackdrop}
-        backgroundStyle={{ backgroundColor: theme.colors.surface }}
-        handleIndicatorStyle={{ backgroundColor: theme.colors.hairline }}
+        backgroundStyle={{
+          backgroundColor: theme.colors.surface,
+          borderTopLeftRadius: 28,
+          borderTopRightRadius: 28,
+          borderWidth: theme.mode === 'dark' ? 1 : 0,
+          borderColor: theme.mode === 'dark' ? 'rgba(255, 255, 255, 0.10)' : 'transparent',
+        }}
+        handleIndicatorStyle={{
+          backgroundColor: theme.mode === 'dark' ? 'rgba(255, 255, 255, 0.22)' : theme.colors.hairline,
+          width: 36,
+          height: 4.5,
+          borderRadius: 3,
+        }}
       >
         {step !== 'added' ? (
           <View className="flex-row items-center justify-between px-6 pb-2">
@@ -289,7 +321,11 @@ export const ManualMedicationSheet = forwardRef<ManualMedicationSheetRef, Manual
             <View className="gap-4 px-6">
               <View
                 className="flex-row items-center gap-3 rounded-2xl p-4"
-                style={{ backgroundColor: theme.mode === 'dark' ? 'rgba(16, 185, 129, 0.18)' : '#DCFCE7' }}
+                style={{
+                  backgroundColor: theme.mode === 'dark' ? 'rgba(16, 185, 129, 0.16)' : '#DCFCE7',
+                  borderWidth: 1,
+                  borderColor: theme.mode === 'dark' ? 'rgba(52, 211, 153, 0.28)' : '#86EFAC',
+                }}
               >
                 <ShieldCheck color={theme.mode === 'dark' ? '#34D399' : '#16A34A'} size={22} strokeWidth={2.25} />
                 <View className="flex-1 gap-0.5">

@@ -112,8 +112,16 @@ const MoreSheet = forwardRef<MoreSheetRef, { onSelect: (tab: Tab) => void }>(fun
   useImperativeHandle(ref, () => ({ present: () => modalRef.current?.present() }), []);
 
   const renderBackdrop = useCallback(
-    (props: BottomSheetBackdropProps) => <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} opacity={0.5} pressBehavior="close" />,
-    [],
+    (props: BottomSheetBackdropProps) => (
+      <BottomSheetBackdrop
+        {...props}
+        disappearsOnIndex={-1}
+        appearsOnIndex={0}
+        opacity={theme.mode === 'dark' ? 0.75 : 0.5}
+        pressBehavior="close"
+      />
+    ),
+    [theme.mode],
   );
 
   return (
@@ -122,8 +130,19 @@ const MoreSheet = forwardRef<MoreSheetRef, { onSelect: (tab: Tab) => void }>(fun
       enableDynamicSizing
       enablePanDownToClose
       backdropComponent={renderBackdrop}
-      backgroundStyle={{ backgroundColor: theme.colors.surface }}
-      handleIndicatorStyle={{ backgroundColor: theme.colors.hairline }}
+      backgroundStyle={{
+        backgroundColor: theme.colors.surface,
+        borderTopLeftRadius: 28,
+        borderTopRightRadius: 28,
+        borderWidth: theme.mode === 'dark' ? 1 : 0,
+        borderColor: theme.mode === 'dark' ? 'rgba(255, 255, 255, 0.10)' : 'transparent',
+      }}
+      handleIndicatorStyle={{
+        backgroundColor: theme.mode === 'dark' ? 'rgba(255, 255, 255, 0.22)' : theme.colors.hairline,
+        width: 36,
+        height: 4.5,
+        borderRadius: 3,
+      }}
     >
       <BottomSheetView style={{ paddingHorizontal: 24, paddingTop: 4, paddingBottom: 24, gap: 4 }}>
         <Text className="text-title-lg font-bold" style={{ color: theme.colors.ink, marginBottom: 8 }}>

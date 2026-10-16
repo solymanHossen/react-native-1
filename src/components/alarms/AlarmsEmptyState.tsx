@@ -18,7 +18,7 @@ export function AlarmsEmptyState() {
     <View
       className="items-center justify-center rounded-3xl border p-8 text-center"
       style={{
-        backgroundColor: isDark ? 'rgba(31, 41, 55, 0.5)' : theme.colors.elevated,
+        backgroundColor: theme.colors.elevated,
         borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : theme.colors.hairline,
       }}
     >
